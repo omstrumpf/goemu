@@ -15,3 +15,8 @@ func NewGBA() *GBA {
 
 	return gba
 }
+
+// Tick TODO
+func (gba *GBA) Tick() {
+	gba.cpu.ProcessNextInstruction()
+}
