@@ -315,6 +315,313 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 
 		//// 8-bit ALU ////
+		0x87: func() { // ADD A,A
+			cpu.addInstruction(cpu.AF.Hi(), false)
+		},
+		0x80: func() { // ADD A,B
+			cpu.addInstruction(cpu.BC.Hi(), false)
+		},
+		0x81: func() { // ADD A,C
+			cpu.addInstruction(cpu.BC.Lo(), false)
+		},
+		0x82: func() { // ADD A,D
+			cpu.addInstruction(cpu.DE.Hi(), false)
+		},
+		0x83: func() { // ADD A,E
+			cpu.addInstruction(cpu.DE.Lo(), false)
+		},
+		0x84: func() { // ADD A,H
+			cpu.addInstruction(cpu.HL.Hi(), false)
+		},
+		0x85: func() { // ADD A,L
+			cpu.addInstruction(cpu.HL.Lo(), false)
+		},
+		0xC6: func() { // ADD A,n
+			cpu.addInstruction(cpu.mmu.Read(cpu.PC.Inc()), false)
+		},
+		0x86: func() { // ADD A,(HL)
+			cpu.addInstruction(cpu.mmu.Read(cpu.HL.HiLo()), false)
+		},
+
+		0x8F: func() { // ADC A,A
+			cpu.addInstruction(cpu.AF.Hi(), true)
+		},
+		0x88: func() { // ADC A,B
+			cpu.addInstruction(cpu.BC.Hi(), true)
+		},
+		0x89: func() { // ADC A,C
+			cpu.addInstruction(cpu.BC.Lo(), true)
+		},
+		0x8A: func() { // ADC A,D
+			cpu.addInstruction(cpu.DE.Hi(), true)
+		},
+		0x8B: func() { // ADC A,E
+			cpu.addInstruction(cpu.DE.Lo(), true)
+		},
+		0x8C: func() { // ADC A,H
+			cpu.addInstruction(cpu.HL.Hi(), true)
+		},
+		0x8D: func() { // ADC A,L
+			cpu.addInstruction(cpu.HL.Lo(), true)
+		},
+		0xCE: func() { // ADC A,n
+			cpu.addInstruction(cpu.mmu.Read(cpu.PC.Inc()), true)
+		},
+		0x8E: func() { // ADC A,(HL)
+			cpu.addInstruction(cpu.mmu.Read(cpu.HL.HiLo()), true)
+		},
+
+		0x97: func() { // SUB A,A
+			cpu.subInstruction(cpu.AF.Hi(), false)
+		},
+		0x90: func() { // SUB A,B
+			cpu.subInstruction(cpu.BC.Hi(), false)
+		},
+		0x91: func() { // SUB A,C
+			cpu.subInstruction(cpu.BC.Lo(), false)
+		},
+		0x92: func() { // SUB A,D
+			cpu.subInstruction(cpu.DE.Hi(), false)
+		},
+		0x93: func() { // SUB A,E
+			cpu.subInstruction(cpu.DE.Lo(), false)
+		},
+		0x94: func() { // SUB A,H
+			cpu.subInstruction(cpu.HL.Hi(), false)
+		},
+		0x95: func() { // SUB A,L
+			cpu.subInstruction(cpu.HL.Lo(), false)
+		},
+		0xD6: func() { // SUB A,n
+			cpu.subInstruction(cpu.mmu.Read(cpu.PC.Inc()), false)
+		},
+		0x96: func() { // SUB A,(HL)
+			cpu.subInstruction(cpu.mmu.Read(cpu.HL.HiLo()), false)
+		},
+
+		0x9F: func() { // SBC A,A
+			cpu.subInstruction(cpu.AF.Hi(), true)
+		},
+		0x98: func() { // SBC A,B
+			cpu.subInstruction(cpu.BC.Hi(), true)
+		},
+		0x99: func() { // SBC A,C
+			cpu.subInstruction(cpu.BC.Lo(), true)
+		},
+		0x9A: func() { // SBC A,D
+			cpu.subInstruction(cpu.DE.Hi(), true)
+		},
+		0x9B: func() { // SBC A,E
+			cpu.subInstruction(cpu.DE.Lo(), true)
+		},
+		0x9C: func() { // SBC A,H
+			cpu.subInstruction(cpu.HL.Hi(), true)
+		},
+		0x9D: func() { // SBC A,L
+			cpu.subInstruction(cpu.HL.Lo(), true)
+		},
+		0xDE: func() { // SBC A,n
+			cpu.subInstruction(cpu.mmu.Read(cpu.PC.Inc()), true)
+		},
+		0x9E: func() { // SBC A,(HL)
+			cpu.subInstruction(cpu.mmu.Read(cpu.HL.HiLo()), true)
+		},
+
+		0xA7: func() { // AND A
+			cpu.andInstruction(cpu.AF.Hi())
+		},
+		0xA0: func() { // AND B
+			cpu.andInstruction(cpu.BC.Hi())
+		},
+		0xA1: func() { // AND C
+			cpu.andInstruction(cpu.BC.Lo())
+		},
+		0xA2: func() { // AND D
+			cpu.andInstruction(cpu.DE.Hi())
+		},
+		0xA3: func() { // AND E
+			cpu.andInstruction(cpu.DE.Lo())
+		},
+		0xA4: func() { // AND H
+			cpu.andInstruction(cpu.HL.Hi())
+		},
+		0xA5: func() { // AND L
+			cpu.andInstruction(cpu.HL.Lo())
+		},
+		0xE6: func() { // AND n
+			cpu.andInstruction(cpu.mmu.Read(cpu.PC.Inc()))
+		},
+		0xA6: func() { // AND (HL)
+			cpu.andInstruction(cpu.mmu.Read(cpu.HL.HiLo()))
+		},
+
+		0xAF: func() { // XOR A
+			cpu.xorInstruction(cpu.AF.Hi())
+		},
+		0xA8: func() { // XOR B
+			cpu.xorInstruction(cpu.BC.Hi())
+		},
+		0xA9: func() { // XOR C
+			cpu.xorInstruction(cpu.BC.Lo())
+		},
+		0xAA: func() { // XOR D
+			cpu.xorInstruction(cpu.DE.Hi())
+		},
+		0xAB: func() { // XOR E
+			cpu.xorInstruction(cpu.DE.Lo())
+		},
+		0xAC: func() { // XOR H
+			cpu.xorInstruction(cpu.HL.Hi())
+		},
+		0xAD: func() { // XOR L
+			cpu.xorInstruction(cpu.HL.Lo())
+		},
+		0xEE: func() { // XOR n
+			cpu.xorInstruction(cpu.mmu.Read(cpu.PC.Inc()))
+		},
+		0xAE: func() { // XOR (HL)
+			cpu.xorInstruction(cpu.mmu.Read(cpu.HL.HiLo()))
+		},
+
+		0xB7: func() { // OR A
+			cpu.orInstruction(cpu.AF.Hi())
+		},
+		0xB0: func() { // OR B
+			cpu.orInstruction(cpu.BC.Hi())
+		},
+		0xB1: func() { // OR C
+			cpu.orInstruction(cpu.BC.Lo())
+		},
+		0xB2: func() { // OR D
+			cpu.orInstruction(cpu.DE.Hi())
+		},
+		0xB3: func() { // OR E
+			cpu.orInstruction(cpu.DE.Lo())
+		},
+		0xB4: func() { // OR H
+			cpu.orInstruction(cpu.HL.Hi())
+		},
+		0xB5: func() { // OR L
+			cpu.orInstruction(cpu.HL.Lo())
+		},
+		0xF6: func() { // OR n
+			cpu.orInstruction(cpu.mmu.Read(cpu.PC.Inc()))
+		},
+		0xB6: func() { // OR (HL)
+			cpu.orInstruction(cpu.mmu.Read(cpu.HL.HiLo()))
+		},
+
+		0xBF: func() { // CP A
+			cpu.cpInstruction(cpu.AF.Hi())
+		},
+		0xB8: func() { // CP B
+			cpu.cpInstruction(cpu.BC.Hi())
+		},
+		0xB9: func() { // CP C
+			cpu.cpInstruction(cpu.BC.Lo())
+		},
+		0xBA: func() { // CP D
+			cpu.cpInstruction(cpu.DE.Hi())
+		},
+		0xBB: func() { // CP E
+			cpu.cpInstruction(cpu.DE.Lo())
+		},
+		0xBC: func() { // CP H
+			cpu.cpInstruction(cpu.HL.Hi())
+		},
+		0xBD: func() { // CP L
+			cpu.cpInstruction(cpu.HL.Lo())
+		},
+		0xFE: func() { // CP n
+			cpu.cpInstruction(cpu.mmu.Read(cpu.PC.Inc()))
+		},
+		0xBE: func() { // CP (HL)
+			cpu.cpInstruction(cpu.mmu.Read(cpu.HL.HiLo()))
+		},
+
+		0x3C: func() { // INC A
+			cpu.incInstruction(cpu.AF.Hi(), cpu.AF.SetHi)
+		},
+		0x04: func() { // INC B
+			cpu.incInstruction(cpu.BC.Hi(), cpu.BC.SetHi)
+		},
+		0x0C: func() { // INC C
+			cpu.incInstruction(cpu.BC.Lo(), cpu.BC.SetLo)
+		},
+		0x14: func() { // INC D
+			cpu.incInstruction(cpu.DE.Hi(), cpu.DE.SetHi)
+		},
+		0x1C: func() { // INC E
+			cpu.incInstruction(cpu.DE.Lo(), cpu.DE.SetLo)
+		},
+		0x24: func() { // INC H
+			cpu.incInstruction(cpu.HL.Hi(), cpu.HL.SetHi)
+		},
+		0x2C: func() { // INC L
+			cpu.incInstruction(cpu.HL.Lo(), cpu.HL.SetLo)
+		},
+		0x34: func() { // INC (HL)
+			addr := cpu.HL.HiLo()
+			cpu.incInstruction(cpu.mmu.Read(cpu.HL.HiLo()), func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x3D: func() { // DEC A
+			cpu.decInstruction(cpu.AF.Hi(), cpu.AF.SetHi)
+		},
+		0x05: func() { // DEC B
+			cpu.decInstruction(cpu.BC.Hi(), cpu.BC.SetHi)
+		},
+		0x0B: func() { // DEC C
+			cpu.decInstruction(cpu.BC.Lo(), cpu.BC.SetLo)
+		},
+		0x15: func() { // DEC D
+			cpu.decInstruction(cpu.DE.Hi(), cpu.DE.SetHi)
+		},
+		0x1B: func() { // DEC E
+			cpu.decInstruction(cpu.DE.Lo(), cpu.DE.SetLo)
+		},
+		0x25: func() { // DEC H
+			cpu.decInstruction(cpu.HL.Hi(), cpu.HL.SetHi)
+		},
+		0x2B: func() { // DEC L
+			cpu.decInstruction(cpu.HL.Lo(), cpu.HL.SetLo)
+		},
+		0x35: func() { // DEC (HL)
+			addr := cpu.HL.HiLo()
+			cpu.decInstruction(cpu.mmu.Read(cpu.HL.HiLo()), func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x27: func() { // DAA
+			// BCD correction on register A
+
+			if !cpu.n() { // If last instruction was an addition
+				// Add 0x60 if large or carry
+				if cpu.c() || cpu.AF.Hi() > 0x99 {
+					cpu.AF.SetHi(cpu.AF.Hi() + 0x60)
+					cpu.setC(true)
+				}
+
+				// Add 0x06 if half-large or half-carry
+				if cpu.h() || cpu.AF.Hi()&0xF > 0x9 {
+					cpu.AF.SetHi(cpu.AF.Hi() + 0x06)
+					cpu.setH(false)
+				}
+			} else if cpu.c() && cpu.h() { // If subtraction and both carries are set
+				cpu.AF.SetHi(cpu.AF.Hi() + 0x9A)
+				cpu.setH(false)
+			} else if cpu.c() { // If subtraction and only high carry is set
+				cpu.AF.SetHi(cpu.AF.Hi() + 0xA0)
+			} else if cpu.h() { // If subtraction and only half carry is set
+				cpu.AF.SetHi(cpu.AF.Hi() + 0xFA)
+				cpu.setH(false)
+			}
+			cpu.setZ(cpu.AF.Hi() == 0)
+		},
+		0x2F: func() { // CPL
+			cpu.AF.SetHi(cpu.AF.Hi() ^ 0xFF)
+			cpu.setN(true)
+			cpu.setH(true)
+		},
 
 		//// 16-bit ALU ////
 
@@ -324,20 +631,14 @@ func (cpu *CPU) PopulateInstructions() {
 
 		//// Control ////
 		0x3F: func() { // CCF
-			f := cpu.AF.Lo()
-			if cpu.c() {
-				f &= 0x8F // 0b10001111, set n, h, and c to 0
-			} else {
-				f &= 0x9F // 0b1001111, set n, h to 0
-				f |= 0x10 // 0b00010000, set c to 1
-			}
-			cpu.AF.SetLo(f)
+			cpu.setN(false)
+			cpu.setH(false)
+			cpu.setC(!cpu.c())
 		},
 		0x37: func() { // SCF
-			f := cpu.AF.Lo()
-			f &= 0x9F                       // 0b10011111, set n, h to 0
-			f |= 0x10                       // 0b00010000, set c to 1
-			cpu.AF.SetLo(cpu.AF.Lo() & 0x9) // 0b1001
+			cpu.setN(false)
+			cpu.setH(false)
+			cpu.setC(true)
 		},
 		0x00: func() { // NOP
 		},
@@ -363,6 +664,7 @@ func (cpu *CPU) PopulateInstructions() {
 			opcode := k
 			cpu.instructions[k] = func() {
 				log.Printf("Encountered unknown instruction: %#2x", opcode)
+				// TODO pause execution (notify user)
 			}
 		}
 	}
@@ -482,6 +784,106 @@ func (cpu *CPU) PopulateInstructions() {
 		0xF1: 12,
 
 		//// 8-bit ALU ////
+		0x87: 4,
+		0x80: 4,
+		0x81: 4,
+		0x82: 4,
+		0x83: 4,
+		0x84: 4,
+		0x85: 4,
+		0xC6: 8,
+		0x86: 8,
+
+		0x8F: 4,
+		0x88: 4,
+		0x89: 4,
+		0x8A: 4,
+		0x8B: 4,
+		0x8C: 4,
+		0x8D: 4,
+		0xCE: 8,
+		0x8E: 8,
+
+		0x97: 4,
+		0x90: 4,
+		0x91: 4,
+		0x92: 4,
+		0x93: 4,
+		0x94: 4,
+		0x95: 4,
+		0xD6: 8,
+		0x96: 8,
+
+		0x9F: 4,
+		0x98: 4,
+		0x99: 4,
+		0x9A: 4,
+		0x9B: 4,
+		0x9C: 4,
+		0x9D: 4,
+		0xDE: 8,
+		0x9E: 8,
+
+		0xA7: 4,
+		0xA0: 4,
+		0xA1: 4,
+		0xA2: 4,
+		0xA3: 4,
+		0xA4: 4,
+		0xA5: 4,
+		0xE6: 8,
+		0xA6: 8,
+
+		0xAF: 4,
+		0xA8: 4,
+		0xA9: 4,
+		0xAA: 4,
+		0xAB: 4,
+		0xAC: 4,
+		0xAD: 4,
+		0xEE: 8,
+		0xAE: 8,
+
+		0xB7: 4,
+		0xB0: 4,
+		0xB1: 4,
+		0xB2: 4,
+		0xB3: 4,
+		0xB4: 4,
+		0xB5: 4,
+		0xF6: 8,
+		0xB6: 8,
+
+		0xBF: 4,
+		0xB8: 4,
+		0xB9: 4,
+		0xBA: 4,
+		0xBB: 4,
+		0xBC: 4,
+		0xBD: 4,
+		0xFE: 8,
+		0xBE: 8,
+
+		0x3c: 4,
+		0x04: 4,
+		0x0C: 4,
+		0x14: 4,
+		0x1C: 4,
+		0x24: 4,
+		0x2C: 4,
+		0x34: 12,
+
+		0x3D: 4,
+		0x05: 4,
+		0x0B: 4,
+		0x15: 4,
+		0x1B: 4,
+		0x25: 4,
+		0x2B: 4,
+		0x35: 12,
+
+		0x27: 4,
+		0x2F: 4,
 
 		//// 16-bit ALU ////
 
@@ -500,4 +902,99 @@ func (cpu *CPU) PopulateInstructions() {
 
 		//// Jump /////
 	}
+}
+
+func (cpu *CPU) addInstruction(operand byte, useCarry bool) {
+	original := cpu.AF.Hi()
+	carry := 0
+	if useCarry && cpu.c() {
+		carry = 1
+	}
+	result := int16(original) + int16(operand) + int16(carry)
+
+	cpu.AF.SetHi(byte(result))
+
+	cpu.setZ(byte(result) == 0)
+	cpu.setN(false)
+	cpu.setH((operand&0xF)+(original*0xF)+byte(carry) > 0xF)
+	cpu.setC(result > 0xFF)
+}
+
+func (cpu *CPU) subInstruction(operand byte, useCarry bool) {
+	original := cpu.AF.Hi()
+	carry := 0
+	if useCarry && cpu.c() {
+		carry = 1
+	}
+	result := int16(original) - int16(operand) - int16(carry)
+
+	cpu.AF.SetHi(byte(result))
+
+	cpu.setZ(byte(result) == 0)
+	cpu.setN(true)
+	cpu.setH(int16(original&0xF)-int16(operand&0xF)-int16(carry) < 0)
+	cpu.setC(result < 0)
+}
+
+func (cpu *CPU) andInstruction(operand byte) {
+	result := cpu.AF.Hi() & operand
+
+	cpu.AF.SetHi(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(true)
+	cpu.setC(false)
+}
+
+func (cpu *CPU) xorInstruction(operand byte) {
+	result := cpu.AF.Hi() ^ operand
+
+	cpu.AF.SetHi(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(false)
+}
+
+func (cpu *CPU) orInstruction(operand byte) {
+	result := cpu.AF.Hi() | operand
+
+	cpu.AF.SetHi(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(false)
+}
+
+func (cpu *CPU) cpInstruction(operand byte) {
+	original := cpu.AF.Hi()
+	result := original - operand
+
+	cpu.setZ(result == 0)
+	cpu.setN(true)
+	cpu.setH((original & 0x0F) > (operand & 0x0F))
+	cpu.setC(original > operand)
+}
+
+func (cpu *CPU) incInstruction(val byte, setter func(byte)) {
+	result := val + 1
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(((val & 0xF) + 1) > 0xF)
+}
+
+func (cpu *CPU) decInstruction(val byte, setter func(byte)) {
+	result := val - 1
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(true)
+	cpu.setH(val&0xF == 0)
 }
