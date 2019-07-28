@@ -68,3 +68,69 @@ func TestInstructionsLD(t *testing.T) {
 		t.Errorf("Expected operation to take 25 cycles, got %d", cpu.clock)
 	}
 }
+
+func TestInstructionsStack(t *testing.T) {
+	mmu := NewMMU()
+
+	cpu := NewCPU(mmu)
+
+	instructions := []byte{
+		0x01, 0xCD, 0xAB, // LD BC,nn
+		0x11, 0x34, 0x12, // LD DE,nn
+		0x21, 0x00, 0x10, // LD HL,nn
+		0xF9, // LD SP,HL
+		0xC5, // PUSH BC
+		0xD5, // PUSH DE
+		0xD5, // PUSH DE
+		0xD5, // PUSH DE
+		0xD1, // POP DE
+		0xE1, // POP HL
+		0x76, // HALT
+	}
+
+	copy(mmu.rom, instructions)
+
+	mmu.DisableBios()
+	cpu.PC.Set(0)
+
+	for range instructions {
+		if cpu.halt {
+			break
+		}
+		cpu.ProcessNextInstruction()
+	}
+
+	if !cpu.halt {
+		t.Errorf("Expected CPU to have halted")
+	}
+	if cpu.BC.HiLo() != 0xABCD {
+		t.Errorf("Expected register BC to contain 0xABCD, got %#4x", cpu.BC.HiLo())
+	}
+	if cpu.DE.HiLo() != 0x1234 {
+		t.Errorf("Expected register DE to contain 0x1234, got %#4x", cpu.DE.HiLo())
+	}
+	if cpu.HL.HiLo() != 0x1234 {
+		t.Errorf("Expected register HL to contain 0x1234, got %#4x", cpu.HL.HiLo())
+	}
+	if cpu.SP.HiLo() != 0x0FFC {
+		t.Errorf("Expected register SP to contain 0x0FFC, got %#4x", cpu.SP.HiLo())
+	}
+	if mmu.Read16(0x0FFE) != 0xABCD {
+		t.Errorf("Expected memory address 0x0FFE to contain 0xABCD, got %#4x", mmu.Read(0x0FFE))
+	}
+	if mmu.Read16(0x0FFC) != 0x1234 {
+		t.Errorf("Expected memory address 0x0FFC to contain 0x1234, got %#4x", mmu.Read(0x0FFC))
+	}
+	if mmu.Read16(0x0FFA) != 0x1234 {
+		t.Errorf("Expected memory address 0x0FFA to contain 0x1234, got %#4x", mmu.Read(0x0FFA))
+	}
+	if mmu.Read16(0x0FF8) != 0x1234 {
+		t.Errorf("Expected memory address 0x0FF8 to contain 0x1234, got %#4x", mmu.Read(0x0FF8))
+	}
+	if mmu.Read16(0x0FF6) != 0x0000 {
+		t.Errorf("Expected memory address 0x0FF6 to contain 0x0000, got %#4x", mmu.Read(0x0FF6))
+	}
+	if cpu.clock != 33 {
+		t.Errorf("Expected operation to take 33 cycles, got %d", cpu.clock)
+	}
+}

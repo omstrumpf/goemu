@@ -289,16 +289,20 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 
 		0xC5: func() { // PUSH BC
-			cpu.mmu.Write16(cpu.SP.Dec2(), cpu.BC.HiLo())
+			cpu.SP.Dec2()
+			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.BC.HiLo())
 		},
 		0xD5: func() { // PUSH DE
-			cpu.mmu.Write16(cpu.SP.Dec2(), cpu.DE.HiLo())
+			cpu.SP.Dec2()
+			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.DE.HiLo())
 		},
 		0xE5: func() { // PUSH HL
-			cpu.mmu.Write16(cpu.SP.Dec2(), cpu.HL.HiLo())
+			cpu.SP.Dec2()
+			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.HL.HiLo())
 		},
 		0xF5: func() { // PUSH AF
-			cpu.mmu.Write16(cpu.SP.Dec2(), cpu.AF.HiLo())
+			cpu.SP.Dec2()
+			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.AF.HiLo())
 		},
 
 		0xC1: func() { // POP BC
@@ -1068,7 +1072,8 @@ func (cpu *CPU) add16SignedInstruction(original uint16, operand int8, setter fun
 
 func (cpu *CPU) callInstruction(target uint16) {
 	// Push PC to stack
-	cpu.mmu.Write16(cpu.SP.Dec2(), cpu.PC.HiLo())
+	addr := cpu.SP.Dec2()
+	cpu.mmu.Write16(addr, cpu.PC.HiLo())
 
 	// Set PC to new target
 	cpu.PC.Set(target)
