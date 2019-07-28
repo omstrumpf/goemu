@@ -80,7 +80,7 @@ func (cpu *CPU) setZ(set bool) {
 	if set {
 		cpu.AF.Set(cpu.AF.HiLo() | 1<<7)
 	} else {
-		cpu.AF.Set(cpu.AF.HiLo() & uint16(^byte(1<<7)))
+		cpu.AF.Set(cpu.AF.HiLo() & ^uint16(1<<7))
 	}
 }
 
@@ -88,7 +88,7 @@ func (cpu *CPU) setN(set bool) {
 	if set {
 		cpu.AF.Set(cpu.AF.HiLo() | 1<<6)
 	} else {
-		cpu.AF.Set(cpu.AF.HiLo() & uint16(^byte(1<<6)))
+		cpu.AF.Set(cpu.AF.HiLo() & ^uint16(1<<6))
 	}
 }
 
@@ -96,7 +96,7 @@ func (cpu *CPU) setH(set bool) {
 	if set {
 		cpu.AF.Set(cpu.AF.HiLo() | 1<<5)
 	} else {
-		cpu.AF.Set(cpu.AF.HiLo() & uint16(^byte(1<<5)))
+		cpu.AF.Set(cpu.AF.HiLo() & ^uint16(1<<5))
 	}
 }
 
@@ -104,6 +104,6 @@ func (cpu *CPU) setC(set bool) {
 	if set {
 		cpu.AF.Set(cpu.AF.HiLo() | 1<<4)
 	} else {
-		cpu.AF.Set(cpu.AF.HiLo() & uint16(^byte(1<<4)))
+		cpu.AF.Set(cpu.AF.HiLo() & ^uint16(1<<4))
 	}
 }

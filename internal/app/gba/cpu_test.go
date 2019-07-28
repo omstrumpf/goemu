@@ -26,6 +26,8 @@ func TestCPUFlags(t *testing.T) {
 
 	cpu := NewCPU(mmu)
 
+	cpu.AF.SetHi(0xFF)
+
 	if cpu.z() {
 		t.Error("Z flag should init to false")
 	}
@@ -79,6 +81,9 @@ func TestCPUFlags(t *testing.T) {
 
 	if cpu.AF.Lo() != 0x00 {
 		t.Errorf("Expected flag register to match 0x00, got %#2x", cpu.AF.Lo())
+	}
+	if cpu.AF.Hi() != 0xFF {
+		t.Errorf("Expected A register to remain 0xFF, got %#2x", cpu.AF.Hi())
 	}
 
 }
