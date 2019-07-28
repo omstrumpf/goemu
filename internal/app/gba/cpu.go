@@ -1,6 +1,6 @@
 package gba
 
-// CPU Represents the central processing unit. Stores the state and instruction map.
+// CPU represents the central processing unit. Stores the state and instruction map.
 type CPU struct {
 	AF Register // Accumulator and flags
 	BC Register // General use
@@ -13,6 +13,8 @@ type CPU struct {
 	halt bool
 	stop bool
 	ime  bool // Interrupt disable
+
+	clock int
 
 	mmu *MMU // Memory Management Unit
 
@@ -36,15 +38,15 @@ func NewCPU(mmu *MMU) *CPU {
 }
 
 // ProcessNextInstruction fetches the next instruction, executes it, and increments the clock accordingly
-func (cpu *CPU) ProcessNextInstruction() int {
+func (cpu *CPU) ProcessNextInstruction() {
 	// Fetch the next instruction and increment PC
 	opcode := cpu.mmu.Read(cpu.PC.Inc())
 
 	// Execute the instruction
 	cpu.instructions[opcode]()
 
-	// Return the consumed cycles
-	return cpu.cycles[opcode]
+	// Increment the clock accordingly
+	cpu.clock += cpu.cycles[opcode]
 }
 
 // Flags

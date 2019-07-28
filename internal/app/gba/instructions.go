@@ -763,28 +763,28 @@ func (cpu *CPU) PopulateInstructions() {
 			target := cpu.mmu.Read16(cpu.PC.Inc2())
 			if !cpu.z() {
 				cpu.PC.Set(target)
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 		0xCA: func() { // JP Z,nn
 			target := cpu.mmu.Read16(cpu.PC.Inc2())
 			if cpu.z() {
 				cpu.PC.Set(target)
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 		0xD2: func() { // JP NC,nn
 			target := cpu.mmu.Read16(cpu.PC.Inc2())
 			if !cpu.c() {
 				cpu.PC.Set(target)
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 		0xDA: func() { // JP C,nn
 			target := cpu.mmu.Read16(cpu.PC.Inc2())
 			if cpu.c() {
 				cpu.PC.Set(target)
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 
@@ -797,28 +797,28 @@ func (cpu *CPU) PopulateInstructions() {
 			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
 			if !cpu.z() {
 				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 		0x28: func() { // JR Z,n
 			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
 			if cpu.z() {
 				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 		0x30: func() { // JR NC,n
 			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
 			if !cpu.c() {
 				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 		0x38: func() { // JR C,n
 			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
 			if cpu.c() {
 				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
-				// TODO should consume 1 additional cycle here
+				cpu.clock++
 			}
 		},
 
@@ -832,6 +832,7 @@ func (cpu *CPU) PopulateInstructions() {
 
 			if !cpu.z() {
 				cpu.callInstruction(target)
+				cpu.clock += 3
 			}
 		},
 		0xCC: func() { // CALL Z,nn
@@ -839,6 +840,7 @@ func (cpu *CPU) PopulateInstructions() {
 
 			if cpu.z() {
 				cpu.callInstruction(target)
+				cpu.clock += 3
 			}
 		},
 		0xD4: func() { // CALL NC,nn
@@ -846,6 +848,7 @@ func (cpu *CPU) PopulateInstructions() {
 
 			if !cpu.c() {
 				cpu.callInstruction(target)
+				cpu.clock += 3
 			}
 		},
 		0xDC: func() { // CALL C,nn
@@ -853,6 +856,7 @@ func (cpu *CPU) PopulateInstructions() {
 
 			if cpu.c() {
 				cpu.callInstruction(target)
+				cpu.clock += 3
 			}
 		},
 
@@ -862,21 +866,25 @@ func (cpu *CPU) PopulateInstructions() {
 		0xC0: func() { // RET NZ
 			if !cpu.z() {
 				cpu.retInstruction()
+				cpu.clock += 3
 			}
 		},
 		0xC8: func() { // RET Z
 			if cpu.z() {
 				cpu.retInstruction()
+				cpu.clock += 3
 			}
 		},
 		0xD0: func() { // RET NC
 			if !cpu.c() {
 				cpu.retInstruction()
+				cpu.clock += 3
 			}
 		},
 		0xD8: func() { // RET C
 			if cpu.c() {
 				cpu.retInstruction()
+				cpu.clock += 3
 			}
 		},
 		0xD9: func() { // RETI
