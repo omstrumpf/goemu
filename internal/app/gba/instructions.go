@@ -752,6 +752,162 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 
 		//// Jump /////
+		0xC3: func() { // JP nn
+			cpu.PC.Set(cpu.mmu.Read16(cpu.PC.Inc2()))
+		},
+		0xE9: func() { // JP HL
+			cpu.PC.Set(cpu.HL.HiLo())
+		},
+
+		0xC2: func() { // JP NZ,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+			if !cpu.z() {
+				cpu.PC.Set(target)
+				// TODO should consume 1 additional cycle here
+			}
+		},
+		0xCA: func() { // JP Z,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+			if cpu.z() {
+				cpu.PC.Set(target)
+				// TODO should consume 1 additional cycle here
+			}
+		},
+		0xD2: func() { // JP NC,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+			if !cpu.c() {
+				cpu.PC.Set(target)
+				// TODO should consume 1 additional cycle here
+			}
+		},
+		0xDA: func() { // JP C,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+			if cpu.c() {
+				cpu.PC.Set(target)
+				// TODO should consume 1 additional cycle here
+			}
+		},
+
+		0x18: func() { // JR n
+			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
+			cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
+		},
+
+		0x20: func() { // JR NZ,n
+			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
+			if !cpu.z() {
+				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
+				// TODO should consume 1 additional cycle here
+			}
+		},
+		0x28: func() { // JR Z,n
+			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
+			if cpu.z() {
+				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
+				// TODO should consume 1 additional cycle here
+			}
+		},
+		0x30: func() { // JR NC,n
+			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
+			if !cpu.c() {
+				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
+				// TODO should consume 1 additional cycle here
+			}
+		},
+		0x38: func() { // JR C,n
+			offset := int8(cpu.mmu.Read(cpu.PC.Inc()))
+			if cpu.c() {
+				cpu.PC.Set(uint16(int32(cpu.PC.HiLo()) + int32(offset)))
+				// TODO should consume 1 additional cycle here
+			}
+		},
+
+		0xCD: func() { // CALL nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+
+			cpu.callInstruction(target)
+		},
+		0xC4: func() { // CALL NZ,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+
+			if !cpu.z() {
+				cpu.callInstruction(target)
+			}
+		},
+		0xCC: func() { // CALL Z,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+
+			if cpu.z() {
+				cpu.callInstruction(target)
+			}
+		},
+		0xD4: func() { // CALL NC,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+
+			if !cpu.c() {
+				cpu.callInstruction(target)
+			}
+		},
+		0xDC: func() { // CALL C,nn
+			target := cpu.mmu.Read16(cpu.PC.Inc2())
+
+			if cpu.c() {
+				cpu.callInstruction(target)
+			}
+		},
+
+		0xC9: func() { // RET
+			cpu.retInstruction()
+		},
+		0xC0: func() { // RET NZ
+			if !cpu.z() {
+				cpu.retInstruction()
+			}
+		},
+		0xC8: func() { // RET Z
+			if cpu.z() {
+				cpu.retInstruction()
+			}
+		},
+		0xD0: func() { // RET NC
+			if !cpu.c() {
+				cpu.retInstruction()
+			}
+		},
+		0xD8: func() { // RET C
+			if cpu.c() {
+				cpu.retInstruction()
+			}
+		},
+		0xD9: func() { // RETI
+			cpu.retInstruction()
+			cpu.ime = false
+		},
+
+		0xC7: func() { // RST 0x00
+			cpu.callInstruction(0x0000)
+		},
+		0xCF: func() { // RST 0x08
+			cpu.callInstruction(0x0008)
+		},
+		0xD7: func() { // RST 0x10
+			cpu.callInstruction(0x0010)
+		},
+		0xDF: func() { // RST 0x18
+			cpu.callInstruction(0x0018)
+		},
+		0xE7: func() { // RST 0x20
+			cpu.callInstruction(0x0020)
+		},
+		0xEF: func() { // RST 0x28
+			cpu.callInstruction(0x0028)
+		},
+		0xF7: func() { // RST 0x30
+			cpu.callInstruction(0x0030)
+		},
+		0xFF: func() { // RST 0x38
+			cpu.callInstruction(0x0038)
+		},
 	}
 
 	for k, v := range cpu.instructions {
@@ -900,4 +1056,17 @@ func (cpu *CPU) add16SignedInstruction(original uint16, operand int8, setter fun
 	cpu.setN(false)
 	cpu.setH((xor & 0x10) == 0x10)
 	cpu.setC((xor & 0x100) == 0x100)
+}
+
+func (cpu *CPU) callInstruction(target uint16) {
+	// Push PC to stack
+	cpu.mmu.Write16(cpu.SP.Dec2(), cpu.PC.HiLo())
+
+	// Set PC to new target
+	cpu.PC.Set(target)
+}
+
+func (cpu *CPU) retInstruction() {
+	// Restore PC
+	cpu.PC.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
 }
