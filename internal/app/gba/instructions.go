@@ -571,19 +571,19 @@ func (cpu *CPU) PopulateInstructions() {
 		0x05: func() { // DEC B
 			cpu.decInstruction(cpu.BC.Hi(), cpu.BC.SetHi)
 		},
-		0x0B: func() { // DEC C
+		0x0D: func() { // DEC C
 			cpu.decInstruction(cpu.BC.Lo(), cpu.BC.SetLo)
 		},
 		0x15: func() { // DEC D
 			cpu.decInstruction(cpu.DE.Hi(), cpu.DE.SetHi)
 		},
-		0x1B: func() { // DEC E
+		0x1D: func() { // DEC E
 			cpu.decInstruction(cpu.DE.Lo(), cpu.DE.SetLo)
 		},
 		0x25: func() { // DEC H
 			cpu.decInstruction(cpu.HL.Hi(), cpu.HL.SetHi)
 		},
-		0x2B: func() { // DEC L
+		0x2D: func() { // DEC L
 			cpu.decInstruction(cpu.HL.Lo(), cpu.HL.SetLo)
 		},
 		0x35: func() { // DEC (HL)
@@ -624,6 +624,51 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 
 		//// 16-bit ALU ////
+		0x09: func() { // ADD HL,BC
+			cpu.add16Instruction(cpu.BC.HiLo())
+		},
+		0x19: func() { // ADD HL,DE
+			cpu.add16Instruction(cpu.DE.HiLo())
+		},
+		0x29: func() { // ADD HL,HL
+			cpu.add16Instruction(cpu.HL.HiLo())
+		},
+		0x39: func() { // ADD HL,SP
+			cpu.add16Instruction(cpu.SP.HiLo())
+		},
+
+		0x03: func() { // INC BC
+			cpu.BC.Set(cpu.BC.HiLo() + 1)
+		},
+		0x13: func() { // INC DE
+			cpu.BC.Set(cpu.DE.HiLo() + 1)
+		},
+		0x23: func() { // INC HL
+			cpu.BC.Set(cpu.HL.HiLo() + 1)
+		},
+		0x33: func() { // INC SP
+			cpu.BC.Set(cpu.SP.HiLo() + 1)
+		},
+
+		0x0B: func() { // DEC BC
+			cpu.BC.Set(cpu.BC.HiLo() - 1)
+		},
+		0x1B: func() { // DEC DE
+			cpu.BC.Set(cpu.DE.HiLo() - 1)
+		},
+		0x2B: func() { // DEC HL
+			cpu.BC.Set(cpu.HL.HiLo() - 1)
+		},
+		0x3B: func() { // DEC SP
+			cpu.BC.Set(cpu.SP.HiLo() - 1)
+		},
+
+		0xE8: func() { // ADD SP,d
+			cpu.add16SignedInstruction(cpu.SP.HiLo(), int8(cpu.PC.Inc()), cpu.SP.Set)
+		},
+		0xF8: func() { // LD HL,SP,d
+			cpu.add16SignedInstruction(cpu.SP.HiLo(), int8(cpu.PC.Inc()), cpu.HL.Set)
+		},
 
 		//// Rotate / Shift ////
 
@@ -782,4 +827,27 @@ func (cpu *CPU) decInstruction(val byte, setter func(byte)) {
 	cpu.setZ(result == 0)
 	cpu.setN(true)
 	cpu.setH(val&0xF == 0)
+}
+
+func (cpu *CPU) add16Instruction(val uint16) {
+	result := uint32(cpu.HL.HiLo()) + uint32(val)
+
+	cpu.HL.Set(uint16(result))
+	cpu.setN(false)
+	cpu.setH(uint32(val&0xFFF) > (result & 0xFFF))
+	cpu.setC(result > 0xFFFF)
+}
+
+func (cpu *CPU) add16SignedInstruction(original uint16, operand int8, setter func(uint16)) {
+	result := int32(original) + int32(operand)
+
+	setter(uint16(result))
+
+	// xor operands and result to determine carries
+	xor := original ^ uint16(operand) ^ uint16(result)
+
+	cpu.setZ(false)
+	cpu.setN(false)
+	cpu.setH((xor & 0x10) == 0x10)
+	cpu.setC((xor & 0x100) == 0x100)
 }
