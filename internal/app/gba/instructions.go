@@ -189,7 +189,7 @@ func (cpu *CPU) PopulateInstructions() {
 			cpu.DE.SetHi(cpu.mmu.Read(cpu.HL.HiLo()))
 		},
 		0x5E: func() { // LD E,(HL)
-			cpu.HL.SetHi(cpu.mmu.Read(cpu.HL.HiLo()))
+			cpu.DE.SetLo(cpu.mmu.Read(cpu.HL.HiLo()))
 		},
 		0x66: func() { // LD H,(HL)
 			cpu.HL.SetHi(cpu.mmu.Read(cpu.HL.HiLo()))

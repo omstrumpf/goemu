@@ -49,6 +49,16 @@ func (cpu *CPU) ProcessNextInstruction() {
 	cpu.clock += cpu.cycles[opcode]
 }
 
+// IsHalted returns true if the CPU is halted
+func (cpu *CPU) IsHalted() bool {
+	return cpu.halt
+}
+
+// IsStopped returns true if the CPU is stopped
+func (cpu *CPU) IsStopped() bool {
+	return cpu.stop
+}
+
 // Flags
 func (cpu *CPU) z() bool {
 	return cpu.AF.HiLo()>>7&1 == 1
