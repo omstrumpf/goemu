@@ -671,8 +671,58 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 
 		//// Rotate / Shift ////
+		0x07: func() { // RLCA
+			original := cpu.AF.Hi()
+			result := byte(original<<1) | (original >> 7)
 
-		//// Singlebit ////
+			cpu.AF.SetHi(result)
+
+			cpu.setZ(false)
+			cpu.setN(false)
+			cpu.setH(false)
+			cpu.setC(original > 0x7F)
+		},
+		0x17: func() { // RLA
+			original := cpu.AF.Hi()
+			carry := 0
+			if cpu.c() {
+				carry = 1
+			}
+			result := byte(original<<1) + byte(carry)
+
+			cpu.AF.SetHi(result)
+
+			cpu.setZ(false)
+			cpu.setN(false)
+			cpu.setH(false)
+			cpu.setC(original > 0x7F)
+		},
+		0x0F: func() { // RRCA
+			original := cpu.AF.Hi()
+			result := byte(original>>1) | (original << 7)
+
+			cpu.AF.SetHi(result)
+
+			cpu.setZ(false)
+			cpu.setN(false)
+			cpu.setH(false)
+			cpu.setC(original > 0x7F)
+		},
+		0x1F: func() { // RRA
+			original := cpu.AF.Hi()
+			carry := 0
+			if cpu.c() {
+				carry = 1 << 7
+			}
+			result := byte(original>>1) | byte(carry)
+
+			cpu.AF.SetHi(result)
+
+			cpu.setZ(false)
+			cpu.setN(false)
+			cpu.setH(false)
+			cpu.setC(1&original == 1)
+		},
 
 		//// Control ////
 		0x3F: func() { // CCF
