@@ -134,3 +134,97 @@ func TestInstructionsStack(t *testing.T) {
 		t.Errorf("Expected operation to take 33 cycles, got %d", cpu.clock)
 	}
 }
+
+func TestInstructionsALU(t *testing.T) {
+	mmu := NewMMU()
+
+	cpu := NewCPU(mmu)
+
+	instructions := []byte{
+		0x21, 0x00, 0x10, // LD HL,nn
+		0xF9,       // LD SP,HL
+		0xC6, 0x08, // ADD A,n
+		0xF5,       // PUSH AF
+		0x47,       // LD B,A
+		0xC6, 0x08, // ADD A,n
+		0xF5,       // PUSH AF
+		0x80,       // ADD A,B
+		0xF5,       // PUSH AF
+		0xC6, 0xFF, // ADD A,n
+		0xF5,       // PUSH AF
+		0x88,       // ADC A,B
+		0xF5,       // PUSH AF
+		0x90,       // SUB A,B
+		0xF5,       // PUSH AF
+		0xDE, 0x01, // SBC A,n
+		0xF5,       // PUSH AF
+		0xF6, 0x01, // OR n
+		0xF5,       // PUSH AF
+		0xE6, 0x01, // AND n
+		0xF5,       // PUSH AF
+		0xEE, 0x01, // XOR n
+		0xF5,             // PUSH AF
+		0x3C,             // INC A
+		0xF5,             // PUSH AF
+		0x05,             // DEC B
+		0x21, 0x34, 0x12, // LD HL,nn
+		0x36, 0x04, // LD (HL),n
+		0x86,             // ADD A,(HL)
+		0xF5,             // PUSH AF
+		0x11, 0x34, 0x12, // LD DE,nn
+		0x21, 0x78, 0x56, // LD HL,nn
+		0x19, // ADD HL,DE
+		0x13, // INC DE
+		0x2B, // DEC HL
+		0x76, // HALT
+	}
+
+	copy(mmu.rom, instructions)
+
+	mmu.DisableBios()
+	cpu.PC.Set(0)
+
+	for range instructions {
+		if cpu.halt {
+			break
+		}
+		cpu.ProcessNextInstruction()
+	}
+
+	if !cpu.IsHalted() {
+		t.Errorf("Expected CPU to have halted")
+	}
+	if cpu.AF.Hi() != 0x05 {
+		t.Errorf("Expected register A to contain 0x05, got %#2x", cpu.AF.Hi())
+	}
+	if cpu.BC.Hi() != 0x07 {
+		t.Errorf("Expected register B to contain 0x07, got %#2x", cpu.BC.Hi())
+	}
+	if cpu.clock != 93 {
+		t.Errorf("Expected operation to take 93 cycles, got %d", cpu.clock)
+	}
+
+	expectedValues := []byte{
+		0x08,
+		0x10,
+		0x18,
+		0x17,
+		0x20,
+		0x18,
+		0x17,
+		0x17,
+		0x01,
+		0x00,
+		0x01,
+		0x05,
+	}
+
+	addr := uint16(0x0FFF)
+	for i, v := range expectedValues {
+		if mmu.Read(addr) != v {
+			t.Errorf("Expected memory value %d to contain %#2x, got %#2x", i+1, v, mmu.Read(addr))
+		}
+
+		addr -= 2
+	}
+}

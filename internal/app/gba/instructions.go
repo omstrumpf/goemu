@@ -645,26 +645,26 @@ func (cpu *CPU) PopulateInstructions() {
 			cpu.BC.Set(cpu.BC.HiLo() + 1)
 		},
 		0x13: func() { // INC DE
-			cpu.BC.Set(cpu.DE.HiLo() + 1)
+			cpu.DE.Set(cpu.DE.HiLo() + 1)
 		},
 		0x23: func() { // INC HL
-			cpu.BC.Set(cpu.HL.HiLo() + 1)
+			cpu.HL.Set(cpu.HL.HiLo() + 1)
 		},
 		0x33: func() { // INC SP
-			cpu.BC.Set(cpu.SP.HiLo() + 1)
+			cpu.SP.Set(cpu.SP.HiLo() + 1)
 		},
 
 		0x0B: func() { // DEC BC
 			cpu.BC.Set(cpu.BC.HiLo() - 1)
 		},
 		0x1B: func() { // DEC DE
-			cpu.BC.Set(cpu.DE.HiLo() - 1)
+			cpu.DE.Set(cpu.DE.HiLo() - 1)
 		},
 		0x2B: func() { // DEC HL
-			cpu.BC.Set(cpu.HL.HiLo() - 1)
+			cpu.HL.Set(cpu.HL.HiLo() - 1)
 		},
 		0x3B: func() { // DEC SP
-			cpu.BC.Set(cpu.SP.HiLo() - 1)
+			cpu.SP.Set(cpu.SP.HiLo() - 1)
 		},
 
 		0xE8: func() { // ADD SP,d
