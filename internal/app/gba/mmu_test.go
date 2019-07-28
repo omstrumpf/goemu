@@ -1,6 +1,9 @@
 package gba
 
-import "testing"
+import (
+	"io/ioutil"
+	"testing"
+)
 
 func TestMMUInit(t *testing.T) {
 	mmu := NewMMU()
@@ -14,8 +17,8 @@ func TestMMUReadWrite(t *testing.T) {
 	mmu := NewMMU()
 
 	got := mmu.Read(0)
-	if got != 0 {
-		t.Errorf("Expected initial value to be 0, got %d", got)
+	if got != BIOS[0] {
+		t.Errorf("Expected initial value to be %#2x, got %#2x", BIOS[0], got)
 	}
 
 	mmu.Write(0, 0x12)
@@ -136,4 +139,24 @@ func TestMMUZeros(t *testing.T) {
 	if mmu.Read(0xFEFF) != 0 {
 		t.Errorf("Expected to read 0, got %#2x", mmu.Read(0xFEFF))
 	}
+}
+
+func TestMMULoadRom(t *testing.T) {
+	mmu := NewMMU()
+
+	romfile := "../../../roms/cpu_instrs.gb"
+
+	mmu.LoadROM(romfile)
+
+	buf, err := ioutil.ReadFile(romfile)
+	if err != nil {
+		panic(err)
+	}
+
+	mmu.DisableBios()
+
+	if buf[0] != mmu.Read(0) {
+		t.Errorf("Expected to read %#2x, got %#2x", buf[0], mmu.Read(0))
+	}
+
 }

@@ -1,6 +1,18 @@
 package gba
 
-import "log"
+import (
+	"io/ioutil"
+	"log"
+)
+
+const (
+	romlen  = 0x8000
+	vramlen = 0x8000
+	eramlen = 0x2000
+	wramlen = 0x2000
+	goamlen = 0xA0
+	zramlen = 0x80
+)
 
 // MMU represents the memory management unit.
 type MMU struct {
@@ -21,19 +33,42 @@ type MMU struct {
 func NewMMU() *MMU {
 	mmu := new(MMU)
 
-	mmu.bios = make([]byte, 0x100)
-	mmu.rom = make([]byte, 0x8000)
-	mmu.vram = make([]byte, 0x8000)
-	mmu.eram = make([]byte, 0x2000)
-	mmu.wram = make([]byte, 0x2000)
-	mmu.goam = make([]byte, 0xA0)
-	mmu.zram = make([]byte, 0x80)
+	mmu.bios = BIOS
+	mmu.rom = make([]byte, romlen)
+	mmu.vram = make([]byte, vramlen)
+	mmu.eram = make([]byte, eramlen)
+	mmu.wram = make([]byte, wramlen)
+	mmu.goam = make([]byte, goamlen)
+	mmu.zram = make([]byte, zramlen)
 
 	mmu.zero = []byte{0}
 
 	mmu.biosEnable = true
 
 	return mmu
+}
+
+// LoadROM loads a ROM into memory
+func (mmu *MMU) LoadROM(filename string) {
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	buflen := len(buf)
+
+	if buflen > romlen {
+		log.Print("Insufficient memory capacity for ROM")
+	}
+
+	for i := 0; i < romlen; i++ {
+		if i < buflen {
+			mmu.rom[i] = buf[i]
+		} else {
+			mmu.rom[i] = 0
+		}
+	}
 }
 
 // DisableBios disables the BIOS map over the main ROM
