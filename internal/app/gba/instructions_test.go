@@ -34,7 +34,7 @@ func TestInstructionsLD(t *testing.T) {
 		cpu.ProcessNextInstruction()
 	}
 
-	if !cpu.halt {
+	if !cpu.IsHalted() {
 		t.Errorf("Expected CPU to have halted")
 	}
 	if cpu.AF.Hi() != 0xCC {
@@ -100,7 +100,7 @@ func TestInstructionsStack(t *testing.T) {
 		cpu.ProcessNextInstruction()
 	}
 
-	if !cpu.halt {
+	if !cpu.IsHalted() {
 		t.Errorf("Expected CPU to have halted")
 	}
 	if cpu.BC.HiLo() != 0xABCD {
