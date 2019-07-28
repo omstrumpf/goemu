@@ -113,31 +113,16 @@ func (mmu *MMU) mmapLocation(addr uint16) (buffer []byte, offset uint16) {
 			return mmu.bios, addr
 		}
 		fallthrough
-	case 0x1000:
-		fallthrough
-	case 0x2000:
-		fallthrough
-	case 0x3000:
-		fallthrough
-	case 0x4000:
-		fallthrough
-	case 0x5000:
-		fallthrough
-	case 0x6000:
-		fallthrough
-	case 0x7000:
+	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000:
 		return mmu.rom, addr
-	case 0x8000:
-		fallthrough
-	case 0x9000:
+	// GPU VRAM
+	case 0x8000, 0x9000:
 		return mmu.vram, addr & 0x1FFF
-	case 0xA000:
-		fallthrough
-	case 0xB000:
+	// External RAM
+	case 0xA000, 0xB000:
 		return mmu.eram, addr & 0x1FFF
-	case 0xC000:
-		fallthrough
-	case 0xD000:
+	// Working RAM
+	case 0xC000, 0xD000:
 		return mmu.wram, addr & 0x1FFF
 	// WRAM Shadow
 	case 0xE000:
@@ -145,33 +130,7 @@ func (mmu *MMU) mmapLocation(addr uint16) (buffer []byte, offset uint16) {
 	// Shadow, IO, and ZRAM
 	case 0xF000:
 		switch addr & 0x0F00 {
-		case 0x000:
-			fallthrough
-		case 0x100:
-			fallthrough
-		case 0x200:
-			fallthrough
-		case 0x300:
-			fallthrough
-		case 0x400:
-			fallthrough
-		case 0x500:
-			fallthrough
-		case 0x600:
-			fallthrough
-		case 0x700:
-			fallthrough
-		case 0x800:
-			fallthrough
-		case 0x900:
-			fallthrough
-		case 0xA00:
-			fallthrough
-		case 0xB00:
-			fallthrough
-		case 0xC00:
-			fallthrough
-		case 0xD00:
+		case 0x000, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x700, 0x800, 0x900, 0xA00, 0xB00, 0xC00, 0xD00:
 			return mmu.wram, addr & 0x1FFF
 		// GPU OAM
 		case 0xE00:
