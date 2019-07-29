@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/faiface/pixel/pixelgl" // I/O
-	"github.com/omstrumpf/goemu/internal/app/gbc"
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc"
 	"github.com/omstrumpf/goemu/internal/app/io"
 )
 
