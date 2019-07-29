@@ -880,6 +880,15 @@ func (cpu *CPU) PopulateInstructions() {
 		0xFF: func() { // RST 0x38
 			cpu.call(0x0038)
 		},
+
+		//// CB Prefix ////
+		0xCB: func() {
+			opcode := cpu.mmu.Read(cpu.PC.Inc())
+
+			cpu.instructionsCB[opcode]()
+
+			cpu.clock += cpu.cyclesCB[opcode]
+		},
 	}
 
 	for k, v := range cpu.instructions {
