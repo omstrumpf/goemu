@@ -217,6 +217,64 @@ func TestInstructionsALU(t *testing.T) {
 		0x00,
 		0x01,
 		0x05,
+		0x00,
+	}
+
+	addr := uint16(0x0FFF)
+	for i, v := range expectedValues {
+		if mmu.Read(addr) != v {
+			t.Errorf("Expected memory value %d to contain %#2x, got %#2x", i+1, v, mmu.Read(addr))
+		}
+
+		addr -= 2
+	}
+}
+
+func TestInstructionsRot(t *testing.T) {
+	mmu := NewMMU()
+
+	cpu := NewCPU(mmu)
+
+	instructions := []byte{
+		0x21, 0x00, 0x10, // LD HL,nn
+		0xF9,       // LD SP,HL
+		0x3E, 0xAA, // LD A,n
+		0x07, // RLCA
+		0xF5, // PUSH AF
+		0x17, // RLA
+		0xF5, // PUSH AF
+		0x0F, // RRCA
+		0xF5, // PUSH AF
+		0x1F, // RRCA
+		0xF5, // PUSH AF
+		0x76, // HALT
+	}
+
+	copy(mmu.rom, instructions)
+
+	mmu.DisableBios()
+	cpu.PC.Set(0)
+
+	for range instructions {
+		if cpu.halt {
+			break
+		}
+		cpu.ProcessNextInstruction()
+	}
+
+	if !cpu.IsHalted() {
+		t.Errorf("Expected CPU to have halted")
+	}
+	if cpu.clock != 27 {
+		t.Errorf("Expected operation to take 27 cycles, got %d", cpu.clock)
+	}
+
+	expectedValues := []byte{
+		0x55,
+		0xAB,
+		0xD5,
+		0xEA,
+		0x00,
 	}
 
 	addr := uint16(0x0FFF)
