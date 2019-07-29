@@ -1,6 +1,6 @@
-package gba
+package gbc
 
-// Register represents a 16 bit GBA register
+// Register represents a 16 bit GBC register
 type Register struct {
 	val uint16 // The value in the register
 

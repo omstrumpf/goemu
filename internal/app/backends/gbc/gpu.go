@@ -1,4 +1,4 @@
-package gba
+package gbc
 
 // GPU represents the gameboy's graphics processing unit.
 type GPU struct {

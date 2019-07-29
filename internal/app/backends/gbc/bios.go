@@ -1,4 +1,4 @@
-package gba
+package gbc
 
 // BIOS contains the Gameboy BIOS
 var BIOS = []byte{

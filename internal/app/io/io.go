@@ -3,18 +3,18 @@ package io
 import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/omstrumpf/gogba/internal/app/console"
+	"github.com/omstrumpf/goemu/internal/app/backends"
 )
 
 // IO manages the graphical output of the emulator
 type IO struct {
-	console console.Console
+	console backends.Console
 
 	win *pixelgl.Window
 }
 
 // NewIO constructs a valid IO struct
-func NewIO(console console.Console) *IO {
+func NewIO(console backends.Console) *IO {
 	io := new(IO)
 
 	io.console = console

@@ -1,4 +1,4 @@
-package gba
+package gbc
 
 import "time"
 
@@ -10,30 +10,30 @@ const (
 	FPS = 60
 )
 
-// GBA is the toplevel struct containing all the gameboy systems
-type GBA struct {
+// GBC is the toplevel struct containing all the gameboy systems
+type GBC struct {
 	mmu *MMU
 	cpu *CPU
 	gpu *GPU
 }
 
-// NewGBA constructs a valid GBA struct
-func NewGBA() *GBA {
-	gba := new(GBA)
+// NewGBC constructs a valid GBC struct
+func NewGBC() *GBC {
+	gbc := new(GBC)
 
-	gba.mmu = NewMMU()
-	gba.cpu = NewCPU(gba.mmu)
-	gba.gpu = NewGPU(gba.mmu)
+	gbc.mmu = NewMMU()
+	gbc.cpu = NewCPU(gbc.mmu)
+	gbc.gpu = NewGPU(gbc.mmu)
 
-	return gba
+	return gbc
 }
 
 // GetFrameTime returns the real-time duration of a single frame
-func (gba *GBA) GetFrameTime() time.Duration {
+func (gbc *GBC) GetFrameTime() time.Duration {
 	return time.Second / FPS
 }
 
 // Tick runs the gameboy for a single frame-time
-func (gba *GBA) Tick() {
-	gba.cpu.ProcessNextInstruction()
+func (gbc *GBC) Tick() {
+	gbc.cpu.ProcessNextInstruction()
 }

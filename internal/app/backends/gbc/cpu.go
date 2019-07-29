@@ -1,4 +1,4 @@
-package gba
+package gbc
 
 // CPU represents the central processing unit. Stores the state and instruction map.
 type CPU struct {

@@ -1,4 +1,4 @@
-module github.com/omstrumpf/gogba
+module github.com/omstrumpf/goemu
 
 go 1.12
 

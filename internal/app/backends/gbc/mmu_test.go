@@ -1,4 +1,4 @@
-package gba
+package gbc
 
 import (
 	"io/ioutil"
@@ -144,7 +144,7 @@ func TestMMUZeros(t *testing.T) {
 func TestMMULoadRom(t *testing.T) {
 	mmu := NewMMU()
 
-	romfile := "../../../roms/cpu_instrs.gb"
+	romfile := "../../../../roms/cpu_instrs.gb"
 
 	mmu.LoadROM(romfile)
 
