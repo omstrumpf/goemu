@@ -286,3 +286,78 @@ func TestInstructionsRot(t *testing.T) {
 		addr -= 2
 	}
 }
+
+// TODO test jumps
+
+// TODO test control instructions
+
+func TestInstructionsCBRot(t *testing.T) {
+	mmu := NewMMU()
+
+	cpu := NewCPU(mmu)
+
+	instructions := []byte{
+		0x21, 0x00, 0x10, // LD HL,nn
+		0xF9,       // LD SP,HL
+		0x06, 0xBB, // LD B,n
+		0xCB, 0x00, // RLC B
+		0xC5,       // PUSH BC
+		0xCB, 0x10, // RL B
+		0xC5,       // PUSH BC
+		0xCB, 0x08, // RRC B
+		0xC5,       // PUSH BC
+		0xCB, 0x18, // RR B
+		0xC5,       // PUSH BC
+		0xCB, 0x20, // SLA B
+		0xC5,       // PUSH BC
+		0xCB, 0x30, // SWAP B
+		0xC5,       // PUSH BC
+		0xCB, 0x28, // SRA B
+		0xC5,       // PUSH BC
+		0xCB, 0x38, // SRL B
+		0xC5, // PUSH BC
+		0x76, // HALT
+	}
+
+	copy(mmu.rom, instructions)
+
+	mmu.DisableBios()
+	cpu.PC.Set(0)
+
+	for range instructions {
+		if cpu.halt {
+			break
+		}
+		cpu.ProcessNextInstruction()
+	}
+
+	if !cpu.IsHalted() {
+		t.Errorf("Expected CPU to have halted")
+	}
+	if cpu.clock != 55 {
+		t.Errorf("Expected operation to take 55 cycles, got %d", cpu.clock)
+	}
+
+	expectedValues := []byte{
+		0x77,
+		0xEF,
+		0xF7,
+		0xFB,
+		0xF6,
+		0x6F,
+		0x37,
+		0x1B,
+		0x00,
+	}
+
+	addr := uint16(0x0FFF)
+	for i, v := range expectedValues {
+		if mmu.Read(addr) != v {
+			t.Errorf("Expected memory value %d to contain %#2x, got %#2x", i+1, v, mmu.Read(addr))
+		}
+
+		addr -= 2
+	}
+}
+
+// TODO test bit instructions
