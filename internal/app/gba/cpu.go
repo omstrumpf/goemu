@@ -18,8 +18,10 @@ type CPU struct {
 
 	mmu *MMU // Memory Management Unit
 
-	instructions [0x100]func() // Instruction map
-	cycles       [0x100]int    // Cycle cost map
+	instructions   [0x100]func() // Instruction map
+	instructionsCB [0x100]func() // CB instruction map
+	cycles         [0x100]int    // Cycle cost map
+	cyclesCB       [0x100]int    // CB cycle cost map
 }
 
 // NewCPU constructs a valid CPU struct
@@ -39,6 +41,10 @@ func NewCPU(mmu *MMU) *CPU {
 
 // ProcessNextInstruction fetches the next instruction, executes it, and increments the clock accordingly
 func (cpu *CPU) ProcessNextInstruction() {
+	if cpu.halt || cpu.stop {
+		return
+	}
+
 	// Fetch the next instruction and increment PC
 	opcode := cpu.mmu.Read(cpu.PC.Inc())
 
