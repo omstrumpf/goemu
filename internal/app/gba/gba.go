@@ -8,12 +8,6 @@ const (
 
 	// FPS is the target frames per second for the GPU
 	FPS = 60
-
-	// SecondsPerFrame is the number of real-time seconds per GPU frame
-	SecondsPerFrame = time.Second / FPS
-
-	// CyclesPerFrame is the number of CPU cycles per GPU frame
-	CyclesPerFrame = ClockSpeed / FPS
 )
 
 // GBA is the toplevel struct containing all the gameboy systems
@@ -32,6 +26,11 @@ func NewGBA() *GBA {
 	gba.gpu = NewGPU(gba.mmu)
 
 	return gba
+}
+
+// GetFrameTime returns the real-time duration of a single frame
+func (gba *GBA) GetFrameTime() time.Duration {
+	return time.Second / FPS
 }
 
 // Tick runs the gameboy for a single frame-time

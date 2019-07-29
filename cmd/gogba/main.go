@@ -9,6 +9,7 @@ import (
 	"github.com/omstrumpf/gogba/internal/app/io"
 )
 
+// Runs a temporary version of the GBA emulator. Will have a global entrypoint later that allows selecting another backend.
 func main() {
 	pixelgl.Run(_main)
 }
@@ -19,7 +20,7 @@ func _main() {
 	gameboy := gba.NewGBA()
 	io := io.NewIO(gameboy)
 
-	ticker := time.NewTicker(gba.SecondsPerFrame)
+	ticker := time.NewTicker(gameboy.GetFrameTime())
 
 	// Game loop
 	for range ticker.C {

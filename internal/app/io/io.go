@@ -3,21 +3,21 @@ package io
 import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/omstrumpf/gogba/internal/app/gba"
+	"github.com/omstrumpf/gogba/internal/app/console"
 )
 
-// IO manages the graphical output emulator
+// IO manages the graphical output of the emulator
 type IO struct {
-	gba *gba.GBA
+	console console.Console
 
 	win *pixelgl.Window
 }
 
 // NewIO constructs a valid IO struct
-func NewIO(gba *gba.GBA) *IO {
+func NewIO(console console.Console) *IO {
 	io := new(IO)
 
-	io.gba = gba
+	io.console = console
 
 	io.setupWindow()
 
