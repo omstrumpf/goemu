@@ -566,7 +566,7 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 		0x34: func() { // INC (HL)
 			addr := cpu.HL.HiLo()
-			cpu.inc(cpu.mmu.Read(cpu.HL.HiLo()), func(val byte) { cpu.mmu.Write(addr, val) })
+			cpu.inc(cpu.mmu.Read(addr), func(val byte) { cpu.mmu.Write(addr, val) })
 		},
 
 		0x3D: func() { // DEC A
@@ -592,7 +592,7 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 		0x35: func() { // DEC (HL)
 			addr := cpu.HL.HiLo()
-			cpu.dec(cpu.mmu.Read(cpu.HL.HiLo()), func(val byte) { cpu.mmu.Write(addr, val) })
+			cpu.dec(cpu.mmu.Read(addr), func(val byte) { cpu.mmu.Write(addr, val) })
 		},
 
 		0x27: func() { // DAA
@@ -896,6 +896,826 @@ func (cpu *CPU) PopulateInstructions() {
 		0x07: func() { // RLC A
 			cpu.rotLeft(cpu.AF.Hi(), false, cpu.AF.SetHi)
 		},
+		0x00: func() { // RLC B
+			cpu.rotLeft(cpu.BC.Hi(), false, cpu.BC.SetHi)
+		},
+		0x01: func() { // RLC C
+			cpu.rotLeft(cpu.BC.Lo(), false, cpu.BC.SetLo)
+		},
+		0x02: func() { // RLC D
+			cpu.rotLeft(cpu.DE.Hi(), false, cpu.DE.SetHi)
+		},
+		0x03: func() { // RLC E
+			cpu.rotLeft(cpu.DE.Lo(), false, cpu.DE.SetLo)
+		},
+		0x04: func() { // RLC H
+			cpu.rotLeft(cpu.HL.Hi(), false, cpu.HL.SetHi)
+		},
+		0x05: func() { // RLC L
+			cpu.rotLeft(cpu.HL.Lo(), false, cpu.HL.SetLo)
+		},
+		0x06: func() { // RLC (HL)
+			addr := cpu.HL.HiLo()
+			cpu.rotLeft(cpu.mmu.Read(addr), false, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x17: func() { // RL A
+			cpu.rotLeft(cpu.AF.Hi(), true, cpu.AF.SetHi)
+		},
+		0x10: func() { // RL B
+			cpu.rotLeft(cpu.BC.Hi(), true, cpu.BC.SetHi)
+		},
+		0x11: func() { // RL C
+			cpu.rotLeft(cpu.BC.Lo(), true, cpu.BC.SetLo)
+		},
+		0x12: func() { // RL D
+			cpu.rotLeft(cpu.DE.Hi(), true, cpu.DE.SetHi)
+		},
+		0x13: func() { // RL E
+			cpu.rotLeft(cpu.DE.Lo(), true, cpu.DE.SetLo)
+		},
+		0x14: func() { // RL H
+			cpu.rotLeft(cpu.HL.Hi(), true, cpu.HL.SetHi)
+		},
+		0x15: func() { // RL L
+			cpu.rotLeft(cpu.HL.Lo(), true, cpu.HL.SetLo)
+		},
+		0x16: func() { // RL (HL)
+			addr := cpu.HL.HiLo()
+			cpu.rotLeft(cpu.mmu.Read(addr), true, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x0F: func() { // RRC A
+			cpu.rotRight(cpu.AF.Hi(), false, cpu.AF.SetHi)
+		},
+		0x08: func() { // RRC B
+			cpu.rotRight(cpu.BC.Hi(), false, cpu.BC.SetHi)
+		},
+		0x09: func() { // RRC C
+			cpu.rotRight(cpu.BC.Lo(), false, cpu.BC.SetLo)
+		},
+		0x0A: func() { // RRC D
+			cpu.rotRight(cpu.DE.Hi(), false, cpu.DE.SetHi)
+		},
+		0x0B: func() { // RRC E
+			cpu.rotRight(cpu.DE.Lo(), false, cpu.DE.SetLo)
+		},
+		0x0C: func() { // RRC H
+			cpu.rotRight(cpu.HL.Hi(), false, cpu.HL.SetHi)
+		},
+		0x0D: func() { // RRC L
+			cpu.rotRight(cpu.HL.Lo(), false, cpu.HL.SetLo)
+		},
+		0x0E: func() { // RRC (HL)
+			addr := cpu.HL.HiLo()
+			cpu.rotRight(cpu.mmu.Read(addr), false, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x1F: func() { // RR A
+			cpu.rotRight(cpu.AF.Hi(), true, cpu.AF.SetHi)
+		},
+		0x18: func() { // RR B
+			cpu.rotRight(cpu.BC.Hi(), true, cpu.BC.SetHi)
+		},
+		0x19: func() { // RR C
+			cpu.rotRight(cpu.BC.Lo(), true, cpu.BC.SetLo)
+		},
+		0x1A: func() { // RR D
+			cpu.rotRight(cpu.DE.Hi(), true, cpu.DE.SetHi)
+		},
+		0x1B: func() { // RR E
+			cpu.rotRight(cpu.DE.Lo(), true, cpu.DE.SetLo)
+		},
+		0x1C: func() { // RR H
+			cpu.rotRight(cpu.HL.Hi(), true, cpu.HL.SetHi)
+		},
+		0x1D: func() { // RR L
+			cpu.rotRight(cpu.HL.Lo(), true, cpu.HL.SetLo)
+		},
+		0x1E: func() { // RR (HL)
+			addr := cpu.HL.HiLo()
+			cpu.rotRight(cpu.mmu.Read(addr), true, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x27: func() { // SLA A
+			cpu.shiftLeft(cpu.AF.Hi(), cpu.AF.SetHi)
+		},
+		0x20: func() { // SLA B
+			cpu.shiftLeft(cpu.BC.Hi(), cpu.BC.SetHi)
+		},
+		0x21: func() { // SLA C
+			cpu.shiftLeft(cpu.BC.Lo(), cpu.BC.SetLo)
+		},
+		0x22: func() { // SLA D
+			cpu.shiftLeft(cpu.DE.Hi(), cpu.DE.SetHi)
+		},
+		0x23: func() { // SLA E
+			cpu.shiftLeft(cpu.DE.Lo(), cpu.DE.SetLo)
+		},
+		0x24: func() { // SLA H
+			cpu.shiftLeft(cpu.HL.Hi(), cpu.HL.SetHi)
+		},
+		0x25: func() { // SLA L
+			cpu.shiftLeft(cpu.HL.Lo(), cpu.HL.SetLo)
+		},
+		0x26: func() { // SLA (HL)
+			addr := cpu.HL.HiLo()
+			cpu.shiftLeft(cpu.mmu.Read(addr), func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x37: func() { // SWAP A
+			cpu.swap(cpu.AF.Hi(), cpu.AF.SetHi)
+		},
+		0x30: func() { // SWAP B
+			cpu.swap(cpu.BC.Hi(), cpu.BC.SetHi)
+		},
+		0x31: func() { // SWAP C
+			cpu.swap(cpu.BC.Lo(), cpu.BC.SetLo)
+		},
+		0x32: func() { // SWAP D
+			cpu.swap(cpu.DE.Hi(), cpu.DE.SetHi)
+		},
+		0x33: func() { // SWAP E
+			cpu.swap(cpu.DE.Lo(), cpu.DE.SetLo)
+		},
+		0x34: func() { // SWAP H
+			cpu.swap(cpu.HL.Hi(), cpu.HL.SetHi)
+		},
+		0x35: func() { // SWAP L
+			cpu.swap(cpu.HL.Lo(), cpu.HL.SetLo)
+		},
+		0x36: func() { // SWAP (HL)
+			addr := cpu.HL.HiLo()
+			cpu.swap(cpu.mmu.Read(addr), func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x2F: func() { // SRA A
+			cpu.shiftRight(cpu.AF.Hi(), false, cpu.AF.SetHi)
+		},
+		0x28: func() { // SRA B
+			cpu.shiftRight(cpu.BC.Hi(), false, cpu.BC.SetHi)
+		},
+		0x29: func() { // SRA C
+			cpu.shiftRight(cpu.BC.Lo(), false, cpu.BC.SetLo)
+		},
+		0x2A: func() { // SRA D
+			cpu.shiftRight(cpu.DE.Hi(), false, cpu.DE.SetHi)
+		},
+		0x2B: func() { // SRA E
+			cpu.shiftRight(cpu.DE.Lo(), false, cpu.DE.SetLo)
+		},
+		0x2C: func() { // SRA H
+			cpu.shiftRight(cpu.HL.Hi(), false, cpu.HL.SetHi)
+		},
+		0x2D: func() { // SRA L
+			cpu.shiftRight(cpu.HL.Lo(), false, cpu.HL.SetLo)
+		},
+		0x2E: func() { // SRA (HL)
+			addr := cpu.HL.HiLo()
+			cpu.shiftRight(cpu.mmu.Read(addr), false, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x3F: func() { // SRL A
+			cpu.shiftRight(cpu.AF.Hi(), true, cpu.AF.SetHi)
+		},
+		0x38: func() { // SRL B
+			cpu.shiftRight(cpu.BC.Hi(), true, cpu.BC.SetHi)
+		},
+		0x39: func() { // SRL C
+			cpu.shiftRight(cpu.BC.Lo(), true, cpu.BC.SetLo)
+		},
+		0x3A: func() { // SRL D
+			cpu.shiftRight(cpu.DE.Hi(), true, cpu.DE.SetHi)
+		},
+		0x3B: func() { // SRL E
+			cpu.shiftRight(cpu.DE.Lo(), true, cpu.DE.SetLo)
+		},
+		0x3C: func() { // SRL H
+			cpu.shiftRight(cpu.HL.Hi(), true, cpu.HL.SetHi)
+		},
+		0x3D: func() { // SRL L
+			cpu.shiftRight(cpu.HL.Lo(), true, cpu.HL.SetLo)
+		},
+		0x3E: func() { // SRL (HL)
+			addr := cpu.HL.HiLo()
+			cpu.shiftRight(cpu.mmu.Read(addr), true, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x47: func() { // BIT 0,A
+			cpu.testBit(cpu.AF.Hi(), 0)
+		},
+		0x40: func() { // BIT 0,B
+			cpu.testBit(cpu.BC.Hi(), 0)
+		},
+		0x41: func() { // BIT 0,C
+			cpu.testBit(cpu.BC.Lo(), 0)
+		},
+		0x42: func() { // BIT 0,D
+			cpu.testBit(cpu.DE.Hi(), 0)
+		},
+		0x43: func() { // BIT 0,E
+			cpu.testBit(cpu.DE.Lo(), 0)
+		},
+		0x44: func() { // BIT 0,H
+			cpu.testBit(cpu.HL.Hi(), 0)
+		},
+		0x45: func() { // BIT 0,L
+			cpu.testBit(cpu.HL.Lo(), 0)
+		},
+		0x46: func() { // BIT 0,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 0)
+		},
+
+		0x4F: func() { // BIT 1,A
+			cpu.testBit(cpu.AF.Hi(), 1)
+		},
+		0x48: func() { // BIT 1,B
+			cpu.testBit(cpu.BC.Hi(), 1)
+		},
+		0x49: func() { // BIT 1,C
+			cpu.testBit(cpu.BC.Lo(), 1)
+		},
+		0x4A: func() { // BIT 1,D
+			cpu.testBit(cpu.DE.Hi(), 1)
+		},
+		0x4B: func() { // BIT 1,E
+			cpu.testBit(cpu.DE.Lo(), 1)
+		},
+		0x4C: func() { // BIT 1,H
+			cpu.testBit(cpu.HL.Hi(), 1)
+		},
+		0x4D: func() { // BIT 1,L
+			cpu.testBit(cpu.HL.Lo(), 1)
+		},
+		0x4E: func() { // BIT 1,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 1)
+		},
+
+		0x57: func() { // BIT 2,A
+			cpu.testBit(cpu.AF.Hi(), 2)
+		},
+		0x50: func() { // BIT 2,B
+			cpu.testBit(cpu.BC.Hi(), 2)
+		},
+		0x51: func() { // BIT 2,C
+			cpu.testBit(cpu.BC.Lo(), 2)
+		},
+		0x52: func() { // BIT 2,D
+			cpu.testBit(cpu.DE.Hi(), 2)
+		},
+		0x53: func() { // BIT 2,E
+			cpu.testBit(cpu.DE.Lo(), 2)
+		},
+		0x54: func() { // BIT 2,H
+			cpu.testBit(cpu.HL.Hi(), 2)
+		},
+		0x55: func() { // BIT 2,L
+			cpu.testBit(cpu.HL.Lo(), 2)
+		},
+		0x56: func() { // BIT 2,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 2)
+		},
+
+		0x5F: func() { // BIT 3,A
+			cpu.testBit(cpu.AF.Hi(), 3)
+		},
+		0x58: func() { // BIT 3,B
+			cpu.testBit(cpu.BC.Hi(), 3)
+		},
+		0x59: func() { // BIT 3,C
+			cpu.testBit(cpu.BC.Lo(), 3)
+		},
+		0x5A: func() { // BIT 3,D
+			cpu.testBit(cpu.DE.Hi(), 3)
+		},
+		0x5B: func() { // BIT 3,E
+			cpu.testBit(cpu.DE.Lo(), 3)
+		},
+		0x5C: func() { // BIT 3,H
+			cpu.testBit(cpu.HL.Hi(), 3)
+		},
+		0x5D: func() { // BIT 3,L
+			cpu.testBit(cpu.HL.Lo(), 3)
+		},
+		0x5E: func() { // BIT 3,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 3)
+		},
+
+		0x67: func() { // BIT 4,A
+			cpu.testBit(cpu.AF.Hi(), 4)
+		},
+		0x60: func() { // BIT 4,B
+			cpu.testBit(cpu.BC.Hi(), 4)
+		},
+		0x61: func() { // BIT 4,C
+			cpu.testBit(cpu.BC.Lo(), 4)
+		},
+		0x62: func() { // BIT 4,D
+			cpu.testBit(cpu.DE.Hi(), 4)
+		},
+		0x63: func() { // BIT 4,E
+			cpu.testBit(cpu.DE.Lo(), 4)
+		},
+		0x64: func() { // BIT 4,H
+			cpu.testBit(cpu.HL.Hi(), 4)
+		},
+		0x65: func() { // BIT 4,L
+			cpu.testBit(cpu.HL.Lo(), 4)
+		},
+		0x66: func() { // BIT 4,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 4)
+		},
+
+		0x6F: func() { // BIT 5,A
+			cpu.testBit(cpu.AF.Hi(), 5)
+		},
+		0x68: func() { // BIT 5,B
+			cpu.testBit(cpu.BC.Hi(), 5)
+		},
+		0x69: func() { // BIT 5,C
+			cpu.testBit(cpu.BC.Lo(), 5)
+		},
+		0x6A: func() { // BIT 5,D
+			cpu.testBit(cpu.DE.Hi(), 5)
+		},
+		0x6B: func() { // BIT 5,E
+			cpu.testBit(cpu.DE.Lo(), 5)
+		},
+		0x6C: func() { // BIT 5,H
+			cpu.testBit(cpu.HL.Hi(), 5)
+		},
+		0x6D: func() { // BIT 5,L
+			cpu.testBit(cpu.HL.Lo(), 5)
+		},
+		0x6E: func() { // BIT 5,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 5)
+		},
+
+		0x77: func() { // BIT 6,A
+			cpu.testBit(cpu.AF.Hi(), 6)
+		},
+		0x70: func() { // BIT 6,B
+			cpu.testBit(cpu.BC.Hi(), 6)
+		},
+		0x71: func() { // BIT 6,C
+			cpu.testBit(cpu.BC.Lo(), 6)
+		},
+		0x72: func() { // BIT 6,D
+			cpu.testBit(cpu.DE.Hi(), 6)
+		},
+		0x73: func() { // BIT 6,E
+			cpu.testBit(cpu.DE.Lo(), 6)
+		},
+		0x74: func() { // BIT 6,H
+			cpu.testBit(cpu.HL.Hi(), 6)
+		},
+		0x75: func() { // BIT 6,L
+			cpu.testBit(cpu.HL.Lo(), 6)
+		},
+		0x76: func() { // BIT 6,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 6)
+		},
+
+		0x7F: func() { // BIT 7,A
+			cpu.testBit(cpu.AF.Hi(), 7)
+		},
+		0x78: func() { // BIT 7,B
+			cpu.testBit(cpu.BC.Hi(), 7)
+		},
+		0x79: func() { // BIT 7,C
+			cpu.testBit(cpu.BC.Lo(), 7)
+		},
+		0x7A: func() { // BIT 7,D
+			cpu.testBit(cpu.DE.Hi(), 7)
+		},
+		0x7B: func() { // BIT 7,E
+			cpu.testBit(cpu.DE.Lo(), 7)
+		},
+		0x7C: func() { // BIT 7,H
+			cpu.testBit(cpu.HL.Hi(), 7)
+		},
+		0x7D: func() { // BIT 7,L
+			cpu.testBit(cpu.HL.Lo(), 7)
+		},
+		0x7E: func() { // BIT 7,(HL)
+			cpu.testBit(cpu.mmu.Read(cpu.HL.HiLo()), 7)
+		},
+
+		0xC7: func() { // SET 0,A
+			cpu.setBit(cpu.AF.Hi(), 0, cpu.AF.SetHi)
+		},
+		0xC0: func() { // SET 0,B
+			cpu.setBit(cpu.BC.Hi(), 0, cpu.BC.SetHi)
+		},
+		0xC1: func() { // SET 0,C
+			cpu.setBit(cpu.BC.Lo(), 0, cpu.BC.SetLo)
+		},
+		0xC2: func() { // SET 0,D
+			cpu.setBit(cpu.DE.Hi(), 0, cpu.DE.SetHi)
+		},
+		0xC3: func() { // SET 0,E
+			cpu.setBit(cpu.DE.Lo(), 0, cpu.DE.SetLo)
+		},
+		0xC4: func() { // SET 0,H
+			cpu.setBit(cpu.HL.Hi(), 0, cpu.HL.SetHi)
+		},
+		0xC5: func() { // SET 0,L
+			cpu.setBit(cpu.HL.Lo(), 0, cpu.HL.SetLo)
+		},
+		0xC6: func() { // SET 0,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 0, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xCF: func() { // SET 1,A
+			cpu.setBit(cpu.AF.Hi(), 1, cpu.AF.SetHi)
+		},
+		0xC8: func() { // SET 1,B
+			cpu.setBit(cpu.BC.Hi(), 1, cpu.BC.SetHi)
+		},
+		0xC9: func() { // SET 1,C
+			cpu.setBit(cpu.BC.Lo(), 1, cpu.BC.SetLo)
+		},
+		0xCA: func() { // SET 1,D
+			cpu.setBit(cpu.DE.Hi(), 1, cpu.DE.SetHi)
+		},
+		0xCB: func() { // SET 1,E
+			cpu.setBit(cpu.DE.Lo(), 1, cpu.DE.SetLo)
+		},
+		0xCC: func() { // SET 1,H
+			cpu.setBit(cpu.HL.Hi(), 1, cpu.HL.SetHi)
+		},
+		0xCD: func() { // SET 1,L
+			cpu.setBit(cpu.HL.Lo(), 1, cpu.HL.SetLo)
+		},
+		0xCE: func() { // SET 1,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 1, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xD7: func() { // SET 2,A
+			cpu.setBit(cpu.AF.Hi(), 2, cpu.AF.SetHi)
+		},
+		0xD0: func() { // SET 2,B
+			cpu.setBit(cpu.BC.Hi(), 2, cpu.BC.SetHi)
+		},
+		0xD1: func() { // SET 2,C
+			cpu.setBit(cpu.BC.Lo(), 2, cpu.BC.SetLo)
+		},
+		0xD2: func() { // SET 2,D
+			cpu.setBit(cpu.DE.Hi(), 2, cpu.DE.SetHi)
+		},
+		0xD3: func() { // SET 2,E
+			cpu.setBit(cpu.DE.Lo(), 2, cpu.DE.SetLo)
+		},
+		0xD4: func() { // SET 2,H
+			cpu.setBit(cpu.HL.Hi(), 2, cpu.HL.SetHi)
+		},
+		0xD5: func() { // SET 2,L
+			cpu.setBit(cpu.HL.Lo(), 2, cpu.HL.SetLo)
+		},
+		0xD6: func() { // SET 2,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 2, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xDF: func() { // SET 3,A
+			cpu.setBit(cpu.AF.Hi(), 3, cpu.AF.SetHi)
+		},
+		0xD8: func() { // SET 3,B
+			cpu.setBit(cpu.BC.Hi(), 3, cpu.BC.SetHi)
+		},
+		0xD9: func() { // SET 3,C
+			cpu.setBit(cpu.BC.Lo(), 3, cpu.BC.SetLo)
+		},
+		0xDA: func() { // SET 3,D
+			cpu.setBit(cpu.DE.Hi(), 3, cpu.DE.SetHi)
+		},
+		0xDB: func() { // SET 3,E
+			cpu.setBit(cpu.DE.Lo(), 3, cpu.DE.SetLo)
+		},
+		0xDC: func() { // SET 3,H
+			cpu.setBit(cpu.HL.Hi(), 3, cpu.HL.SetHi)
+		},
+		0xDD: func() { // SET 3,L
+			cpu.setBit(cpu.HL.Lo(), 3, cpu.HL.SetLo)
+		},
+		0xDE: func() { // SET 3,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 3, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xE7: func() { // SET 4,A
+			cpu.setBit(cpu.AF.Hi(), 4, cpu.AF.SetHi)
+		},
+		0xE0: func() { // SET 4,B
+			cpu.setBit(cpu.BC.Hi(), 4, cpu.BC.SetHi)
+		},
+		0xE1: func() { // SET 4,C
+			cpu.setBit(cpu.BC.Lo(), 4, cpu.BC.SetLo)
+		},
+		0xE2: func() { // SET 4,D
+			cpu.setBit(cpu.DE.Hi(), 4, cpu.DE.SetHi)
+		},
+		0xE3: func() { // SET 4,E
+			cpu.setBit(cpu.DE.Lo(), 4, cpu.DE.SetLo)
+		},
+		0xE4: func() { // SET 4,H
+			cpu.setBit(cpu.HL.Hi(), 4, cpu.HL.SetHi)
+		},
+		0xE5: func() { // SET 4,L
+			cpu.setBit(cpu.HL.Lo(), 4, cpu.HL.SetLo)
+		},
+		0xE6: func() { // SET 4,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 4, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xEF: func() { // SET 5,A
+			cpu.setBit(cpu.AF.Hi(), 5, cpu.AF.SetHi)
+		},
+		0xE8: func() { // SET 5,B
+			cpu.setBit(cpu.BC.Hi(), 5, cpu.BC.SetHi)
+		},
+		0xE9: func() { // SET 5,C
+			cpu.setBit(cpu.BC.Lo(), 5, cpu.BC.SetLo)
+		},
+		0xEA: func() { // SET 5,D
+			cpu.setBit(cpu.DE.Hi(), 5, cpu.DE.SetHi)
+		},
+		0xEB: func() { // SET 5,E
+			cpu.setBit(cpu.DE.Lo(), 5, cpu.DE.SetLo)
+		},
+		0xEC: func() { // SET 5,H
+			cpu.setBit(cpu.HL.Hi(), 5, cpu.HL.SetHi)
+		},
+		0xED: func() { // SET 5,L
+			cpu.setBit(cpu.HL.Lo(), 5, cpu.HL.SetLo)
+		},
+		0xEE: func() { // SET 5,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 5, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xF7: func() { // SET 6,A
+			cpu.setBit(cpu.AF.Hi(), 6, cpu.AF.SetHi)
+		},
+		0xF0: func() { // SET 6,B
+			cpu.setBit(cpu.BC.Hi(), 6, cpu.BC.SetHi)
+		},
+		0xF1: func() { // SET 6,C
+			cpu.setBit(cpu.BC.Lo(), 6, cpu.BC.SetLo)
+		},
+		0xF2: func() { // SET 6,D
+			cpu.setBit(cpu.DE.Hi(), 6, cpu.DE.SetHi)
+		},
+		0xF3: func() { // SET 6,E
+			cpu.setBit(cpu.DE.Lo(), 6, cpu.DE.SetLo)
+		},
+		0xF4: func() { // SET 6,H
+			cpu.setBit(cpu.HL.Hi(), 6, cpu.HL.SetHi)
+		},
+		0xF5: func() { // SET 6,L
+			cpu.setBit(cpu.HL.Lo(), 6, cpu.HL.SetLo)
+		},
+		0xF6: func() { // SET 6,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 6, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xFF: func() { // SET 7,A
+			cpu.setBit(cpu.AF.Hi(), 7, cpu.AF.SetHi)
+		},
+		0xF8: func() { // SET 7,B
+			cpu.setBit(cpu.BC.Hi(), 7, cpu.BC.SetHi)
+		},
+		0xF9: func() { // SET 7,C
+			cpu.setBit(cpu.BC.Lo(), 7, cpu.BC.SetLo)
+		},
+		0xFA: func() { // SET 7,D
+			cpu.setBit(cpu.DE.Hi(), 7, cpu.DE.SetHi)
+		},
+		0xFB: func() { // SET 7,E
+			cpu.setBit(cpu.DE.Lo(), 7, cpu.DE.SetLo)
+		},
+		0xFC: func() { // SET 7,H
+			cpu.setBit(cpu.HL.Hi(), 7, cpu.HL.SetHi)
+		},
+		0xFD: func() { // SET 7,L
+			cpu.setBit(cpu.HL.Lo(), 7, cpu.HL.SetLo)
+		},
+		0xFE: func() { // SET 7,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.setBit(cpu.mmu.Read(addr), 7, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x87: func() { // RES 0,A
+			cpu.resetBit(cpu.AF.Hi(), 0, cpu.AF.SetHi)
+		},
+		0x80: func() { // RES 0,B
+			cpu.resetBit(cpu.BC.Hi(), 0, cpu.BC.SetHi)
+		},
+		0x81: func() { // RES 0,C
+			cpu.resetBit(cpu.BC.Lo(), 0, cpu.BC.SetLo)
+		},
+		0x82: func() { // RES 0,D
+			cpu.resetBit(cpu.DE.Hi(), 0, cpu.DE.SetHi)
+		},
+		0x83: func() { // RES 0,E
+			cpu.resetBit(cpu.DE.Lo(), 0, cpu.DE.SetLo)
+		},
+		0x84: func() { // RES 0,H
+			cpu.resetBit(cpu.HL.Hi(), 0, cpu.HL.SetHi)
+		},
+		0x85: func() { // RES 0,L
+			cpu.resetBit(cpu.HL.Lo(), 0, cpu.HL.SetLo)
+		},
+		0x86: func() { // RES 0,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 0, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x8F: func() { // RES 1,A
+			cpu.resetBit(cpu.AF.Hi(), 1, cpu.AF.SetHi)
+		},
+		0x88: func() { // RES 1,B
+			cpu.resetBit(cpu.BC.Hi(), 1, cpu.BC.SetHi)
+		},
+		0x89: func() { // RES 1,C
+			cpu.resetBit(cpu.BC.Lo(), 1, cpu.BC.SetLo)
+		},
+		0x8A: func() { // RES 1,D
+			cpu.resetBit(cpu.DE.Hi(), 1, cpu.DE.SetHi)
+		},
+		0x8B: func() { // RES 1,E
+			cpu.resetBit(cpu.DE.Lo(), 1, cpu.DE.SetLo)
+		},
+		0x8C: func() { // RES 1,H
+			cpu.resetBit(cpu.HL.Hi(), 1, cpu.HL.SetHi)
+		},
+		0x8D: func() { // RES 1,L
+			cpu.resetBit(cpu.HL.Lo(), 1, cpu.HL.SetLo)
+		},
+		0x8E: func() { // RES 1,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 1, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x97: func() { // RES 2,A
+			cpu.resetBit(cpu.AF.Hi(), 2, cpu.AF.SetHi)
+		},
+		0x90: func() { // RES 2,B
+			cpu.resetBit(cpu.BC.Hi(), 2, cpu.BC.SetHi)
+		},
+		0x91: func() { // RES 2,C
+			cpu.resetBit(cpu.BC.Lo(), 2, cpu.BC.SetLo)
+		},
+		0x92: func() { // RES 2,D
+			cpu.resetBit(cpu.DE.Hi(), 2, cpu.DE.SetHi)
+		},
+		0x93: func() { // RES 2,E
+			cpu.resetBit(cpu.DE.Lo(), 2, cpu.DE.SetLo)
+		},
+		0x94: func() { // RES 2,H
+			cpu.resetBit(cpu.HL.Hi(), 2, cpu.HL.SetHi)
+		},
+		0x95: func() { // RES 2,L
+			cpu.resetBit(cpu.HL.Lo(), 2, cpu.HL.SetLo)
+		},
+		0x96: func() { // RES 2,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 2, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0x9F: func() { // RES 3,A
+			cpu.resetBit(cpu.AF.Hi(), 3, cpu.AF.SetHi)
+		},
+		0x98: func() { // RES 3,B
+			cpu.resetBit(cpu.BC.Hi(), 3, cpu.BC.SetHi)
+		},
+		0x99: func() { // RES 3,C
+			cpu.resetBit(cpu.BC.Lo(), 3, cpu.BC.SetLo)
+		},
+		0x9A: func() { // RES 3,D
+			cpu.resetBit(cpu.DE.Hi(), 3, cpu.DE.SetHi)
+		},
+		0x9B: func() { // RES 3,E
+			cpu.resetBit(cpu.DE.Lo(), 3, cpu.DE.SetLo)
+		},
+		0x9C: func() { // RES 3,H
+			cpu.resetBit(cpu.HL.Hi(), 3, cpu.HL.SetHi)
+		},
+		0x9D: func() { // RES 3,L
+			cpu.resetBit(cpu.HL.Lo(), 3, cpu.HL.SetLo)
+		},
+		0x9E: func() { // RES 3,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 3, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xA7: func() { // RES 4,A
+			cpu.resetBit(cpu.AF.Hi(), 4, cpu.AF.SetHi)
+		},
+		0xA0: func() { // RES 4,B
+			cpu.resetBit(cpu.BC.Hi(), 4, cpu.BC.SetHi)
+		},
+		0xA1: func() { // RES 4,C
+			cpu.resetBit(cpu.BC.Lo(), 4, cpu.BC.SetLo)
+		},
+		0xA2: func() { // RES 4,D
+			cpu.resetBit(cpu.DE.Hi(), 4, cpu.DE.SetHi)
+		},
+		0xA3: func() { // RES 4,E
+			cpu.resetBit(cpu.DE.Lo(), 4, cpu.DE.SetLo)
+		},
+		0xA4: func() { // RES 4,H
+			cpu.resetBit(cpu.HL.Hi(), 4, cpu.HL.SetHi)
+		},
+		0xA5: func() { // RES 4,L
+			cpu.resetBit(cpu.HL.Lo(), 4, cpu.HL.SetLo)
+		},
+		0xA6: func() { // RES 4,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 4, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xAF: func() { // RES 5,A
+			cpu.resetBit(cpu.AF.Hi(), 5, cpu.AF.SetHi)
+		},
+		0xA8: func() { // RES 5,B
+			cpu.resetBit(cpu.BC.Hi(), 5, cpu.BC.SetHi)
+		},
+		0xA9: func() { // RES 5,C
+			cpu.resetBit(cpu.BC.Lo(), 5, cpu.BC.SetLo)
+		},
+		0xAA: func() { // RES 5,D
+			cpu.resetBit(cpu.DE.Hi(), 5, cpu.DE.SetHi)
+		},
+		0xAB: func() { // RES 5,E
+			cpu.resetBit(cpu.DE.Lo(), 5, cpu.DE.SetLo)
+		},
+		0xAC: func() { // RES 5,H
+			cpu.resetBit(cpu.HL.Hi(), 5, cpu.HL.SetHi)
+		},
+		0xAD: func() { // RES 5,L
+			cpu.resetBit(cpu.HL.Lo(), 5, cpu.HL.SetLo)
+		},
+		0xAE: func() { // RES 5,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 5, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xB7: func() { // RES 6,A
+			cpu.resetBit(cpu.AF.Hi(), 6, cpu.AF.SetHi)
+		},
+		0xB0: func() { // RES 6,B
+			cpu.resetBit(cpu.BC.Hi(), 6, cpu.BC.SetHi)
+		},
+		0xB1: func() { // RES 6,C
+			cpu.resetBit(cpu.BC.Lo(), 6, cpu.BC.SetLo)
+		},
+		0xB2: func() { // RES 6,D
+			cpu.resetBit(cpu.DE.Hi(), 6, cpu.DE.SetHi)
+		},
+		0xB3: func() { // RES 6,E
+			cpu.resetBit(cpu.DE.Lo(), 6, cpu.DE.SetLo)
+		},
+		0xB4: func() { // RES 6,H
+			cpu.resetBit(cpu.HL.Hi(), 6, cpu.HL.SetHi)
+		},
+		0xB5: func() { // RES 6,L
+			cpu.resetBit(cpu.HL.Lo(), 6, cpu.HL.SetLo)
+		},
+		0xB6: func() { // RES 6,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 6, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
+
+		0xBF: func() { // RES 7,A
+			cpu.resetBit(cpu.AF.Hi(), 7, cpu.AF.SetHi)
+		},
+		0xB8: func() { // RES 7,B
+			cpu.resetBit(cpu.BC.Hi(), 7, cpu.BC.SetHi)
+		},
+		0xB9: func() { // RES 7,C
+			cpu.resetBit(cpu.BC.Lo(), 7, cpu.BC.SetLo)
+		},
+		0xBA: func() { // RES 7,D
+			cpu.resetBit(cpu.DE.Hi(), 7, cpu.DE.SetHi)
+		},
+		0xBB: func() { // RES 7,E
+			cpu.resetBit(cpu.DE.Lo(), 7, cpu.DE.SetLo)
+		},
+		0xBC: func() { // RES 7,H
+			cpu.resetBit(cpu.HL.Hi(), 7, cpu.HL.SetHi)
+		},
+		0xBD: func() { // RES 7,L
+			cpu.resetBit(cpu.HL.Lo(), 7, cpu.HL.SetLo)
+		},
+		0xBE: func() { // RES 7,(HL)
+			addr := cpu.HL.HiLo()
+			cpu.resetBit(cpu.mmu.Read(addr), 7, func(val byte) { cpu.mmu.Write(addr, val) })
+		},
 	}
 
 	for k, v := range cpu.instructions {
@@ -1105,6 +1925,57 @@ func (cpu *CPU) rotRight(original byte, useCarry bool, setter func(byte)) {
 	cpu.setN(false)
 	cpu.setH(false)
 	cpu.setC(1&original == 1)
+}
+
+func (cpu *CPU) shiftLeft(original byte, setter func(byte)) {
+	result := original << 1
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(original > 0x7F)
+}
+
+func (cpu *CPU) shiftRight(original byte, logical bool, setter func(byte)) {
+	result := original >> 1
+
+	if !logical {
+		result |= (original & 0x80)
+	}
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(1&original == 1)
+}
+
+func (cpu *CPU) swap(original byte, setter func(byte)) {
+	result := (original >> 4) | (original << 4)
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(false)
+}
+
+func (cpu *CPU) testBit(val byte, bit uint8) {
+	cpu.setZ(val>>bit&1 == 1)
+	cpu.setN(false)
+	cpu.setH(true)
+}
+
+func (cpu *CPU) setBit(original byte, bit uint8, setter func(byte)) {
+	setter(original | 1<<bit)
+}
+
+func (cpu *CPU) resetBit(original byte, bit uint8, setter func(byte)) {
+	setter(original & ^(1 << bit))
 }
 
 func (cpu *CPU) call(target uint16) {
