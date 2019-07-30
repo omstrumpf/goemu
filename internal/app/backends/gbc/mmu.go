@@ -115,7 +115,7 @@ func (mmu *MMU) mmapLocation(addr uint16) (buffer []byte, offset uint16) {
 		fallthrough
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000:
 		return mmu.rom, addr
-	// GPU VRAM
+	// PPU VRAM
 	case 0x8000, 0x9000:
 		return mmu.vram, addr & 0x1FFF
 	// External RAM
@@ -132,7 +132,7 @@ func (mmu *MMU) mmapLocation(addr uint16) (buffer []byte, offset uint16) {
 		switch addr & 0x0F00 {
 		case 0x000, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x700, 0x800, 0x900, 0xA00, 0xB00, 0xC00, 0xD00:
 			return mmu.wram, addr & 0x1FFF
-		// GPU OAM
+		// PPU OAM
 		case 0xE00:
 			if addr < 0xFEA0 {
 				return mmu.goam, addr & 0xFF
