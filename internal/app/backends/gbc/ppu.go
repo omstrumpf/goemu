@@ -9,22 +9,28 @@ import (
 type PPU struct {
 	mmu *MMU // Memory Management Unit
 
-	memoryControl *ppuControl // Control Registers
+	memoryControl *ppuControl // Control Regsiter Device
 
-	framebuffer []color.RGBA // Frame Buffer
+	framebuffer []color.RGBA  // Frame Buffer
+	palette     [4]color.RGBA // Color Palette
 
-	registers []byte // Control Registers
+	// Control Registers
+	lcdEnable    bool // Enables the entire screen
+	windowMap    bool // Which window map is in use
+	windowEnable bool // Enables the window display
+	bgTileSelect bool // Which tileset is in use
+	bgMap        bool // Which background map is in use
+	spriteSize   bool // Size of the sprite
+	spriteEnable bool // Enables the sprite
+	bgEnable     bool // Enables rendering the background
 
-	mode       uint8  // Mode Number (0: HBLANK, 1: VBLANK, 2: OAM, 3: VRAM)
-	clock      int    // PPU clock
-	timeInMode int    // Number of clock cycles spent in the current mode
-	line       uint16 // Line currently being processed
+	mode       byte // Mode Number (0: HBLANK, 1: VBLANK, 2: OAM, 3: VRAM)
+	clock      int  // PPU clock
+	timeInMode int  // Number of clock cycles spent in the current mode
+	line       byte // Line currently being processed
 
-	bgMap   uint8 // Which background map is in use
-	tileSet uint8 // Which tileset is in use
-
-	scrollX uint16 // Background scroll X
-	scrollY uint16 // Background scroll Y
+	scrollX byte // Background scroll X
+	scrollY byte // Background scroll Y
 }
 
 // NewPPU constructs a valid PPU struct
@@ -34,7 +40,16 @@ func NewPPU(mmu *MMU) *PPU {
 	ppu.mmu = mmu
 
 	ppu.framebuffer = make([]color.RGBA, 160*144)
-	ppu.registers = make([]byte, 64)
+	ppu.palette = [4]color.RGBA{
+		color.RGBA{255, 255, 255, 0xFF},
+		color.RGBA{192, 192, 192, 0xFF},
+		color.RGBA{96, 96, 96, 0xFF},
+		color.RGBA{0, 0, 0, 0xFF},
+	}
+
+	ppu.lcdEnable = true
+	ppu.windowMap = true
+	ppu.bgEnable = true
 
 	ppu.mode = 2 // Start in OAM mode
 
@@ -107,17 +122,17 @@ func (ppu *PPU) renderLine() {
 	var bgAddr uint16
 
 	// Base VRAM address for the background map
-	if ppu.bgMap == 0 {
-		bgAddr = 0x9800
-	} else {
+	if ppu.bgMap {
 		bgAddr = 0x9C00
+	} else {
+		bgAddr = 0x9800
 	}
 
 	// The first tile pointer in this line
-	topLeft := bgAddr + (((ppu.line + ppu.scrollY) & 0x00FF) >> 3)
+	topLeft := bgAddr + uint16(((ppu.line+ppu.scrollY)&0x00FF)>>3)
 
 	// The first tile pointer to be used
-	tilePointer := topLeft + (ppu.scrollX >> 3)
+	tilePointer := topLeft + uint16(ppu.scrollX>>3)
 
 	// Address of the current tile data
 	tileAddr := ppu.getTileAddress(tilePointer)
@@ -136,11 +151,11 @@ func (ppu *PPU) renderLine() {
 			tileAddr = ppu.getTileAddress(tilePointer)
 		}
 
-		tileRow := ppu.mmu.Read16(tileAddr + (tileY * 2))
+		tileRow := ppu.mmu.Read16(tileAddr + uint16(tileY*2))
 
 		val := byte(tileRow >> (14 - (2 * tileX)))
 
-		pixel := gbToRGBA(val)
+		pixel := ppu.palette[val]
 		ppu.writePixel(pixel, screenX, screenY)
 		screenX++
 	}
@@ -151,28 +166,13 @@ func (ppu *PPU) writePixel(val color.RGBA, x int, y int) {
 }
 
 func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
-	switch ppu.getTileSet() {
-	case 0:
-		tileNum := uint16(ppu.mmu.Read(mapAddr))
-		return uint16(0x9000) + (tileNum * 16)
-	case 1:
+	if ppu.bgTileSelect {
 		tileNum := int16(int8(ppu.mmu.Read(mapAddr)))
 		return uint16(int32(0x8000) + int32(tileNum*16))
 	}
 
-	log.Printf("Unrecognized tileset %d", ppu.tileSet)
-	return 0x9000
-}
-
-func (ppu *PPU) getWindowEnable() bool {
-	return ppu.registers[0]&0x20 != 0
-}
-
-func (ppu *PPU) getTileSet() int {
-	if ppu.registers[0]&0x10 == 0 {
-		return 0
-	}
-	return 1
+	tileNum := uint16(ppu.mmu.Read(mapAddr))
+	return uint16(0x9000) + (tileNum * 16)
 }
 
 //// Control Registers ////
@@ -181,11 +181,77 @@ type ppuControl struct {
 }
 
 func (ppc *ppuControl) Read(addr uint16) byte {
-	return 0 // TODO
+	switch addr {
+	case 0x00:
+		var ret byte
+		if ppc.ppu.lcdEnable {
+			ret |= 0x80
+		}
+		if ppc.ppu.windowMap {
+			ret |= 0x40
+		}
+		if ppc.ppu.windowEnable {
+			ret |= 0x20
+		}
+		if ppc.ppu.bgTileSelect {
+			ret |= 0x10
+		}
+		if ppc.ppu.bgMap {
+			ret |= 0x08
+		}
+		if ppc.ppu.spriteSize {
+			ret |= 0x04
+		}
+		if ppc.ppu.spriteEnable {
+			ret |= 0x02
+		}
+		if ppc.ppu.bgEnable {
+			ret |= 0x01
+		}
+		return ret
+	case 0x02:
+		return ppc.ppu.scrollY
+	case 0x03:
+		return ppc.ppu.scrollX
+	case 0x04:
+		return ppc.ppu.line
+	}
+
+	log.Printf("Encountered unknown PPU control address: %#2x", addr)
+	return 0
 }
 
 func (ppc *ppuControl) Write(addr uint16, val byte) {
-	// TODO
+	switch addr {
+	case 0x00:
+		ppc.ppu.lcdEnable = (val&0x80 != 0)
+		ppc.ppu.windowMap = (val&0x40 != 0)
+		ppc.ppu.windowEnable = (val&0x20 != 0)
+		ppc.ppu.bgTileSelect = (val&0x10 != 0)
+		ppc.ppu.bgMap = (val&0x08 != 0)
+		ppc.ppu.spriteSize = (val&0x04 != 0)
+		ppc.ppu.spriteEnable = (val&0x02 != 0)
+		ppc.ppu.bgEnable = (val&0x01 != 0)
+	case 0x02:
+		ppc.ppu.scrollY = val
+	case 0x03:
+		ppc.ppu.scrollX = val
+	case 0x04:
+		ppc.ppu.line = val
+	case 0x07:
+		for i := uint8(0); i < 4; i++ {
+			switch (val >> (i * 2)) & 3 {
+			case 0:
+				ppc.ppu.palette[i] = color.RGBA{255, 255, 255, 0xFF}
+			case 1:
+				ppc.ppu.palette[i] = color.RGBA{192, 192, 192, 0xFF}
+			case 2:
+				ppc.ppu.palette[i] = color.RGBA{96, 96, 96, 0xFF}
+			case 3:
+				ppc.ppu.palette[i] = color.RGBA{0, 0, 0, 0xFF}
+			}
+		}
+	}
 }
 
 //// Helpers ////
