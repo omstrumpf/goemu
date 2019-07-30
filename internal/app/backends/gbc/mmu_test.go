@@ -1,7 +1,6 @@
 package gbc
 
 import (
-	"io/ioutil"
 	"testing"
 )
 
@@ -144,19 +143,15 @@ func TestMMUZeros(t *testing.T) {
 func TestMMULoadRom(t *testing.T) {
 	mmu := NewMMU()
 
-	romfile := "../../../../roms/cpu_instrs.gb"
+	buf := []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}
 
-	mmu.LoadROM(romfile)
-
-	buf, err := ioutil.ReadFile(romfile)
-	if err != nil {
-		panic(err)
-	}
+	mmu.LoadROM(buf)
 
 	mmu.DisableBios()
 
-	if buf[0] != mmu.Read(0) {
-		t.Errorf("Expected to read %#2x, got %#2x", buf[0], mmu.Read(0))
+	for i, b := range buf {
+		if b != mmu.Read(uint16(i)) {
+			t.Errorf("Expected to read %#2x, got %#2x", b, mmu.Read(uint16(i)))
+		}
 	}
-
 }

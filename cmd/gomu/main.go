@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"github.com/faiface/pixel/pixelgl" // I/O
@@ -18,6 +19,13 @@ func _main() {
 	fmt.Println("Welcome to gomu!")
 
 	gameboy := gbc.NewGBC()
+
+	buf, err := ioutil.ReadFile("roms/cpu_instrs.gb")
+	if err != nil {
+		panic(err)
+	}
+	gameboy.LoadROM(buf)
+
 	io := io.NewIO(gameboy)
 
 	ticker := time.NewTicker(gameboy.GetFrameTime())

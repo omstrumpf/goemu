@@ -56,6 +56,11 @@ func (gbc *GBC) Tick() {
 	}
 }
 
+// LoadROM loads the given ROM bytes into the MMU
+func (gbc *GBC) LoadROM(rom []byte) {
+	gbc.mmu.LoadROM(rom)
+}
+
 // GetFrameBuffer returns the gameboy's frame buffer, a slice of RGBA values
 func (gbc *GBC) GetFrameBuffer() []color.RGBA {
 	return gbc.ppu.framebuffer

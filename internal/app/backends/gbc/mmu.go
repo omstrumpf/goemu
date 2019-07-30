@@ -1,7 +1,6 @@
 package gbc
 
 import (
-	"io/ioutil"
 	"log"
 )
 
@@ -49,13 +48,7 @@ func NewMMU() *MMU {
 }
 
 // LoadROM loads a ROM into memory
-func (mmu *MMU) LoadROM(filename string) {
-	buf, err := ioutil.ReadFile(filename)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
+func (mmu *MMU) LoadROM(buf []byte) {
 	buflen := len(buf)
 
 	if buflen > romlen {
