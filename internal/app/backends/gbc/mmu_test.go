@@ -16,8 +16,8 @@ func TestMMUReadWrite(t *testing.T) {
 	mmu := NewMMU()
 
 	got := mmu.Read(0)
-	if got != BIOS[0] {
-		t.Errorf("Expected initial value to be %#2x, got %#2x", BIOS[0], got)
+	if got != BIOS.Read(0) {
+		t.Errorf("Expected initial value to be %#2x, got %#2x", BIOS.Read(0), got)
 	}
 
 	mmu.Write(0, 0x12)
@@ -82,44 +82,44 @@ func TestMMUMappings(t *testing.T) {
 	mmu.Write(0xFF80, 0xC) // ZRAM
 	mmu.Write(0xFFFF, 0xD) // ZRAM
 
-	if mmu.bios[0x0000] != 0x1 {
-		t.Errorf("Expected to read 0x1 from bios memory, got %#2x", mmu.bios[0x0000])
+	if mmu.bios.Read(0x0000) != 0x1 {
+		t.Errorf("Expected to read 0x1 from bios memory, got %#2x", mmu.bios.Read(0x0000))
 	}
-	if mmu.bios[0x0099] != 0x2 {
-		t.Errorf("Expected to read 0x2 from bios memory, got %#2x", mmu.bios[0x0099])
+	if mmu.bios.Read(0x0099) != 0x2 {
+		t.Errorf("Expected to read 0x2 from bios memory, got %#2x", mmu.bios.Read(0x0099))
 	}
-	if mmu.rom[0x0100] != 0x3 {
-		t.Errorf("Expected to read 0x3 from rom, got %#2x", mmu.rom[0x0100])
+	if mmu.rom.Read(0x0100) != 0x3 {
+		t.Errorf("Expected to read 0x3 from rom, got %#2x", mmu.rom.Read(0x0100))
 	}
-	if mmu.rom[0x7FFF] != 0x4 {
-		t.Errorf("Expected to read 0x4 from rom, got %#2x", mmu.rom[0x7FFF])
+	if mmu.rom.Read(0x7FFF) != 0x4 {
+		t.Errorf("Expected to read 0x4 from rom, got %#2x", mmu.rom.Read(0x7FFF))
 	}
-	if mmu.vram[0x0000] != 0x5 {
-		t.Errorf("Expected to read 0x5 from vram, got %#2x", mmu.vram[0x0000])
+	if mmu.vram.Read(0x0000) != 0x5 {
+		t.Errorf("Expected to read 0x5 from vram, got %#2x", mmu.vram.Read(0x0000))
 	}
-	if mmu.vram[0x1FFF] != 0x6 {
-		t.Errorf("Expected to read 0x6 from vram, got %#2x", mmu.vram[0x1FFF])
+	if mmu.vram.Read(0x1FFF) != 0x6 {
+		t.Errorf("Expected to read 0x6 from vram, got %#2x", mmu.vram.Read(0x1FFF))
 	}
-	if mmu.eram[0x0000] != 0x7 {
-		t.Errorf("Expected to read 0x7 from eram, got %#2x", mmu.eram[0x0000])
+	if mmu.eram.Read(0x0000) != 0x7 {
+		t.Errorf("Expected to read 0x7 from eram, got %#2x", mmu.eram.Read(0x0000))
 	}
-	if mmu.eram[0x1FFF] != 0x8 {
-		t.Errorf("Expected to read 0x8 from eram, got %#2x", mmu.eram[0x1FFF])
+	if mmu.eram.Read(0x1FFF) != 0x8 {
+		t.Errorf("Expected to read 0x8 from eram, got %#2x", mmu.eram.Read(0x1FFF))
 	}
-	if mmu.wram[0x0000] != 0x9 {
-		t.Errorf("Expected to read 0x9 from wram, got %#2x", mmu.wram[0x0000])
+	if mmu.wram.Read(0x0000) != 0x9 {
+		t.Errorf("Expected to read 0x9 from wram, got %#2x", mmu.wram.Read(0x0000))
 	}
-	if mmu.wram[0x1FFF] != 0xA {
-		t.Errorf("Expected to read 0xA from wram, got %#2x", mmu.wram[0x1FFF])
+	if mmu.wram.Read(0x1FFF) != 0xA {
+		t.Errorf("Expected to read 0xA from wram, got %#2x", mmu.wram.Read(0x1FFF))
 	}
-	if mmu.goam[0x0000] != 0xB {
-		t.Errorf("Expected to read 0xB from goam, got %#2x", mmu.goam[0x0000])
+	if mmu.goam.Read(0x0000) != 0xB {
+		t.Errorf("Expected to read 0xB from goam, got %#2x", mmu.goam.Read(0x0000))
 	}
-	if mmu.zram[0x0000] != 0xC {
-		t.Errorf("Expected to read 0xC from zram, got %#2x", mmu.zram[0x0000])
+	if mmu.zram.Read(0x0000) != 0xC {
+		t.Errorf("Expected to read 0xC from zram, got %#2x", mmu.zram.Read(0x0000))
 	}
-	if mmu.zram[0x007F] != 0xD {
-		t.Errorf("Expected to read 0xD from zram, got %#2x", mmu.zram[0x007F])
+	if mmu.zram.Read(0x007F) != 0xD {
+		t.Errorf("Expected to read 0xD from zram, got %#2x", mmu.zram.Read(0x007F))
 	}
 
 	if mmu.Read(0xE000) != 0x9 {

@@ -15,17 +15,19 @@ const (
 
 // MMU represents the memory management unit.
 type MMU struct {
-	bios []byte
-	rom  []byte
-	vram []byte
-	eram []byte
-	wram []byte
-	goam []byte
-	zram []byte
+	bios memoryDevice
+	rom  memoryDevice
+	vram memoryDevice
+	eram memoryDevice
+	wram memoryDevice
+	goam memoryDevice
+	zram memoryDevice
 
-	zero []byte
+	zero memoryDevice
 
 	biosEnable bool
+
+	ppu *PPU
 }
 
 // NewMMU constructs a valid MMU struct
@@ -33,14 +35,14 @@ func NewMMU() *MMU {
 	mmu := new(MMU)
 
 	mmu.bios = BIOS
-	mmu.rom = make([]byte, romlen)
-	mmu.vram = make([]byte, vramlen)
-	mmu.eram = make([]byte, eramlen)
-	mmu.wram = make([]byte, wramlen)
-	mmu.goam = make([]byte, goamlen)
-	mmu.zram = make([]byte, zramlen)
+	mmu.rom = newStandardMemoryDevice(romlen)
+	mmu.vram = newStandardMemoryDevice(vramlen)
+	mmu.eram = newStandardMemoryDevice(eramlen)
+	mmu.wram = newStandardMemoryDevice(wramlen)
+	mmu.goam = newStandardMemoryDevice(goamlen)
+	mmu.zram = newStandardMemoryDevice(zramlen)
 
-	mmu.zero = []byte{0}
+	mmu.zero = newZeroMemoryDevice()
 
 	mmu.biosEnable = true
 
@@ -49,17 +51,17 @@ func NewMMU() *MMU {
 
 // LoadROM loads a ROM into memory
 func (mmu *MMU) LoadROM(buf []byte) {
-	buflen := len(buf)
+	buflen := uint16(len(buf))
 
 	if buflen > romlen {
 		log.Print("Insufficient memory capacity for ROM")
 	}
 
-	for i := 0; i < romlen; i++ {
+	for i := uint16(0); i < romlen; i++ {
 		if i < buflen {
-			mmu.rom[i] = buf[i]
+			mmu.rom.Write(i, buf[i])
 		} else {
-			mmu.rom[i] = 0
+			mmu.rom.Write(i, 0)
 		}
 	}
 }
@@ -71,20 +73,14 @@ func (mmu *MMU) DisableBios() {
 
 // Read returns the 8-bit value from the address
 func (mmu *MMU) Read(addr uint16) byte {
-	buffer, offset := mmu.mmapLocation(addr)
-	return buffer[offset]
+	device, offset := mmu.mmapLocation(addr)
+	return device.Read(offset)
 }
 
 // Write writes the 8-bit value to the address
 func (mmu *MMU) Write(addr uint16, val byte) {
-	buffer, offset := mmu.mmapLocation(addr)
-
-	// Do not write to zero buffer
-	if len(buffer) == 1 && buffer[0] == 0 {
-		return
-	}
-
-	buffer[offset] = val
+	device, offset := mmu.mmapLocation(addr)
+	device.Write(offset, val)
 }
 
 // Read16 returns the 16-bit value from the address
@@ -98,7 +94,7 @@ func (mmu *MMU) Write16(addr uint16, val uint16) {
 	mmu.Write(addr+1, byte(val>>8))
 }
 
-func (mmu *MMU) mmapLocation(addr uint16) (buffer []byte, offset uint16) {
+func (mmu *MMU) mmapLocation(addr uint16) (md memoryDevice, offset uint16) {
 	switch addr & 0xF000 {
 	// BIOS is mapped over ROM on startup
 	case 0x0000:
@@ -134,12 +130,14 @@ func (mmu *MMU) mmapLocation(addr uint16) (buffer []byte, offset uint16) {
 			return mmu.zero, 0
 		// Zpage & I/O
 		case 0xF00:
-			// ZPAGE
-			if addr >= 0xFF80 {
+			switch addr & 0x00F0 {
+			case 0x00, 0x10, 0x20, 0x30: // Unimplemented
+				return mmu.zero, 0
+			case 0x40, 0x50, 0x60, 0x70: // PPU Control
+				return mmu.ppu.memoryControl, addr & 0x3F
+			case 0x80, 0x90, 0xA0, 0xB0, 0xC0, 0xD0, 0xE0, 0xF0: // ZRAM
 				return mmu.zram, addr & 0x7F
 			}
-			// I/O
-			return mmu.zero, 0
 		}
 	}
 

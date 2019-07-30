@@ -22,7 +22,9 @@ func TestInstructionsLD(t *testing.T) {
 		0x76, // HALT
 	}
 
-	copy(mmu.rom, instructions)
+	for i, op := range instructions {
+		mmu.rom.Write(uint16(i), op)
+	}
 
 	mmu.DisableBios()
 	cpu.PC.Set(0)
@@ -88,7 +90,9 @@ func TestInstructionsStack(t *testing.T) {
 		0x76, // HALT
 	}
 
-	copy(mmu.rom, instructions)
+	for i, op := range instructions {
+		mmu.rom.Write(uint16(i), op)
+	}
 
 	mmu.DisableBios()
 	cpu.PC.Set(0)
@@ -179,7 +183,9 @@ func TestInstructionsALU(t *testing.T) {
 		0x76, // HALT
 	}
 
-	copy(mmu.rom, instructions)
+	for i, op := range instructions {
+		mmu.rom.Write(uint16(i), op)
+	}
 
 	mmu.DisableBios()
 	cpu.PC.Set(0)
@@ -250,7 +256,9 @@ func TestInstructionsRot(t *testing.T) {
 		0x76, // HALT
 	}
 
-	copy(mmu.rom, instructions)
+	for i, op := range instructions {
+		mmu.rom.Write(uint16(i), op)
+	}
 
 	mmu.DisableBios()
 	cpu.PC.Set(0)
@@ -319,7 +327,9 @@ func TestInstructionsCBRot(t *testing.T) {
 		0x76, // HALT
 	}
 
-	copy(mmu.rom, instructions)
+	for i, op := range instructions {
+		mmu.rom.Write(uint16(i), op)
+	}
 
 	mmu.DisableBios()
 	cpu.PC.Set(0)

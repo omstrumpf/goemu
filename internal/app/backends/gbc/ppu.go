@@ -9,7 +9,11 @@ import (
 type PPU struct {
 	mmu *MMU // Memory Management Unit
 
+	memoryControl *ppuControl // Control Registers
+
 	framebuffer []color.RGBA // Frame Buffer
+
+	registers []byte // Control Registers
 
 	mode       uint8  // Mode Number (0: HBLANK, 1: VBLANK, 2: OAM, 3: VRAM)
 	clock      int    // PPU clock
@@ -30,8 +34,13 @@ func NewPPU(mmu *MMU) *PPU {
 	ppu.mmu = mmu
 
 	ppu.framebuffer = make([]color.RGBA, 160*144)
+	ppu.registers = make([]byte, 64)
 
 	ppu.mode = 2 // Start in OAM mode
+
+	ppuControl := new(ppuControl)
+	ppuControl.ppu = ppu
+	ppu.memoryControl = ppuControl
 
 	return ppu
 }
@@ -142,7 +151,7 @@ func (ppu *PPU) writePixel(val color.RGBA, x int, y int) {
 }
 
 func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
-	switch ppu.tileSet {
+	switch ppu.getTileSet() {
 	case 0:
 		tileNum := uint16(ppu.mmu.Read(mapAddr))
 		return uint16(0x9000) + (tileNum * 16)
@@ -155,6 +164,31 @@ func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
 	return 0x9000
 }
 
+func (ppu *PPU) getWindowEnable() bool {
+	return ppu.registers[0]&0x20 != 0
+}
+
+func (ppu *PPU) getTileSet() int {
+	if ppu.registers[0]&0x10 == 0 {
+		return 0
+	}
+	return 1
+}
+
+//// Control Registers ////
+type ppuControl struct {
+	ppu *PPU
+}
+
+func (ppc *ppuControl) Read(addr uint16) byte {
+	return 0 // TODO
+}
+
+func (ppc *ppuControl) Write(addr uint16, val byte) {
+	// TODO
+}
+
+//// Helpers ////
 func gbToRGBA(val byte) color.RGBA {
 	switch val {
 	case 0:

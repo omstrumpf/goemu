@@ -43,6 +43,8 @@ func NewGBC() *GBC {
 	gbc.cpu = NewCPU(gbc.mmu)
 	gbc.ppu = NewPPU(gbc.mmu)
 
+	gbc.mmu.ppu = gbc.ppu
+
 	return gbc
 }
 
