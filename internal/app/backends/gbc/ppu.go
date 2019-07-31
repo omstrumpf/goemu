@@ -62,7 +62,7 @@ func NewPPU(mmu *MMU) *PPU {
 
 // UpdateToClock runs the PPU until the given clock cycle
 func (ppu *PPU) UpdateToClock(clock int) {
-	for ppu.clock <= clock {
+	for ppu.clock < clock {
 		switch ppu.mode {
 		case 0: // HBLANK
 			if ppu.timeInMode == 51 {

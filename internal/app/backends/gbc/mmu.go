@@ -54,7 +54,7 @@ func (mmu *MMU) LoadROM(buf []byte) {
 	buflen := uint16(len(buf))
 
 	if buflen > romlen {
-		log.Print("Insufficient memory capacity for ROM")
+		log.Printf("Insufficient memory capacity for ROM: %#4x", buflen)
 	}
 
 	for i := uint16(0); i < romlen; i++ {
