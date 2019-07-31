@@ -63,6 +63,11 @@ func (gbc *GBC) LoadROM(rom []byte) {
 	gbc.mmu.LoadROM(rom)
 }
 
+// IsStopped returns true if the gameboy is not running
+func (gbc *GBC) IsStopped() bool {
+	return gbc.cpu.IsStopped() || gbc.cpu.IsHalted()
+}
+
 // GetFrameBuffer returns the gameboy's frame buffer, a slice of RGBA values
 func (gbc *GBC) GetFrameBuffer() []color.RGBA {
 	return gbc.ppu.framebuffer

@@ -32,7 +32,7 @@ func _main() {
 
 	// Game loop
 	for range ticker.C {
-		if io.ShouldExit() {
+		if io.ShouldExit() || gameboy.IsStopped() {
 			return
 		}
 

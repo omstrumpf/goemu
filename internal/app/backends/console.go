@@ -9,6 +9,7 @@ import (
 type Console interface {
 	Tick()
 	LoadROM([]byte)
+	IsStopped() bool
 	GetFrameBuffer() []color.RGBA
 	GetFrameTime() time.Duration
 	GetScreenWidth() int
