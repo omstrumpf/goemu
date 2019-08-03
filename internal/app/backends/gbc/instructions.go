@@ -2,7 +2,252 @@ package gbc
 
 import "log"
 
-// PopulateInstructions populates the opcode map for instructions and cycle costs
+// Add adds the operand into the accumulator (A = A + op). If useCarry is set, it also adds the carry bit.
+func (cpu *CPU) add(operand byte, useCarry bool) {
+	original := cpu.AF.Hi()
+	carry := 0
+	if useCarry && cpu.c() {
+		carry = 1
+	}
+	result := int16(original) + int16(operand) + int16(carry)
+
+	cpu.AF.SetHi(byte(result))
+
+	cpu.setZ(byte(result) == 0)
+	cpu.setN(false)
+	cpu.setH((operand&0xF)+(original*0xF)+byte(carry) > 0xF)
+	cpu.setC(result > 0xFF)
+}
+
+// Sub subtracts the operand from the accumulator (A = A - op). If useCarry is set, it also subtracts the carry bit.
+func (cpu *CPU) sub(operand byte, useCarry bool) {
+	original := cpu.AF.Hi()
+	carry := 0
+	if useCarry && cpu.c() {
+		carry = 1
+	}
+	result := int16(original) - int16(operand) - int16(carry)
+
+	cpu.AF.SetHi(byte(result))
+
+	cpu.setZ(byte(result) == 0)
+	cpu.setN(true)
+	cpu.setH(int16(original&0xF)-int16(operand&0xF)-int16(carry) < 0)
+	cpu.setC(result < 0)
+}
+
+// And performs a bitwise AND between the accumulator and the operand (A = A AND op).
+func (cpu *CPU) and(operand byte) {
+	result := cpu.AF.Hi() & operand
+
+	cpu.AF.SetHi(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(true)
+	cpu.setC(false)
+}
+
+// Xor performs a bitwise XOR between the accumulator and the operand (A = A XOR op).
+func (cpu *CPU) xor(operand byte) {
+	result := cpu.AF.Hi() ^ operand
+
+	cpu.AF.SetHi(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(false)
+}
+
+// Or performs a bitwise OR between the accumulator and the operand (A = A OR op)
+func (cpu *CPU) or(operand byte) {
+	result := cpu.AF.Hi() | operand
+
+	cpu.AF.SetHi(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(false)
+}
+
+// Cp compares the accumulator with the operand.
+func (cpu *CPU) cp(operand byte) {
+	original := cpu.AF.Hi()
+	result := original - operand
+
+	cpu.setZ(result == 0)
+	cpu.setN(true)
+	cpu.setH((original & 0x0F) > (operand & 0x0F))
+	cpu.setC(original > operand)
+}
+
+// Inc increments the value into the given setter function.
+func (cpu *CPU) inc(val byte, setter func(byte)) {
+	result := val + 1
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(((val & 0xF) + 1) > 0xF)
+}
+
+// Dec decrements the value into the given setter function
+func (cpu *CPU) dec(val byte, setter func(byte)) {
+	result := val - 1
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(true)
+	cpu.setH(val&0xF == 0)
+}
+
+// Add16 performs a 16 bit AND into the HL register (HL = HL + val)
+func (cpu *CPU) add16(val uint16) {
+	result := uint32(cpu.HL.HiLo()) + uint32(val)
+
+	cpu.HL.Set(uint16(result))
+	cpu.setN(false)
+	cpu.setH(uint32(val&0xFFF) > (result & 0xFFF))
+	cpu.setC(result > 0xFFFF)
+}
+
+// Add16Signed performs a 16 bit AND into the given setter function
+func (cpu *CPU) add16Signed(original uint16, operand int8, setter func(uint16)) {
+	result := int32(original) + int32(operand)
+
+	setter(uint16(result))
+
+	// xor operands and result to determine carries
+	xor := original ^ uint16(operand) ^ uint16(result)
+
+	cpu.setZ(false)
+	cpu.setN(false)
+	cpu.setH((xor & 0x10) == 0x10)
+	cpu.setC((xor & 0x100) == 0x100)
+}
+
+// RotLeft rotates the value into the given setter function. Rotates through the carry bit if set (9 bit rotate)
+func (cpu *CPU) rotLeft(original byte, useCarry bool, setter func(byte)) {
+	var result byte
+
+	if useCarry {
+		carry := 0
+		if cpu.c() {
+			carry = 1
+		}
+		result = byte(original<<1) + byte(carry)
+	} else {
+		result = byte(original<<1) | (original >> 7)
+	}
+
+	setter(result)
+
+	cpu.setZ(false)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(original > 0x7F)
+}
+
+// RotRight rotates the value into the given setter function. Rotates through the carry bit if set (9 bit rotate)
+func (cpu *CPU) rotRight(original byte, useCarry bool, setter func(byte)) {
+	var result byte
+
+	if useCarry {
+		carry := 0
+		if cpu.c() {
+			carry = 1 << 7
+		}
+		result = byte(original>>1) | byte(carry)
+	} else {
+		result = byte(original>>1) | (original << 7)
+	}
+
+	setter(result)
+
+	cpu.setZ(false)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(1&original == 1)
+}
+
+// ShiftLeft shifts the value into the given setter function.
+func (cpu *CPU) shiftLeft(original byte, setter func(byte)) {
+	result := original << 1
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(original > 0x7F)
+}
+
+// ShiftRight shifts the value into the given setter function.
+func (cpu *CPU) shiftRight(original byte, logical bool, setter func(byte)) {
+	result := original >> 1
+
+	if !logical {
+		result |= (original & 0x80)
+	}
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(1&original == 1)
+}
+
+// Swap swaps the values in the bottom and top halfs of the value into the given setter function.
+func (cpu *CPU) swap(original byte, setter func(byte)) {
+	result := (original >> 4) | (original << 4)
+
+	setter(result)
+
+	cpu.setZ(result == 0)
+	cpu.setN(false)
+	cpu.setH(false)
+	cpu.setC(false)
+}
+
+// TestBit tests a bit of the value.
+func (cpu *CPU) testBit(val byte, bit uint8) {
+	cpu.setZ(val>>bit&1 == 1)
+	cpu.setN(false)
+	cpu.setH(true)
+}
+
+// SetBit sets a bit of the value into the given setter function.
+func (cpu *CPU) setBit(original byte, bit uint8, setter func(byte)) {
+	setter(original | 1<<bit)
+}
+
+// ResetBit resets a bit of the value into the given setter function.
+func (cpu *CPU) resetBit(original byte, bit uint8, setter func(byte)) {
+	setter(original & ^(1 << bit))
+}
+
+// Call pushes PC to the stack, then jumps to the target.
+func (cpu *CPU) call(target uint16) {
+	// Push PC to stack
+	addr := cpu.SP.Dec2()
+	cpu.mmu.Write16(addr, cpu.PC.HiLo())
+
+	// Set PC to new target
+	cpu.PC.Set(target)
+}
+
+// Ret pops the return address off the stack, and jumps to it.
+func (cpu *CPU) ret() {
+	// Restore PC
+	cpu.PC.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
+}
+
+// PopulateInstructions populates the cpu opcode maps for instructions and cycle costs
 func (cpu *CPU) PopulateInstructions() {
 	cpu.instructions = [0x100]func(){
 		//// 8-bit loads ////
@@ -1774,229 +2019,4 @@ func (cpu *CPU) PopulateInstructions() {
 		2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 4, 2,
 		2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 4, 2,
 	}
-}
-
-func (cpu *CPU) add(operand byte, useCarry bool) {
-	original := cpu.AF.Hi()
-	carry := 0
-	if useCarry && cpu.c() {
-		carry = 1
-	}
-	result := int16(original) + int16(operand) + int16(carry)
-
-	cpu.AF.SetHi(byte(result))
-
-	cpu.setZ(byte(result) == 0)
-	cpu.setN(false)
-	cpu.setH((operand&0xF)+(original*0xF)+byte(carry) > 0xF)
-	cpu.setC(result > 0xFF)
-}
-
-func (cpu *CPU) sub(operand byte, useCarry bool) {
-	original := cpu.AF.Hi()
-	carry := 0
-	if useCarry && cpu.c() {
-		carry = 1
-	}
-	result := int16(original) - int16(operand) - int16(carry)
-
-	cpu.AF.SetHi(byte(result))
-
-	cpu.setZ(byte(result) == 0)
-	cpu.setN(true)
-	cpu.setH(int16(original&0xF)-int16(operand&0xF)-int16(carry) < 0)
-	cpu.setC(result < 0)
-}
-
-func (cpu *CPU) and(operand byte) {
-	result := cpu.AF.Hi() & operand
-
-	cpu.AF.SetHi(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(false)
-	cpu.setH(true)
-	cpu.setC(false)
-}
-
-func (cpu *CPU) xor(operand byte) {
-	result := cpu.AF.Hi() ^ operand
-
-	cpu.AF.SetHi(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(false)
-	cpu.setH(false)
-	cpu.setC(false)
-}
-
-func (cpu *CPU) or(operand byte) {
-	result := cpu.AF.Hi() | operand
-
-	cpu.AF.SetHi(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(false)
-	cpu.setH(false)
-	cpu.setC(false)
-}
-
-func (cpu *CPU) cp(operand byte) {
-	original := cpu.AF.Hi()
-	result := original - operand
-
-	cpu.setZ(result == 0)
-	cpu.setN(true)
-	cpu.setH((original & 0x0F) > (operand & 0x0F))
-	cpu.setC(original > operand)
-}
-
-func (cpu *CPU) inc(val byte, setter func(byte)) {
-	result := val + 1
-
-	setter(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(false)
-	cpu.setH(((val & 0xF) + 1) > 0xF)
-}
-
-func (cpu *CPU) dec(val byte, setter func(byte)) {
-	result := val - 1
-
-	setter(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(true)
-	cpu.setH(val&0xF == 0)
-}
-
-func (cpu *CPU) add16(val uint16) {
-	result := uint32(cpu.HL.HiLo()) + uint32(val)
-
-	cpu.HL.Set(uint16(result))
-	cpu.setN(false)
-	cpu.setH(uint32(val&0xFFF) > (result & 0xFFF))
-	cpu.setC(result > 0xFFFF)
-}
-
-func (cpu *CPU) add16Signed(original uint16, operand int8, setter func(uint16)) {
-	result := int32(original) + int32(operand)
-
-	setter(uint16(result))
-
-	// xor operands and result to determine carries
-	xor := original ^ uint16(operand) ^ uint16(result)
-
-	cpu.setZ(false)
-	cpu.setN(false)
-	cpu.setH((xor & 0x10) == 0x10)
-	cpu.setC((xor & 0x100) == 0x100)
-}
-
-func (cpu *CPU) rotLeft(original byte, useCarry bool, setter func(byte)) {
-	var result byte
-
-	if useCarry {
-		carry := 0
-		if cpu.c() {
-			carry = 1
-		}
-		result = byte(original<<1) + byte(carry)
-	} else {
-		result = byte(original<<1) | (original >> 7)
-	}
-
-	setter(result)
-
-	cpu.setZ(false)
-	cpu.setN(false)
-	cpu.setH(false)
-	cpu.setC(original > 0x7F)
-}
-
-func (cpu *CPU) rotRight(original byte, useCarry bool, setter func(byte)) {
-	var result byte
-
-	if useCarry {
-		carry := 0
-		if cpu.c() {
-			carry = 1 << 7
-		}
-		result = byte(original>>1) | byte(carry)
-	} else {
-		result = byte(original>>1) | (original << 7)
-	}
-
-	setter(result)
-
-	cpu.setZ(false)
-	cpu.setN(false)
-	cpu.setH(false)
-	cpu.setC(1&original == 1)
-}
-
-func (cpu *CPU) shiftLeft(original byte, setter func(byte)) {
-	result := original << 1
-
-	setter(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(false)
-	cpu.setH(false)
-	cpu.setC(original > 0x7F)
-}
-
-func (cpu *CPU) shiftRight(original byte, logical bool, setter func(byte)) {
-	result := original >> 1
-
-	if !logical {
-		result |= (original & 0x80)
-	}
-
-	setter(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(false)
-	cpu.setH(false)
-	cpu.setC(1&original == 1)
-}
-
-func (cpu *CPU) swap(original byte, setter func(byte)) {
-	result := (original >> 4) | (original << 4)
-
-	setter(result)
-
-	cpu.setZ(result == 0)
-	cpu.setN(false)
-	cpu.setH(false)
-	cpu.setC(false)
-}
-
-func (cpu *CPU) testBit(val byte, bit uint8) {
-	cpu.setZ(val>>bit&1 == 1)
-	cpu.setN(false)
-	cpu.setH(true)
-}
-
-func (cpu *CPU) setBit(original byte, bit uint8, setter func(byte)) {
-	setter(original | 1<<bit)
-}
-
-func (cpu *CPU) resetBit(original byte, bit uint8, setter func(byte)) {
-	setter(original & ^(1 << bit))
-}
-
-func (cpu *CPU) call(target uint16) {
-	// Push PC to stack
-	addr := cpu.SP.Dec2()
-	cpu.mmu.Write16(addr, cpu.PC.HiLo())
-
-	// Set PC to new target
-	cpu.PC.Set(target)
-}
-
-func (cpu *CPU) ret() {
-	// Restore PC
-	cpu.PC.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
 }
