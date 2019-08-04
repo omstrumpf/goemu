@@ -234,8 +234,7 @@ func (cpu *CPU) resetBit(original byte, bit uint8, setter func(byte)) {
 // Call pushes PC to the stack, then jumps to the target.
 func (cpu *CPU) call(target uint16) {
 	// Push PC to stack
-	addr := cpu.SP.Dec2()
-	cpu.mmu.Write16(addr, cpu.PC.HiLo())
+	cpu.mmu.Write16(cpu.SP.HiLo(), cpu.PC.HiLo())
 
 	// Set PC to new target
 	cpu.PC.Set(target)
