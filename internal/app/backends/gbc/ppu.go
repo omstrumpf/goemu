@@ -40,6 +40,10 @@ func NewPPU(mmu *MMU) *PPU {
 	ppu.mmu = mmu
 
 	ppu.framebuffer = make([]color.RGBA, 160*144)
+	for i := 0; i < len(ppu.framebuffer); i++ {
+		ppu.framebuffer[i] = color.RGBA{0, 0, 0, 0xFF}
+	}
+
 	ppu.palette = [4]color.RGBA{
 		color.RGBA{255, 255, 255, 0xFF},
 		color.RGBA{192, 192, 192, 0xFF},
@@ -161,18 +165,20 @@ func (ppu *PPU) renderLine() {
 	}
 }
 
+// writePixel writes the given RGBA value into the framebuffer at coordinates (x, y)
 func (ppu *PPU) writePixel(val color.RGBA, x int, y int) {
 	ppu.framebuffer[(y*160)+x] = val
 }
 
+// getTileAddress returns the mmu address of the tile pointed to by the mapAddr
 func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
 	if ppu.bgTileSelect {
-		tileNum := int16(int8(ppu.mmu.Read(mapAddr)))
-		return uint16(int32(0x8000) + int32(tileNum*16))
+		tileNum := uint16(ppu.mmu.Read(mapAddr))
+		return uint16(0x8000) + (tileNum * 16)
 	}
 
-	tileNum := uint16(ppu.mmu.Read(mapAddr))
-	return uint16(0x9000) + (tileNum * 16)
+	tileNum := int16(int8(ppu.mmu.Read(mapAddr)))
+	return uint16(int32(0x9000) + int32(tileNum*16))
 }
 
 //// Control Registers ////
@@ -258,8 +264,7 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 func gbToRGBA(val byte) color.RGBA {
 	switch val {
 	case 0:
-		return color.RGBA{0, 0, 0, 0xFF}
-		// return color.RGBA{255, 255, 255, 0xFF}
+		return color.RGBA{255, 255, 255, 0xFF}
 	case 1:
 		return color.RGBA{192, 192, 192, 0xFF}
 	case 2:
