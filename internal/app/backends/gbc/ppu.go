@@ -132,11 +132,8 @@ func (ppu *PPU) renderLine() {
 		bgAddr = 0x9800
 	}
 
-	// The first tile pointer in this line
-	topLeft := bgAddr + uint16(((ppu.line+ppu.scrollY)&0x00FF)>>3)
-
 	// The first tile pointer to be used
-	tilePointer := topLeft + uint16(ppu.scrollX>>3)
+	tilePointer := bgAddr + uint16(((ppu.line+ppu.scrollY)>>3)*32) + uint16(ppu.scrollX>>3)
 
 	// Address of the current tile data
 	tileAddr := ppu.getTileAddress(tilePointer)
@@ -157,11 +154,12 @@ func (ppu *PPU) renderLine() {
 
 		tileRow := ppu.mmu.Read16(tileAddr + uint16(tileY*2))
 
-		val := byte(tileRow >> (14 - (2 * tileX)))
+		val := byte(tileRow>>(14-(2*tileX))) & 0x03
 
 		pixel := ppu.palette[val]
 		ppu.writePixel(pixel, screenX, screenY)
 		screenX++
+		tileX++
 	}
 }
 
@@ -261,22 +259,6 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 }
 
 //// Helpers ////
-func gbToRGBA(val byte) color.RGBA {
-	switch val {
-	case 0:
-		return color.RGBA{255, 255, 255, 0xFF}
-	case 1:
-		return color.RGBA{192, 192, 192, 0xFF}
-	case 2:
-		return color.RGBA{96, 96, 96, 0xFF}
-	case 3:
-		return color.RGBA{0, 0, 0, 0xFF}
-	}
-
-	log.Printf("Unrecognized gb color value: %d", val)
-	return color.RGBA{255, 255, 255, 0xFF}
-}
-
 func min(a int, b int) int {
 	if a < b {
 		return a
