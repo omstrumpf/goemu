@@ -79,6 +79,13 @@ func (mmu *MMU) Read(addr uint16) byte {
 
 // Write writes the 8-bit value to the address
 func (mmu *MMU) Write(addr uint16, val byte) {
+	// TODO remove this hack
+	if addr == 0xFF50 {
+		mmu.DisableBios()
+		log.Print("Disabled bios!")
+		panic("bye")
+	}
+
 	device, offset := mmu.mmapLocation(addr)
 	device.Write(offset, val)
 }
