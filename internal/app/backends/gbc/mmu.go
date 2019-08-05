@@ -51,17 +51,17 @@ func NewMMU() *MMU {
 
 // LoadROM loads a ROM into memory
 func (mmu *MMU) LoadROM(buf []byte) {
-	buflen := uint16(len(buf))
+	buflen := len(buf)
 
 	if buflen > romlen {
 		log.Printf("Insufficient memory capacity for ROM: %#4x", buflen)
 	}
 
-	for i := uint16(0); i < romlen; i++ {
+	for i := 0; i < romlen; i++ {
 		if i < buflen {
-			mmu.rom.Write(i, buf[i])
+			mmu.rom.Write(uint16(i), buf[i])
 		} else {
-			mmu.rom.Write(i, 0)
+			mmu.rom.Write(uint16(i), 0)
 		}
 	}
 }
@@ -82,8 +82,6 @@ func (mmu *MMU) Write(addr uint16, val byte) {
 	// TODO remove this hack
 	if addr == 0xFF50 {
 		mmu.DisableBios()
-		log.Print("Disabled bios!")
-		panic("bye")
 	}
 
 	device, offset := mmu.mmapLocation(addr)

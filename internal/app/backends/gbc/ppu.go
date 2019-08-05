@@ -95,7 +95,7 @@ func (ppu *PPU) UpdateToClock(clock int) {
 				advance := min(clock-ppu.clock, 1140-ppu.timeInMode)
 				ppu.clock += advance
 				ppu.timeInMode += advance
-				ppu.line = 144 + byte((1140-ppu.timeInMode)/9)
+				ppu.line = 144
 			}
 		case 2: // OAM
 			if ppu.timeInMode == 20 {
