@@ -20,7 +20,7 @@ func _main() {
 
 	gameboy := gbc.NewGBC()
 
-	buf, err := ioutil.ReadFile("roms/cpu_instrs.gb")
+	buf, err := ioutil.ReadFile("roms/scroll_test.gb")
 	if err != nil {
 		panic(err)
 	}
