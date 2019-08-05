@@ -24,10 +24,16 @@ type PPU struct {
 	spriteEnable bool // Enables the sprite
 	bgEnable     bool // Enables rendering the background
 
-	mode       byte // Mode Number (0: HBLANK, 1: VBLANK, 2: OAM, 3: VRAM)
-	clock      int  // PPU clock
-	timeInMode int  // Number of clock cycles spent in the current mode
-	line       byte // Line currently being processed
+	mode        byte // Mode Number (0: HBLANK, 1: VBLANK, 2: OAM, 3: VRAM)
+	clock       int  // PPU clock
+	timeInMode  int  // Number of clock cycles spent in the current mode
+	line        byte // Line currently being processed
+	lineCompare byte // Target line for interrupt
+
+	interrupt0   bool // Trigger an interrupt on entering mode 0
+	interrupt1   bool // Trigger an interrupt on entering mode 1
+	interrupt2   bool // Trigger an interrupt on entering mode 2
+	interruptLYC bool // Trigger an interrupt when line matches lineCompare
 
 	scrollX byte // Background scroll X
 	scrollY byte // Background scroll Y
@@ -74,11 +80,20 @@ func (ppu *PPU) UpdateToClock(clock int) {
 
 				ppu.line++
 
-				if ppu.line == 143 {
+				if ppu.interruptLYC && ppu.line == ppu.lineCompare {
+					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+				}
 
+				if ppu.line == 143 {
 					ppu.mode = 1
+					if ppu.interrupt1 {
+						ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+					}
 				} else {
 					ppu.mode = 2
+					if ppu.interrupt2 {
+						ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+					}
 				}
 			} else {
 				advance := min(clock-ppu.clock, 51-ppu.timeInMode)
@@ -91,6 +106,10 @@ func (ppu *PPU) UpdateToClock(clock int) {
 
 				ppu.mode = 2
 				ppu.line = 0
+
+				if ppu.interrupt2 {
+					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+				}
 			} else {
 				advance := min(clock-ppu.clock, 1140-ppu.timeInMode)
 				ppu.clock += advance
@@ -112,6 +131,10 @@ func (ppu *PPU) UpdateToClock(clock int) {
 				ppu.timeInMode = 0
 
 				ppu.mode = 0
+
+				if ppu.interrupt0 {
+					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+				}
 
 				ppu.renderLine()
 			} else {
@@ -214,12 +237,33 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 			ret |= 0x01
 		}
 		return ret
+	case 0x01:
+		var ret byte
+		ret = ppc.ppu.mode
+		if ppc.ppu.line == ppc.ppu.lineCompare {
+			ret |= 0x04
+		}
+		if ppc.ppu.interrupt0 {
+			ret |= 0x08
+		}
+		if ppc.ppu.interrupt1 {
+			ret |= 0x10
+		}
+		if ppc.ppu.interrupt2 {
+			ret |= 0x20
+		}
+		if ppc.ppu.interruptLYC {
+			ret |= 0x40
+		}
+		return ret
 	case 0x02:
 		return ppc.ppu.scrollY
 	case 0x03:
 		return ppc.ppu.scrollX
 	case 0x04:
 		return ppc.ppu.line
+	case 0x05:
+		return ppc.ppu.lineCompare
 	}
 
 	log.Printf("Encountered unknown PPU control address: %#2x", addr)
@@ -237,6 +281,11 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		ppc.ppu.spriteSize = (val&0x04 != 0)
 		ppc.ppu.spriteEnable = (val&0x02 != 0)
 		ppc.ppu.bgEnable = (val&0x01 != 0)
+	case 0x01:
+		ppc.ppu.interrupt0 = (val&0x08 != 0)
+		ppc.ppu.interrupt1 = (val&0x10 != 0)
+		ppc.ppu.interrupt2 = (val&0x20 != 0)
+		ppc.ppu.interruptLYC = (val&0x40 != 0)
 	case 0x02:
 		ppc.ppu.scrollY = val
 	case 0x03:

@@ -85,5 +85,6 @@ func TestCPUFlags(t *testing.T) {
 	if cpu.AF.Hi() != 0xFF {
 		t.Errorf("Expected A register to remain 0xFF, got %#2x", cpu.AF.Hi())
 	}
-
 }
+
+// TODO test interrupts

@@ -53,6 +53,9 @@ func (cpu *CPU) ProcessNextInstruction() {
 
 	// Increment the clock accordingly
 	cpu.clock += cpu.cycles[opcode]
+
+	// Check for interrupts
+	cpu.handleInterrupts()
 }
 
 // IsHalted returns true if the CPU is halted
@@ -63,6 +66,37 @@ func (cpu *CPU) IsHalted() bool {
 // IsStopped returns true if the CPU is stopped
 func (cpu *CPU) IsStopped() bool {
 	return cpu.stop
+}
+
+// Interrupts
+func (cpu *CPU) handleInterrupts() {
+	if !cpu.ime {
+		return
+	}
+
+	interruptByte := cpu.mmu.Read(0xFFFF) & cpu.mmu.Read(0xFF0F)
+
+	if interruptByte&1 != 0 { // V-Blank
+		cpu.mmu.interrupts.ResetInterrupt(interruptVBlankBit)
+		cpu.ime = false
+		cpu.call(0x40)
+	} else if interruptByte&2 != 0 { // LCD STAT
+		cpu.mmu.interrupts.ResetInterrupt(interruptLCDBit)
+		cpu.ime = false
+		cpu.call(0x48)
+	} else if interruptByte&4 != 0 { // Timer
+		cpu.mmu.interrupts.ResetInterrupt(interruptTimerBit)
+		cpu.ime = false
+		cpu.call(0x50)
+	} else if interruptByte&8 != 0 { // Serial
+		cpu.mmu.interrupts.ResetInterrupt(interruptSerialBit)
+		cpu.ime = false
+		cpu.call(0x58)
+	} else if interruptByte&16 != 0 { // Joypad
+		cpu.mmu.interrupts.ResetInterrupt(interruptJoypadBit)
+		cpu.ime = false
+		cpu.call(0x60)
+	}
 }
 
 // Flags
