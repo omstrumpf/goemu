@@ -6,11 +6,13 @@ import (
 
 const (
 	romlen  = 0x8000
-	vramlen = 0x8000
+	vramlen = 0x2000
 	eramlen = 0x2000
 	wramlen = 0x2000
 	goamlen = 0xA0
 	zramlen = 0x80
+
+	totalramlen = 0x10000
 )
 
 // MMU represents the memory management unit.
@@ -57,16 +59,28 @@ func NewMMU() *MMU {
 func (mmu *MMU) LoadROM(buf []byte) {
 	buflen := len(buf)
 
-	if buflen > romlen {
+	if buflen > totalramlen {
 		log.Printf("Insufficient memory capacity for ROM: %#4x", buflen)
 	}
 
-	for i := 0; i < romlen; i++ {
-		if i < buflen {
-			mmu.rom.Write(uint16(i), buf[i])
-		} else {
-			mmu.rom.Write(uint16(i), 0)
-		}
+	j := 0
+	for i := 0; i < romlen && i+j < buflen; i++ {
+		mmu.rom.Write(uint16(i), buf[i])
+	}
+	j += romlen
+
+	for i := 0; i < vramlen && i+j < buflen; i++ {
+		mmu.vram.Write(uint16(i), buf[i+j])
+	}
+	j += vramlen
+
+	for i := 0; i < eramlen && i+j < buflen; i++ {
+		mmu.eram.Write(uint16(i), buf[i+j])
+	}
+	j += eramlen
+
+	for i := 0; i < wramlen && i+j < buflen; i++ {
+		mmu.eram.Write(uint16(i), buf[i+j])
 	}
 }
 

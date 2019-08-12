@@ -16,7 +16,7 @@ func main() {
 }
 
 func _main() {
-	fmt.Println("Welcome to gomu!")
+	fmt.Println("Welcome to goemu!")
 
 	gameboy := gbc.NewGBC()
 

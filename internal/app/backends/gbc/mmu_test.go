@@ -80,7 +80,7 @@ func TestMMUMappings(t *testing.T) {
 	mmu.Write(0xDFFF, 0xA) // WRAM
 	mmu.Write(0xFE00, 0xB) // GOAM
 	mmu.Write(0xFF80, 0xC) // ZRAM
-	mmu.Write(0xFFFF, 0xD) // ZRAM
+	mmu.Write(0xFFFE, 0xD) // ZRAM
 
 	if mmu.bios.Read(0x0000) != 0x1 {
 		t.Errorf("Expected to read 0x1 from bios memory, got %#2x", mmu.bios.Read(0x0000))
@@ -118,8 +118,8 @@ func TestMMUMappings(t *testing.T) {
 	if mmu.zram.Read(0x0000) != 0xC {
 		t.Errorf("Expected to read 0xC from zram, got %#2x", mmu.zram.Read(0x0000))
 	}
-	if mmu.zram.Read(0x007F) != 0xD {
-		t.Errorf("Expected to read 0xD from zram, got %#2x", mmu.zram.Read(0x007F))
+	if mmu.zram.Read(0x007E) != 0xD {
+		t.Errorf("Expected to read 0xD from zram, got %#2x", mmu.zram.Read(0x007E))
 	}
 
 	if mmu.Read(0xE000) != 0x9 {
@@ -144,10 +144,10 @@ func TestMMULoadRom(t *testing.T) {
 	mmu := NewMMU()
 
 	buf := []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}
-
-	mmu.LoadROM(buf)
+	// TODO test with a larger ROM
 
 	mmu.DisableBios()
+	mmu.LoadROM(buf)
 
 	for i, b := range buf {
 		if b != mmu.Read(uint16(i)) {
