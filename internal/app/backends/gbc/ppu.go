@@ -115,6 +115,9 @@ func (ppu *PPU) UpdateToClock(clock int) {
 				ppu.clock += advance
 				ppu.timeInMode += advance
 				ppu.line = 144
+				if ppu.interruptLYC && ppu.lineCompare >= 143 {
+					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+				}
 			}
 		case 2: // OAM
 			if ppu.timeInMode == 20 {

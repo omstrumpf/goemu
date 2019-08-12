@@ -372,7 +372,131 @@ func TestPPURenderLine(t *testing.T) {
 }
 
 func TestPPUTiming(t *testing.T) {
-	// TODO Test UpdateToClock timing
+	mmu := NewMMU()
+	ppu := NewPPU(mmu)
+	mmu.ppu = ppu
+
+	ppu.UpdateToClock(0)
+	if ppu.clock != 0 {
+		t.Errorf("Expected PPU clock to remain 0, got %d", ppu.clock)
+	}
+	if ppu.mode != 2 {
+		t.Errorf("Expected PPU to init in mode 2, got %d", ppu.mode)
+	}
+
+	ppu.UpdateToClock(20)
+	if ppu.clock != 20 {
+		t.Errorf("Expected PPU clock to match CPU clock of 20, got %d", ppu.clock)
+	}
+	if ppu.mode != 2 {
+		t.Errorf("Expected PPU to remain in mode 2, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 20 {
+		t.Errorf("Expected PPU to track time in mode correctly as 20, got %d", ppu.timeInMode)
+	}
+
+	ppu.UpdateToClock(21)
+	if ppu.clock != 21 {
+		t.Errorf("Expected PPU clock to match CPU clock of 21, got %d", ppu.clock)
+	}
+	if ppu.mode != 3 {
+		t.Errorf("Expected PPU to advance to mode 3, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 1 {
+		t.Errorf("Expected PPU to reset time in mode, got %d", ppu.timeInMode)
+	}
+
+	ppu.UpdateToClock(63)
+	if ppu.clock != 63 {
+		t.Errorf("Expected PPU clock to match CPU clock of 63, got %d", ppu.clock)
+	}
+	if ppu.mode != 3 {
+		t.Errorf("Expected PPU to remain in mode 3, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 43 {
+		t.Errorf("Expected PPU to track time in mode correctly as 43, got %d", ppu.timeInMode)
+	}
+
+	ppu.UpdateToClock(64)
+	if ppu.clock != 64 {
+		t.Errorf("Expected PPU clock to match CPU clock of 64, got %d", ppu.clock)
+	}
+	if ppu.mode != 0 {
+		t.Errorf("Expected PPU to advance to mode 0, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 1 {
+		t.Errorf("Expected PPU to reset time in mode, got %d", ppu.timeInMode)
+	}
+
+	ppu.UpdateToClock(114)
+	if ppu.clock != 114 {
+		t.Errorf("Expected PPU clock to match CPU clock of 114, got %d", ppu.clock)
+	}
+	if ppu.mode != 0 {
+		t.Errorf("Expected PPU to remain in mode 0, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 51 {
+		t.Errorf("Expected PPU to track time in mode correctly as 51, got %d", ppu.timeInMode)
+	}
+
+	if ppu.line != 0 {
+		t.Errorf("Expected PPU to be rendering line 0, got %d", ppu.line)
+	}
+
+	ppu.UpdateToClock(115)
+	if ppu.clock != 115 {
+		t.Errorf("Expected PPU clock to match CPU clock of 115, got %d", ppu.clock)
+	}
+	if ppu.mode != 2 {
+		t.Errorf("Expected PPU to advance to mode 2, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 1 {
+		t.Errorf("Expected PPU to reset time in mode, got %d", ppu.timeInMode)
+	}
+	if ppu.line != 1 {
+		t.Errorf("Expected PPU to advance line to 1, got %d", ppu.line)
+	}
+
+	ppu.UpdateToClock(16302)
+	if ppu.mode != 0 {
+		t.Errorf("Expected PPU to be in mode 0, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 51 {
+		t.Errorf("Expected PPU to track time in mode correctly as 51, got %d", ppu.timeInMode)
+	}
+	if ppu.line != 142 {
+		t.Errorf("Expected PPU line to be 142, got %d", ppu.line)
+	}
+
+	ppu.UpdateToClock(16303)
+	if ppu.mode != 1 {
+		t.Errorf("Expected PPU to be in mode 1, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 1 {
+		t.Errorf("Expected PPU to reset time in mode, got %d", ppu.timeInMode)
+	}
+	if ppu.line != 144 {
+		t.Errorf("Expected PPU line to be 144, got %d", ppu.line)
+	}
+
+	ppu.UpdateToClock(17442)
+	if ppu.mode != 1 {
+		t.Errorf("Expected PPU to be in mode 1, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 1140 {
+		t.Errorf("Expected PPU to track time in mode correctly as 1140, got %d", ppu.timeInMode)
+	}
+
+	ppu.UpdateToClock(17443)
+	if ppu.mode != 2 {
+		t.Errorf("Expected PPU to advance to mode 2, got %d", ppu.mode)
+	}
+	if ppu.timeInMode != 1 {
+		t.Errorf("Expected PPU to reset time in mode, got %d", ppu.timeInMode)
+	}
+	if ppu.line != 0 {
+		t.Errorf("Expected PPU line to be reset, got %d", ppu.line)
+	}
 }
 
 func TestPPUUpdateToClock(t *testing.T) {
@@ -381,4 +505,8 @@ func TestPPUUpdateToClock(t *testing.T) {
 
 func TestPPUControlDevice(t *testing.T) {
 	// TODO test control memory device read/write
+}
+
+func TestPPUInterrupts(t *testing.T) {
+	// TODO test get/set of interrupts, and correct firing
 }
