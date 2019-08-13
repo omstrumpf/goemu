@@ -284,17 +284,25 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		ppc.ppu.spriteSize = (val&0x04 != 0)
 		ppc.ppu.spriteEnable = (val&0x02 != 0)
 		ppc.ppu.bgEnable = (val&0x01 != 0)
+		return
 	case 0x01:
 		ppc.ppu.interrupt0 = (val&0x08 != 0)
 		ppc.ppu.interrupt1 = (val&0x10 != 0)
 		ppc.ppu.interrupt2 = (val&0x20 != 0)
 		ppc.ppu.interruptLYC = (val&0x40 != 0)
+		return
 	case 0x02:
 		ppc.ppu.scrollY = val
+		return
 	case 0x03:
 		ppc.ppu.scrollX = val
+		return
 	case 0x04:
 		ppc.ppu.line = val
+		return
+	case 0x05:
+		ppc.ppu.lineCompare = val
+		return
 	case 0x07:
 		for i := uint8(0); i < 4; i++ {
 			switch (val >> (i * 2)) & 3 {
@@ -308,7 +316,10 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 				ppc.ppu.palette[i] = color.RGBA{0, 0, 0, 0xFF}
 			}
 		}
+		return
 	}
+
+	log.Printf("Encountered unknown PPU control address: %#2x", addr)
 }
 
 //// Helpers ////
