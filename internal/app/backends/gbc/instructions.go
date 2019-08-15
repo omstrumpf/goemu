@@ -216,7 +216,7 @@ func (cpu *CPU) swap(original byte, setter func(byte)) {
 
 // TestBit tests a bit of the value.
 func (cpu *CPU) testBit(val byte, bit uint8) {
-	cpu.setZ(val>>bit&1 == 1)
+	cpu.setZ(val>>bit&1 != 1)
 	cpu.setN(false)
 	cpu.setH(true)
 }
