@@ -33,16 +33,16 @@ func (io *IO) ProcessInput() {
 	// TODO
 }
 
-// Render renders the gba's frame buffer to the display
+// Render renders the console's frame buffer to the display
 func (io *IO) Render() {
-	io.win.Clear(color.RGBA{R: 255, G: 0, B: 0, A: 0xFF})
+	io.win.Clear(color.RGBA{R: 0, G: 0, B: 0, A: 0xFF})
 
 	picture := pixel.Picture(io.pic)
 	sprite := pixel.NewSprite(picture, picture.Bounds())
 	sprite.Draw(io.win, pixel.IM)
 
 	shift := io.win.Bounds().Size().Scaled(0.5).Sub(pixel.ZV)
-	mat := pixel.IM.Scaled(pixel.ZV, 1).Moved(shift)
+	mat := pixel.IM.Scaled(pixel.ZV, io.getScaleFactor()).Moved(shift)
 	io.win.SetMatrix(mat)
 
 	io.win.Update()
@@ -55,8 +55,9 @@ func (io *IO) ShouldExit() bool {
 
 func (io *IO) setupWindow() {
 	win, err := pixelgl.NewWindow(pixelgl.WindowConfig{
-		Title:  "GoEmu Emulator (" + io.console.GetConsoleName() + ")",
-		Bounds: pixel.R(0, 0, float64(io.console.GetScreenWidth()), float64(io.console.GetScreenHeight())), // TODO scaling
+		Title:     "GoEmu Emulator (" + io.console.GetConsoleName() + ")",
+		Bounds:    pixel.R(0, 0, float64(io.console.GetScreenWidth()), float64(io.console.GetScreenHeight())),
+		Resizable: true,
 	})
 	if err != nil {
 		panic(err)
@@ -71,4 +72,14 @@ func (io *IO) setupPicture() {
 		Stride: io.console.GetScreenWidth(),
 		Rect:   pixel.R(0, 0, float64(io.console.GetScreenWidth()), float64(io.console.GetScreenHeight())),
 	}
+}
+
+func (io *IO) getScaleFactor() float64 {
+	scaleWidth := io.win.Bounds().W() / float64(io.console.GetScreenWidth())
+	scaleHeight := io.win.Bounds().H() / float64(io.console.GetScreenHeight())
+
+	if scaleWidth < scaleHeight {
+		return scaleWidth
+	}
+	return scaleHeight
 }
