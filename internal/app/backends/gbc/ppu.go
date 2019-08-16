@@ -46,9 +46,7 @@ func NewPPU(mmu *MMU) *PPU {
 	ppu.mmu = mmu
 
 	ppu.framebuffer = make([]color.RGBA, 160*144)
-	for i := 0; i < len(ppu.framebuffer); i++ {
-		ppu.framebuffer[i] = color.RGBA{0, 0, 0, 0xFF}
-	}
+	ppu.clearScrean()
 
 	ppu.palette = [4]color.RGBA{
 		color.RGBA{255, 255, 255, 0xFF},
@@ -56,10 +54,6 @@ func NewPPU(mmu *MMU) *PPU {
 		color.RGBA{96, 96, 96, 0xFF},
 		color.RGBA{0, 0, 0, 0xFF},
 	}
-
-	ppu.lcdEnable = true
-	ppu.windowMap = true
-	ppu.bgEnable = true
 
 	ppu.mode = 2 // Start in OAM mode
 
@@ -150,6 +144,11 @@ func (ppu *PPU) UpdateToClock(clock int) {
 }
 
 func (ppu *PPU) renderLine() {
+	if !ppu.lcdEnable {
+		ppu.clearScrean()
+		return
+	}
+
 	var bgAddr uint16
 
 	// Base VRAM address for the background map
@@ -179,12 +178,10 @@ func (ppu *PPU) renderLine() {
 			tileAddr = ppu.getTileAddress(tilePointer)
 		}
 
-		tileRow := ppu.mmu.Read16(tileAddr + uint16(tileY*2))
-
-		val := byte(tileRow>>(14-(2*tileX))) & 0x03
-
+		val := ppu.getTileVal(tileAddr, tileX, tileY)
 		pixel := ppu.palette[val]
 		ppu.writePixel(pixel, screenX, screenY)
+
 		screenX++
 		tileX++
 	}
@@ -193,6 +190,24 @@ func (ppu *PPU) renderLine() {
 // writePixel writes the given RGBA value into the framebuffer at coordinates (x, y)
 func (ppu *PPU) writePixel(val color.RGBA, x int, y int) {
 	ppu.framebuffer[(y*160)+x] = val
+}
+
+// getTileVal returns the 2 bit value for a tile pixel
+func (ppu *PPU) getTileVal(tileAddr uint16, tileX byte, tileY byte) byte {
+	bit := byte(1 << (7 - tileX))
+
+	tileLo := ppu.mmu.Read(tileAddr + uint16(tileY*2))
+	tileHi := ppu.mmu.Read(tileAddr + uint16(tileY*2) + 1)
+
+	val := byte(0)
+	if tileLo&bit > 0 {
+		val++
+	}
+	if tileHi&bit > 0 {
+		val += 2
+	}
+
+	return val
 }
 
 // getTileAddress returns the mmu address of the tile pointed to by the mapAddr
@@ -204,6 +219,13 @@ func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
 
 	tileNum := int16(int8(ppu.mmu.Read(mapAddr)))
 	return uint16(int32(0x9000) + int32(tileNum*16))
+}
+
+// clearScrean sets the framebuffer to all black
+func (ppu *PPU) clearScrean() {
+	for i := range ppu.framebuffer {
+		ppu.framebuffer[i] = color.RGBA{0, 0, 0, 0xFF}
+	}
 }
 
 //// Control Registers ////
@@ -269,7 +291,7 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		return ppc.ppu.lineCompare
 	}
 
-	log.Printf("Encountered unknown PPU control address: %#2x", addr)
+	log.Printf("Encountered read with unknown PPU control address: %#02x", addr)
 	return 0
 }
 
@@ -319,7 +341,7 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		return
 	}
 
-	log.Printf("Encountered unknown PPU control address: %#2x", addr)
+	log.Printf("Encountered write with unknown PPU control address: %#2x", addr)
 }
 
 //// Helpers ////

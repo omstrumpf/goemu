@@ -184,18 +184,22 @@ func TestPPURenderLine(t *testing.T) {
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 
+	ppu.lcdEnable = true
+	ppu.bgEnable = true
+	ppu.windowMap = true
+
 	// Create 4 tiles in each tileset
 	for i := byte(0); i < 8; i++ {
 		mmu.Write16(0x8000+uint16(i*2), 0xFFFF) // Black
 		mmu.Write16(0x9000+uint16(i*2), 0x0000) // White
 	}
 	for i := byte(0); i < 8; i++ {
-		mmu.Write16(0x8010+uint16(i*2), 0xAAAA) // Dark Gray
-		mmu.Write16(0x9010+uint16(i*2), 0x5555) // Light Gray
+		mmu.Write16(0x8010+uint16(i*2), 0xFF00) // Dark Gray
+		mmu.Write16(0x9010+uint16(i*2), 0x00FF) // Light Gray
 	}
 	for i := byte(0); i < 8; i++ {
-		mmu.Write16(0x8020+uint16(i*2), 0x5555) // Light Gray
-		mmu.Write16(0x9020+uint16(i*2), 0xAAAA) // Dark Gray
+		mmu.Write16(0x8020+uint16(i*2), 0x00FF) // Light Gray
+		mmu.Write16(0x9020+uint16(i*2), 0xFF00) // Dark Gray
 	}
 	for i := byte(0); i < 8; i++ {
 		mmu.Write16(0x8030+uint16(i*2), 0x0000) // White
