@@ -231,10 +231,21 @@ func (cpu *CPU) resetBit(original byte, bit uint8, setter func(byte)) {
 	setter(original & ^(1 << bit))
 }
 
+// Push pushes the value to the stack
+func (cpu *CPU) push(val uint16) {
+	cpu.SP.Dec2()
+	cpu.mmu.Write16(cpu.SP.HiLo(), val)
+}
+
+// Pop pops the stack into the given setter function
+func (cpu *CPU) pop(setter func(uint16)) {
+	setter(cpu.mmu.Read16(cpu.SP.Inc2()))
+}
+
 // Call pushes PC to the stack, then jumps to the target.
 func (cpu *CPU) call(target uint16) {
 	// Push PC to stack
-	cpu.mmu.Write16(cpu.SP.HiLo(), cpu.PC.HiLo())
+	cpu.push(cpu.PC.HiLo())
 
 	// Set PC to new target
 	cpu.PC.Set(target)
@@ -243,7 +254,7 @@ func (cpu *CPU) call(target uint16) {
 // Ret pops the return address off the stack, and jumps to it.
 func (cpu *CPU) ret() {
 	// Restore PC
-	cpu.PC.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
+	cpu.pop(cpu.PC.Set)
 }
 
 // PopulateInstructions populates the cpu opcode maps for instructions and cycle costs
@@ -533,33 +544,29 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 
 		0xC5: func() { // PUSH BC
-			cpu.SP.Dec2()
-			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.BC.HiLo())
+			cpu.push(cpu.BC.HiLo())
 		},
 		0xD5: func() { // PUSH DE
-			cpu.SP.Dec2()
-			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.DE.HiLo())
+			cpu.push(cpu.DE.HiLo())
 		},
 		0xE5: func() { // PUSH HL
-			cpu.SP.Dec2()
-			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.HL.HiLo())
+			cpu.push(cpu.HL.HiLo())
 		},
 		0xF5: func() { // PUSH AF
-			cpu.SP.Dec2()
-			cpu.mmu.Write16(cpu.SP.HiLo(), cpu.AF.HiLo())
+			cpu.push(cpu.AF.HiLo())
 		},
 
 		0xC1: func() { // POP BC
-			cpu.BC.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
+			cpu.pop(cpu.BC.Set)
 		},
 		0xD1: func() { // POP DE
-			cpu.DE.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
+			cpu.pop(cpu.DE.Set)
 		},
 		0xE1: func() { // POP HL
-			cpu.HL.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
+			cpu.pop(cpu.HL.Set)
 		},
 		0xF1: func() { // POP AF
-			cpu.AF.Set(cpu.mmu.Read16(cpu.SP.Inc2()))
+			cpu.pop(cpu.AF.Set)
 		},
 
 		//// 8-bit ALU ////
