@@ -38,15 +38,6 @@ func TestPPUInit(t *testing.T) {
 		t.Error("Palette should initialize correctly")
 	}
 
-	if !ppu.lcdEnable {
-		t.Error("lcdEnable should initialize to true")
-	}
-	if !ppu.windowMap {
-		t.Error("windowMap should initialize to true")
-	}
-	if !ppu.bgEnable {
-		t.Error("bgEnable should initialize to true")
-	}
 	if ppu.mode != 2 {
 		t.Errorf("Expected mode to initialize to 2, got %d", ppu.mode)
 	}
@@ -88,6 +79,52 @@ func TestPPUTileAddress(t *testing.T) {
 	}
 	if ppu.getTileAddress(0x9FFF) != 0x8FF0 {
 		t.Errorf("Expected tile at address 0x9FFF to be 0x8FF0, got %#4x", ppu.getTileAddress(0x9FFF))
+	}
+}
+
+func TestPPURenderPixel(t *testing.T) {
+	mmu := NewMMU()
+	ppu := NewPPU(mmu)
+	mmu.ppu = ppu
+
+	mmu.Write16(0x8000, 0x3A5C)
+	mmu.Write16(0x8002, 0x5C3A)
+
+	if ppu.getTileVal(0x8000, 0, 0) != 0 {
+		t.Errorf("Expected tile value at 0x8000,0,0 to be 0, got %d", ppu.getTileVal(0x8000, 0, 0))
+	}
+	if ppu.getTileVal(0x8000, 1, 0) != 1 {
+		t.Errorf("Expected tile value at 0x8000,1,0 to be 1, got %d", ppu.getTileVal(0x8000, 1, 0))
+	}
+	if ppu.getTileVal(0x8000, 2, 0) != 2 {
+		t.Errorf("Expected tile value at 0x8000,2,0 to be 2, got %d", ppu.getTileVal(0x8000, 2, 0))
+	}
+	if ppu.getTileVal(0x8000, 3, 0) != 3 {
+		t.Errorf("Expected tile value at 0x8000,3,0 to be 3, got %d", ppu.getTileVal(0x8000, 3, 0))
+	}
+	if ppu.getTileVal(0x8000, 4, 0) != 3 {
+		t.Errorf("Expected tile value at 0x8000,4,0 to be 3, got %d", ppu.getTileVal(0x8000, 4, 0))
+	}
+	if ppu.getTileVal(0x8000, 5, 0) != 1 {
+		t.Errorf("Expected tile value at 0x8000,5,0 to be 1, got %d", ppu.getTileVal(0x8000, 5, 0))
+	}
+	if ppu.getTileVal(0x8000, 6, 0) != 2 {
+		t.Errorf("Expected tile value at 0x8000,6,0 to be 2, got %d", ppu.getTileVal(0x8000, 6, 0))
+	}
+	if ppu.getTileVal(0x8000, 7, 0) != 0 {
+		t.Errorf("Expected tile value at 0x8000,7,0 to be 0, got %d", ppu.getTileVal(0x8000, 7, 0))
+	}
+	if ppu.getTileVal(0x8000, 0, 1) != 0 {
+		t.Errorf("Expected tile value at 0x8000,0,1 to be 0, got %d", ppu.getTileVal(0x8000, 0, 1))
+	}
+	if ppu.getTileVal(0x8000, 1, 1) != 2 {
+		t.Errorf("Expected tile value at 0x8000,1,1 to be 2, got %d", ppu.getTileVal(0x8000, 1, 1))
+	}
+	if ppu.getTileVal(0x8000, 2, 1) != 1 {
+		t.Errorf("Expected tile value at 0x8000,2,1 to be 1, got %d", ppu.getTileVal(0x8000, 2, 1))
+	}
+	if ppu.getTileVal(0x8000, 3, 1) != 3 {
+		t.Errorf("Expected tile value at 0x8000,3,1 to be 3, got %d", ppu.getTileVal(0x8000, 3, 1))
 	}
 }
 
