@@ -149,9 +149,8 @@ func (ppu *PPU) renderLine() {
 		return
 	}
 
-	var bgAddr uint16
-
 	// Base VRAM address for the background map
+	var bgAddr uint16
 	if ppu.bgMap {
 		bgAddr = 0x9C00
 	} else {
@@ -159,7 +158,9 @@ func (ppu *PPU) renderLine() {
 	}
 
 	// The first tile pointer to be used
-	tilePointer := bgAddr + uint16(((ppu.line+ppu.scrollY)>>3)*32) + uint16(ppu.scrollX>>3)
+	tileShiftY := uint16((ppu.line+ppu.scrollY)>>3) * 32
+	tileShiftX := uint16(ppu.scrollX >> 3)
+	tilePointer := bgAddr + tileShiftY + tileShiftX
 
 	// Address of the current tile data
 	tileAddr := ppu.getTileAddress(tilePointer)
