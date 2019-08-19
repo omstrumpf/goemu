@@ -42,7 +42,7 @@ func (io *IO) Render() {
 	sprite.Draw(io.win, pixel.IM)
 
 	shift := io.win.Bounds().Size().Scaled(0.5).Sub(pixel.ZV)
-	mat := pixel.IM.Scaled(pixel.ZV, io.getScaleFactor()).Moved(shift)
+	mat := pixel.IM.ScaledXY(pixel.ZV, pixel.V(io.getScaleFactor(), io.getScaleFactor()*-1)).Moved(shift)
 	io.win.SetMatrix(mat)
 
 	io.win.Update()
