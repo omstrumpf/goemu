@@ -7,9 +7,9 @@ import (
 
 const (
 	// ClockSpeed is the number of CPU cycles emulated per second. Increase to speed-up game time.
-	ClockSpeed = 4194304
+	ClockSpeed = 1048576
 
-	// FPS is the target frames per second for the PPU
+	// FPS is the target frames per second for the display
 	FPS = 60
 
 	// FrameTime is the real-time duration of a single frame
