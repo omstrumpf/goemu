@@ -3,6 +3,7 @@ package gbc
 import (
 	"image/color"
 	"log"
+	"math"
 )
 
 // PPU represents the gameboy's graphics processing unit.
@@ -105,13 +106,13 @@ func (ppu *PPU) UpdateToClock(clock int) {
 					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
 				}
 			} else {
-				advance := min(clock-ppu.clock, 1140-ppu.timeInMode)
-				ppu.clock += advance
-				ppu.timeInMode += advance
-				ppu.line = 144
-				if ppu.interruptLYC && ppu.lineCompare >= 143 {
+				if ppu.interruptLYC && ppu.lineCompare == 143 {
 					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
 				}
+				advance := min(clock-ppu.clock, min(1140-ppu.timeInMode, 128))
+				ppu.clock += advance
+				ppu.timeInMode += advance
+				ppu.line = byte(144 + math.Round(9*(float64(ppu.timeInMode)/1140)))
 			}
 		case 2: // OAM
 			if ppu.timeInMode == 20 {
