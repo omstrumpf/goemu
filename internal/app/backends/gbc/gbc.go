@@ -4,7 +4,7 @@ import (
 	"image/color"
 	"time"
 
-	"github.com/omstrumpf/goemu/internal/app/buttons"
+	"github.com/omstrumpf/goemu/internal/app/console"
 )
 
 const (
@@ -66,12 +66,13 @@ func (gbc *GBC) LoadROM(rom []byte) {
 }
 
 // PressButton presses the given button
-func (gbc *GBC) PressButton(b buttons.Button) {
+func (gbc *GBC) PressButton(b console.Button) {
 	gbc.mmu.inputs.PressButton(b)
+	gbc.mmu.interrupts.RequestInterrupt(interruptJoypadBit)
 }
 
 // ReleaseButton releases the given button
-func (gbc *GBC) ReleaseButton(b buttons.Button) {
+func (gbc *GBC) ReleaseButton(b console.Button) {
 	gbc.mmu.inputs.ReleaseButton(b)
 }
 

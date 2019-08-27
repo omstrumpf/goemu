@@ -1,4 +1,27 @@
-package buttons
+package console
+
+import (
+	"image/color"
+	"time"
+)
+
+// Console is the interface for a console backend
+type Console interface {
+	Tick()
+
+	LoadROM([]byte)
+
+	PressButton(Button)
+	ReleaseButton(Button)
+
+	IsStopped() bool
+
+	GetFrameBuffer() []color.RGBA
+	GetFrameTime() time.Duration
+	GetScreenWidth() int
+	GetScreenHeight() int
+	GetConsoleName() string
+}
 
 // Button represents a button on the console
 type Button byte

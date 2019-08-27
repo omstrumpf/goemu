@@ -38,7 +38,9 @@ func _main() {
 
 		io.ProcessInput()
 
-		gameboy.Tick()
+		if io.ShouldEmulate() {
+			gameboy.Tick()
+		}
 
 		io.Render()
 	}

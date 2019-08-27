@@ -5,19 +5,21 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/omstrumpf/goemu/internal/app/backends"
+	"github.com/omstrumpf/goemu/internal/app/console"
 )
 
 // IO manages the graphical output of the emulator
 type IO struct {
-	console backends.Console
+	console console.Console
 
 	win *pixelgl.Window
 	pic *pixel.PictureData
+
+	paused bool
 }
 
 // NewIO constructs a valid IO struct
-func NewIO(console backends.Console) *IO {
+func NewIO(console console.Console) *IO {
 	io := new(IO)
 
 	io.console = console
@@ -28,9 +30,22 @@ func NewIO(console backends.Console) *IO {
 	return io
 }
 
-// ProcessInput reads input and writes it to the gameboy
+// ProcessInput reads input and writes it to the console
 func (io *IO) ProcessInput() {
-	// TODO
+	for key, val := range functionKeys {
+		if io.win.JustPressed(key) {
+			val(io)
+		}
+	}
+
+	for key, val := range buttonKeys {
+		if io.win.JustPressed(key) {
+			io.console.PressButton(val)
+		}
+		if io.win.JustReleased(key) {
+			io.console.ReleaseButton(val)
+		}
+	}
 }
 
 // Render renders the console's frame buffer to the display
@@ -46,6 +61,11 @@ func (io *IO) Render() {
 	io.win.SetMatrix(mat)
 
 	io.win.Update()
+}
+
+// ShouldEmulate returns true if the emulator should emulate (not paused)
+func (io *IO) ShouldEmulate() bool {
+	return !io.paused
 }
 
 // ShouldExit returns true if the emulator should exit

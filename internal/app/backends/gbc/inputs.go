@@ -3,7 +3,7 @@ package gbc
 import (
 	"log"
 
-	"github.com/omstrumpf/goemu/internal/app/buttons"
+	"github.com/omstrumpf/goemu/internal/app/console"
 )
 
 type inputMemoryDevice struct {
@@ -22,46 +22,46 @@ func newInputMemoryDevice() *inputMemoryDevice {
 	return imd
 }
 
-func (imd *inputMemoryDevice) PressButton(b buttons.Button) {
+func (imd *inputMemoryDevice) PressButton(b console.Button) {
 	switch b {
-	case buttons.ButtonDown:
+	case console.ButtonDown:
 		imd.directionalButtons &= ^byte(1 << 3)
-	case buttons.ButtonUp:
+	case console.ButtonUp:
 		imd.directionalButtons &= ^byte(1 << 2)
-	case buttons.ButtonLeft:
+	case console.ButtonLeft:
 		imd.directionalButtons &= ^byte(1 << 1)
-	case buttons.ButtonRight:
+	case console.ButtonRight:
 		imd.directionalButtons &= ^byte(1)
-	case buttons.ButtonStart:
+	case console.ButtonStart:
 		imd.standardButtons &= ^byte(1 << 3)
-	case buttons.ButtonSelect:
+	case console.ButtonSelect:
 		imd.standardButtons &= ^byte(1 << 2)
-	case buttons.ButtonB:
+	case console.ButtonB:
 		imd.standardButtons &= ^byte(1 << 1)
-	case buttons.ButtonA:
+	case console.ButtonA:
 		imd.standardButtons &= ^byte(1)
 	default:
 		log.Printf("Attempted to press unrecognized button %d", b)
 	}
 }
 
-func (imd *inputMemoryDevice) ReleaseButton(b buttons.Button) {
+func (imd *inputMemoryDevice) ReleaseButton(b console.Button) {
 	switch b {
-	case buttons.ButtonDown:
+	case console.ButtonDown:
 		imd.directionalButtons |= byte(1 << 3)
-	case buttons.ButtonUp:
+	case console.ButtonUp:
 		imd.directionalButtons |= byte(1 << 2)
-	case buttons.ButtonLeft:
+	case console.ButtonLeft:
 		imd.directionalButtons |= byte(1 << 1)
-	case buttons.ButtonRight:
+	case console.ButtonRight:
 		imd.directionalButtons |= byte(1)
-	case buttons.ButtonStart:
+	case console.ButtonStart:
 		imd.standardButtons |= byte(1 << 3)
-	case buttons.ButtonSelect:
+	case console.ButtonSelect:
 		imd.standardButtons |= byte(1 << 2)
-	case buttons.ButtonB:
+	case console.ButtonB:
 		imd.standardButtons |= byte(1 << 1)
-	case buttons.ButtonA:
+	case console.ButtonA:
 		imd.standardButtons |= byte(1)
 	default:
 		log.Printf("Attempted to release unrecognized button %d", b)
