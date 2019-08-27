@@ -3,6 +3,8 @@ package gbc
 import (
 	"image/color"
 	"time"
+
+	"github.com/omstrumpf/goemu/internal/app/buttons"
 )
 
 const (
@@ -61,6 +63,16 @@ func (gbc *GBC) Tick() {
 // LoadROM loads the given ROM bytes into the MMU
 func (gbc *GBC) LoadROM(rom []byte) {
 	gbc.mmu.LoadROM(rom)
+}
+
+// PressButton presses the given button
+func (gbc *GBC) PressButton(b buttons.Button) {
+	gbc.mmu.inputs.PressButton(b)
+}
+
+// ReleaseButton releases the given button
+func (gbc *GBC) ReleaseButton(b buttons.Button) {
+	gbc.mmu.inputs.ReleaseButton(b)
 }
 
 // IsStopped returns true if the gameboy is not running

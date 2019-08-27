@@ -25,6 +25,7 @@ type MMU struct {
 	goam memoryDevice
 	zram memoryDevice
 
+	inputs     *inputMemoryDevice
 	interrupts *interruptMemoryDevice
 
 	zero memoryDevice
@@ -46,6 +47,7 @@ func NewMMU() *MMU {
 	mmu.goam = newStandardMemoryDevice(goamlen)
 	mmu.zram = newStandardMemoryDevice(zramlen)
 
+	mmu.inputs = newInputMemoryDevice()
 	mmu.interrupts = newInterruptMemoryDevice()
 
 	mmu.zero = newZeroMemoryDevice()
@@ -160,7 +162,9 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memoryDevice, offset uint16) {
 			}
 
 			switch addr & 0x00F0 {
-			case 0x00, 0x10, 0x20, 0x30: // Unimplemented
+			case 0x00: // Input
+				return mmu.inputs, 0
+			case 0x10, 0x20, 0x30: // Unimplemented
 				return mmu.zero, 0
 			case 0x40, 0x50, 0x60, 0x70: // PPU Control
 				return mmu.ppu.memoryControl, addr & 0x3F
