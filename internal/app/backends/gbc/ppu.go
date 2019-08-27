@@ -81,6 +81,7 @@ func (ppu *PPU) UpdateToClock(clock int) {
 
 				if ppu.line == 143 {
 					ppu.mode = 1
+					ppu.mmu.interrupts.RequestInterrupt(interruptVBlankBit)
 					if ppu.interrupt1 {
 						ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
 					}

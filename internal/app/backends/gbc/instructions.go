@@ -960,10 +960,10 @@ func (cpu *CPU) PopulateInstructions() {
 			cpu.PC.Inc()
 		},
 		0xF3: func() { // DI
-			cpu.ime = true
+			cpu.ime = false
 		},
 		0xFB: func() { // EI
-			cpu.ime = false
+			cpu.ime = true
 		},
 
 		//// Jump /////
