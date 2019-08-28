@@ -1104,7 +1104,7 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 		0xD9: func() { // RETI
 			cpu.ret()
-			cpu.ime = false
+			cpu.ime = true
 		},
 
 		0xC7: func() { // RST 0x00
