@@ -498,6 +498,9 @@ func (cpu *CPU) PopulateInstructions() {
 		0xEA: func() { // LD (nn),A
 			cpu.mmu.Write(cpu.mmu.Read16(cpu.PC.Inc2()), cpu.AF.Hi())
 		},
+		0x08: func() { // LD (nn),SP
+			cpu.mmu.Write16(cpu.mmu.Read16(cpu.PC.Inc2()), cpu.SP.HiLo())
+		},
 
 		0xF2: func() { // LD A,(FF00+C)
 			cpu.AF.SetHi(cpu.mmu.Read(0xFF00 + uint16(cpu.BC.Lo())))

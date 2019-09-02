@@ -102,6 +102,7 @@ func (mmu *MMU) Write(addr uint16, val byte) {
 	// TODO remove this hack
 	if addr == 0xFF50 {
 		mmu.DisableBios()
+		return
 	}
 
 	device, offset := mmu.mmapLocation(addr)

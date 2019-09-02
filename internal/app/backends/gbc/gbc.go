@@ -78,7 +78,7 @@ func (gbc *GBC) ReleaseButton(b console.Button) {
 
 // IsStopped returns true if the gameboy is not running
 func (gbc *GBC) IsStopped() bool {
-	return gbc.cpu.IsStopped() || gbc.cpu.IsHalted()
+	return gbc.cpu.IsStopped()
 }
 
 // GetFrameBuffer returns the gameboy's frame buffer, a slice of RGBA values

@@ -41,18 +41,22 @@ func NewCPU(mmu *MMU) *CPU {
 
 // ProcessNextInstruction fetches the next instruction, executes it, and increments the clock accordingly
 func (cpu *CPU) ProcessNextInstruction() {
-	if cpu.halt || cpu.stop {
+	if cpu.stop {
 		return
 	}
 
-	// Fetch the next instruction and increment PC
-	opcode := cpu.mmu.Read(cpu.PC.Inc())
+	if cpu.halt {
+		cpu.clock++
+	} else {
+		// Fetch the next instruction and increment PC
+		opcode := cpu.mmu.Read(cpu.PC.Inc())
 
-	// Execute the instruction
-	cpu.instructions[opcode]()
+		// Execute the instruction
+		cpu.instructions[opcode]()
 
-	// Increment the clock accordingly
-	cpu.clock += cpu.cycles[opcode]
+		// Increment the clock accordingly
+		cpu.clock += cpu.cycles[opcode]
+	}
 
 	// Check for interrupts
 	cpu.handleInterrupts()
@@ -76,25 +80,25 @@ func (cpu *CPU) handleInterrupts() {
 
 	interruptByte := cpu.mmu.Read(0xFFFF) & cpu.mmu.Read(0xFF0F)
 
+	if interruptByte&0x1F != 0 {
+		cpu.ime = false
+		cpu.halt = false
+	}
+
 	if interruptByte&1 != 0 { // V-Blank
 		cpu.mmu.interrupts.ResetInterrupt(interruptVBlankBit)
-		cpu.ime = false
 		cpu.call(0x40)
 	} else if interruptByte&2 != 0 { // LCD STAT
 		cpu.mmu.interrupts.ResetInterrupt(interruptLCDBit)
-		cpu.ime = false
 		cpu.call(0x48)
 	} else if interruptByte&4 != 0 { // Timer
 		cpu.mmu.interrupts.ResetInterrupt(interruptTimerBit)
-		cpu.ime = false
 		cpu.call(0x50)
 	} else if interruptByte&8 != 0 { // Serial
 		cpu.mmu.interrupts.ResetInterrupt(interruptSerialBit)
-		cpu.ime = false
 		cpu.call(0x58)
 	} else if interruptByte&16 != 0 { // Joypad
 		cpu.mmu.interrupts.ResetInterrupt(interruptJoypadBit)
-		cpu.ime = false
 		cpu.call(0x60)
 	}
 }
