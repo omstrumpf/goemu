@@ -14,7 +14,7 @@ type CPU struct {
 	stop bool
 	ime  bool // Interrupt disable
 
-	clock int
+	instructionClock int // Clock cycles in current instruction
 
 	mmu *MMU // Memory Management Unit
 
@@ -40,13 +40,15 @@ func NewCPU(mmu *MMU) *CPU {
 }
 
 // ProcessNextInstruction fetches the next instruction, executes it, and increments the clock accordingly
-func (cpu *CPU) ProcessNextInstruction() {
+func (cpu *CPU) ProcessNextInstruction() int {
+	cpu.instructionClock = 0
+
 	if cpu.stop {
-		return
+		return cpu.instructionClock
 	}
 
 	if cpu.halt {
-		cpu.clock++
+		cpu.instructionClock++
 	} else {
 		// Fetch the next instruction and increment PC
 		opcode := cpu.mmu.Read(cpu.PC.Inc())
@@ -55,11 +57,13 @@ func (cpu *CPU) ProcessNextInstruction() {
 		cpu.instructions[opcode]()
 
 		// Increment the clock accordingly
-		cpu.clock += cpu.cycles[opcode]
+		cpu.instructionClock += cpu.cycles[opcode]
 	}
 
 	// Check for interrupts
 	cpu.handleInterrupts()
+
+	return cpu.instructionClock
 }
 
 // IsHalted returns true if the CPU is halted

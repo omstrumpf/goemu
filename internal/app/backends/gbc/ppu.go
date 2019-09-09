@@ -21,12 +21,11 @@ type PPU struct {
 	windowEnable bool // Enables the window display
 	bgTileSelect bool // Which tileset is in use
 	bgMap        bool // Which background map is in use
-	spriteSize   bool // Size of the sprite
-	spriteEnable bool // Enables the sprite
+	spriteSize   bool // Size of all sprites
+	spriteEnable bool // Enables rendering sprites
 	bgEnable     bool // Enables rendering the background
 
 	mode        byte // Mode Number (0: HBLANK, 1: VBLANK, 2: OAM, 3: VRAM)
-	clock       int  // PPU clock
 	timeInMode  int  // Number of clock cycles spent in the current mode
 	line        byte // Line currently being processed
 	lineCompare byte // Target line for interrupt
@@ -65,9 +64,9 @@ func NewPPU(mmu *MMU) *PPU {
 	return ppu
 }
 
-// UpdateToClock runs the PPU until the given clock cycle
-func (ppu *PPU) UpdateToClock(clock int) {
-	for ppu.clock < clock {
+// RunForClocks runs the PPU for the given number of clock cycles
+func (ppu *PPU) RunForClocks(clocks int) {
+	for c := 0; c < clocks; c++ {
 		switch ppu.mode {
 		case 0: // HBLANK
 			if ppu.timeInMode == 51 {
@@ -92,9 +91,7 @@ func (ppu *PPU) UpdateToClock(clock int) {
 					}
 				}
 			} else {
-				advance := min(clock-ppu.clock, 51-ppu.timeInMode)
-				ppu.clock += advance
-				ppu.timeInMode += advance
+				ppu.timeInMode++
 			}
 		case 1: // VBLANK
 			if ppu.timeInMode == 1140 {
@@ -110,9 +107,7 @@ func (ppu *PPU) UpdateToClock(clock int) {
 				if ppu.interruptLYC && ppu.lineCompare == 143 {
 					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
 				}
-				advance := min(clock-ppu.clock, min(1140-ppu.timeInMode, 128))
-				ppu.clock += advance
-				ppu.timeInMode += advance
+				ppu.timeInMode++
 				ppu.line = byte(144 + math.Round(9*(float64(ppu.timeInMode)/1140)))
 			}
 		case 2: // OAM
@@ -121,9 +116,7 @@ func (ppu *PPU) UpdateToClock(clock int) {
 
 				ppu.mode = 3
 			} else {
-				advance := min(clock-ppu.clock, 20-ppu.timeInMode)
-				ppu.clock += advance
-				ppu.timeInMode += advance
+				ppu.timeInMode++
 			}
 		case 3: // VRAM
 			if ppu.timeInMode == 43 {
@@ -137,9 +130,7 @@ func (ppu *PPU) UpdateToClock(clock int) {
 
 				ppu.renderLine()
 			} else {
-				advance := min(clock-ppu.clock, 43-ppu.timeInMode)
-				ppu.clock += advance
-				ppu.timeInMode += advance
+				ppu.timeInMode++
 			}
 		}
 	}

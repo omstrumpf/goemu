@@ -52,11 +52,12 @@ func NewGBC() *GBC {
 
 // Tick runs the gameboy for a single frame-time
 func (gbc *GBC) Tick() {
-	clockStart := gbc.cpu.clock
+	clocks := 0
 
-	for gbc.cpu.clock-clockStart < CyclesPerFrame {
-		gbc.cpu.ProcessNextInstruction()
-		gbc.ppu.UpdateToClock(gbc.cpu.clock)
+	for clocks < CyclesPerFrame {
+		c := gbc.cpu.ProcessNextInstruction()
+		clocks += c
+		gbc.ppu.RunForClocks(c)
 	}
 }
 
