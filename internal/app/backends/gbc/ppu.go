@@ -224,7 +224,7 @@ type ppuControl struct {
 
 func (ppc *ppuControl) Read(addr uint16) byte {
 	switch addr {
-	case 0x00:
+	case 0xFF40:
 		var ret byte
 		if ppc.ppu.lcdEnable {
 			ret |= 0x80
@@ -251,7 +251,7 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 			ret |= 0x01
 		}
 		return ret
-	case 0x01:
+	case 0xFF41:
 		var ret byte
 		ret = ppc.ppu.mode
 		if ppc.ppu.line == ppc.ppu.lineCompare {
@@ -270,13 +270,13 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 			ret |= 0x40
 		}
 		return ret
-	case 0x02:
+	case 0xFF42:
 		return ppc.ppu.scrollY
-	case 0x03:
+	case 0xFF43:
 		return ppc.ppu.scrollX
-	case 0x04:
+	case 0xFF44:
 		return ppc.ppu.line
-	case 0x05:
+	case 0xFF45:
 		return ppc.ppu.lineCompare
 	}
 
@@ -286,7 +286,7 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 
 func (ppc *ppuControl) Write(addr uint16, val byte) {
 	switch addr {
-	case 0x00:
+	case 0xFF40:
 		ppc.ppu.lcdEnable = (val&0x80 != 0)
 		ppc.ppu.windowMap = (val&0x40 != 0)
 		ppc.ppu.windowEnable = (val&0x20 != 0)
@@ -296,25 +296,25 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		ppc.ppu.spriteEnable = (val&0x02 != 0)
 		ppc.ppu.bgEnable = (val&0x01 != 0)
 		return
-	case 0x01:
+	case 0xFF41:
 		ppc.ppu.interrupt0 = (val&0x08 != 0)
 		ppc.ppu.interrupt1 = (val&0x10 != 0)
 		ppc.ppu.interrupt2 = (val&0x20 != 0)
 		ppc.ppu.interruptLYC = (val&0x40 != 0)
 		return
-	case 0x02:
+	case 0xFF42:
 		ppc.ppu.scrollY = val
 		return
-	case 0x03:
+	case 0xFF43:
 		ppc.ppu.scrollX = val
 		return
-	case 0x04:
+	case 0xFF44:
 		ppc.ppu.line = val
 		return
-	case 0x05:
+	case 0xFF45:
 		ppc.ppu.lineCompare = val
 		return
-	case 0x07:
+	case 0xFF47:
 		for i := uint8(0); i < 4; i++ {
 			switch (val >> (i * 2)) & 3 {
 			case 0:
@@ -330,7 +330,7 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		return
 	}
 
-	log.Printf("Encountered write with unknown PPU control address: %#2x", addr)
+	log.Printf("Encountered write with unknown PPU control address: %#4x", addr)
 }
 
 //// Helpers ////
