@@ -32,9 +32,10 @@ const (
 
 // GBC is the toplevel struct containing all the gameboy systems
 type GBC struct {
-	mmu *MMU
-	cpu *CPU
-	ppu *PPU
+	mmu   *MMU
+	cpu   *CPU
+	ppu   *PPU
+	timer *Timer
 }
 
 // NewGBC constructs a valid GBC struct
@@ -42,10 +43,12 @@ func NewGBC() *GBC {
 	gbc := new(GBC)
 
 	gbc.mmu = NewMMU()
+	gbc.timer = NewTimer(gbc.mmu)
 	gbc.cpu = NewCPU(gbc.mmu)
 	gbc.ppu = NewPPU(gbc.mmu)
 
 	gbc.mmu.ppu = gbc.ppu
+	gbc.mmu.timer = gbc.timer
 
 	return gbc
 }
@@ -58,6 +61,7 @@ func (gbc *GBC) Tick() {
 		c := gbc.cpu.ProcessNextInstruction()
 		clocks += c
 		gbc.ppu.RunForClocks(c)
+		gbc.timer.RunForClocks(c)
 	}
 }
 

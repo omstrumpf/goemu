@@ -32,7 +32,8 @@ type MMU struct {
 
 	biosEnable bool
 
-	ppu *PPU
+	ppu   *PPU
+	timer *Timer
 }
 
 // NewMMU constructs a valid MMU struct
@@ -163,8 +164,15 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memoryDevice, offset uint16) {
 			}
 
 			switch addr & 0x00F0 {
-			case 0x00: // Input
-				return mmu.inputs, 0
+			case 0x00:
+				switch addr & 0x000F {
+				case 0x0:
+					return mmu.inputs, 0
+				case 0x4, 0x5, 0x6, 0x7:
+					return mmu.timer, addr
+				default:
+					return mmu.zero, 0 // Unimplemented
+				}
 			case 0x10, 0x20, 0x30: // Unimplemented
 				return mmu.zero, 0
 			case 0x40, 0x50, 0x60, 0x70: // PPU Control
