@@ -7,6 +7,8 @@ func TestInstructionsLD(t *testing.T) {
 
 	cpu := NewCPU(mmu)
 
+	clock := 0
+
 	instructions := []byte{
 		0x3E, 0xAA, // LD A,n
 		0x06, 0xBB, // LD B,n
@@ -33,7 +35,7 @@ func TestInstructionsLD(t *testing.T) {
 		if cpu.halt {
 			break
 		}
-		cpu.ProcessNextInstruction()
+		clock += cpu.ProcessNextInstruction()
 	}
 
 	if !cpu.IsHalted() {
@@ -66,8 +68,8 @@ func TestInstructionsLD(t *testing.T) {
 	if mmu.Read(0xBBAA) != 0xCC {
 		t.Errorf("Expected memory address 0xBBAA to contain 0xCC, got %#2x", mmu.Read(0xBBAA))
 	}
-	if cpu.clock != 25 {
-		t.Errorf("Expected operation to take 25 cycles, got %d", cpu.clock)
+	if clock != 25 {
+		t.Errorf("Expected operation to take 25 cycles, got %d", clock)
 	}
 }
 
@@ -75,6 +77,8 @@ func TestInstructionsStack(t *testing.T) {
 	mmu := NewMMU()
 
 	cpu := NewCPU(mmu)
+
+	clock := 0
 
 	instructions := []byte{
 		0x01, 0xCD, 0xAB, // LD BC,nn
@@ -101,7 +105,7 @@ func TestInstructionsStack(t *testing.T) {
 		if cpu.halt {
 			break
 		}
-		cpu.ProcessNextInstruction()
+		clock += cpu.ProcessNextInstruction()
 	}
 
 	if !cpu.IsHalted() {
@@ -134,8 +138,8 @@ func TestInstructionsStack(t *testing.T) {
 	if mmu.Read16(0x0FF6) != 0x0000 {
 		t.Errorf("Expected memory address 0x0FF6 to contain 0x0000, got %#4x", mmu.Read(0x0FF6))
 	}
-	if cpu.clock != 33 {
-		t.Errorf("Expected operation to take 33 cycles, got %d", cpu.clock)
+	if clock != 33 {
+		t.Errorf("Expected operation to take 33 cycles, got %d", clock)
 	}
 }
 
@@ -143,6 +147,8 @@ func TestInstructionsALU(t *testing.T) {
 	mmu := NewMMU()
 
 	cpu := NewCPU(mmu)
+
+	clock := 0
 
 	instructions := []byte{
 		0x21, 0x00, 0x10, // LD HL,nn
@@ -194,7 +200,7 @@ func TestInstructionsALU(t *testing.T) {
 		if cpu.halt {
 			break
 		}
-		cpu.ProcessNextInstruction()
+		clock += cpu.ProcessNextInstruction()
 	}
 
 	if !cpu.IsHalted() {
@@ -206,8 +212,8 @@ func TestInstructionsALU(t *testing.T) {
 	if cpu.BC.Hi() != 0x07 {
 		t.Errorf("Expected register B to contain 0x07, got %#2x", cpu.BC.Hi())
 	}
-	if cpu.clock != 93 {
-		t.Errorf("Expected operation to take 93 cycles, got %d", cpu.clock)
+	if clock != 93 {
+		t.Errorf("Expected operation to take 93 cycles, got %d", clock)
 	}
 
 	expectedValues := []byte{
@@ -241,6 +247,8 @@ func TestInstructionsRot(t *testing.T) {
 
 	cpu := NewCPU(mmu)
 
+	clock := 0
+
 	instructions := []byte{
 		0x21, 0x00, 0x10, // LD HL,nn
 		0xF9,       // LD SP,HL
@@ -267,14 +275,14 @@ func TestInstructionsRot(t *testing.T) {
 		if cpu.halt {
 			break
 		}
-		cpu.ProcessNextInstruction()
+		clock += cpu.ProcessNextInstruction()
 	}
 
 	if !cpu.IsHalted() {
 		t.Errorf("Expected CPU to have halted")
 	}
-	if cpu.clock != 27 {
-		t.Errorf("Expected operation to take 27 cycles, got %d", cpu.clock)
+	if clock != 27 {
+		t.Errorf("Expected operation to take 27 cycles, got %d", clock)
 	}
 
 	expectedValues := []byte{
@@ -303,6 +311,8 @@ func TestInstructionsCBRot(t *testing.T) {
 	mmu := NewMMU()
 
 	cpu := NewCPU(mmu)
+
+	clock := 0
 
 	instructions := []byte{
 		0x21, 0x00, 0x10, // LD HL,nn
@@ -338,14 +348,14 @@ func TestInstructionsCBRot(t *testing.T) {
 		if cpu.halt {
 			break
 		}
-		cpu.ProcessNextInstruction()
+		clock += cpu.ProcessNextInstruction()
 	}
 
 	if !cpu.IsHalted() {
 		t.Errorf("Expected CPU to have halted")
 	}
-	if cpu.clock != 55 {
-		t.Errorf("Expected operation to take 55 cycles, got %d", cpu.clock)
+	if clock != 55 {
+		t.Errorf("Expected operation to take 55 cycles, got %d", clock)
 	}
 
 	expectedValues := []byte{

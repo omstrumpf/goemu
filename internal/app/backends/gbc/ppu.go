@@ -67,9 +67,11 @@ func NewPPU(mmu *MMU) *PPU {
 // RunForClocks runs the PPU for the given number of clock cycles
 func (ppu *PPU) RunForClocks(clocks int) {
 	for c := 0; c < clocks; c++ {
+		ppu.timeInMode++
+
 		switch ppu.mode {
 		case 0: // HBLANK
-			if ppu.timeInMode == 51 {
+			if ppu.timeInMode == 50 {
 				ppu.timeInMode = 0
 
 				ppu.line++
@@ -90,8 +92,6 @@ func (ppu *PPU) RunForClocks(clocks int) {
 						ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
 					}
 				}
-			} else {
-				ppu.timeInMode++
 			}
 		case 1: // VBLANK
 			if ppu.timeInMode == 1140 {
@@ -107,16 +107,13 @@ func (ppu *PPU) RunForClocks(clocks int) {
 				if ppu.interruptLYC && ppu.lineCompare == 143 {
 					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
 				}
-				ppu.timeInMode++
 				ppu.line = byte(144 + math.Round(9*(float64(ppu.timeInMode)/1140)))
 			}
 		case 2: // OAM
-			if ppu.timeInMode == 20 {
+			if ppu.timeInMode == 21 {
 				ppu.timeInMode = 0
 
 				ppu.mode = 3
-			} else {
-				ppu.timeInMode++
 			}
 		case 3: // VRAM
 			if ppu.timeInMode == 43 {
@@ -129,8 +126,6 @@ func (ppu *PPU) RunForClocks(clocks int) {
 				}
 
 				ppu.renderLine()
-			} else {
-				ppu.timeInMode++
 			}
 		}
 	}
