@@ -100,8 +100,22 @@ func (mmu *MMU) Read(addr uint16) byte {
 
 // Write writes the 8-bit value to the address
 func (mmu *MMU) Write(addr uint16, val byte) {
-	// TODO remove this hack
-	if addr == 0xFF50 {
+	// Traps for MMU on-write functionality
+	if addr == 0XFF46 { // DMA
+		src := uint16(val) << 8
+		if src > 0xF100 {
+			src = 0xF100
+		}
+
+		// TODO technically should be waiting 160us for the transfer to complete.
+		// Access to memory should be restricted until it is done (except for HRAM).
+
+		for i := uint16(0); i < 0xA0; i++ {
+			mmu.goam.Write(i, mmu.Read(src+i))
+		}
+		return
+	}
+	if addr == 0xFF50 { // Disable BIOS memory overlay
 		mmu.DisableBios()
 		return
 	}
