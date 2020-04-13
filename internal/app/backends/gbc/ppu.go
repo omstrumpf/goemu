@@ -2,7 +2,6 @@ package gbc
 
 import (
 	"image/color"
-	"log"
 	"math"
 )
 
@@ -280,7 +279,7 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		return ppc.ppu.lineCompare
 	}
 
-	log.Printf("Encountered read with unknown PPU control address: %#02x", addr)
+	logger.Warningf("Encountered read with unknown PPU control address: %#02x", addr)
 	return 0
 }
 
@@ -330,7 +329,7 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		return
 	}
 
-	log.Printf("Encountered write with unknown PPU control address: %#4x", addr)
+	logger.Warningf("Encountered write with unknown PPU control address: %#4x", addr)
 }
 
 //// Helpers ////

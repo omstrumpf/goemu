@@ -1,7 +1,5 @@
 package gbc
 
-import "log"
-
 // TODO write timer tests
 
 // Timer is the gameboy's timer device
@@ -66,7 +64,7 @@ func (t *Timer) Read(addr uint16) byte {
 		return t.tac
 	}
 
-	log.Printf("Encountered unexpected timer read: %#4x", addr)
+	logger.Warningf("Encountered unexpected timer read: %#4x", addr)
 	return 0
 }
 
@@ -100,5 +98,5 @@ func (t *Timer) Write(addr uint16, val byte) {
 		return
 	}
 
-	log.Printf("Encountered unexpected timer write: %#4x", addr)
+	logger.Warningf("Encountered unexpected timer write: %#4x", addr)
 }

@@ -1,7 +1,5 @@
 package gbc
 
-import "log"
-
 type interruptMemoryDevice struct {
 	enable byte
 	flag   byte
@@ -29,7 +27,7 @@ func (imd *interruptMemoryDevice) Read(addr uint16) byte {
 		return imd.enable
 	}
 
-	log.Printf("Encountered unexpected interrupt location: %#4x", addr)
+	logger.Warningf("Encountered unexpected interrupt location: %#4x", addr)
 	return 0
 }
 
@@ -43,7 +41,7 @@ func (imd *interruptMemoryDevice) Write(addr uint16, val byte) {
 		return
 	}
 
-	log.Printf("Encountered unexpected interrupt location: %#4x", addr)
+	logger.Warningf("Encountered unexpected interrupt location: %#4x", addr)
 }
 
 func (imd *interruptMemoryDevice) RequestInterrupt(bit uint8) {

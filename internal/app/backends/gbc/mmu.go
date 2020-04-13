@@ -1,9 +1,5 @@
 package gbc
 
-import (
-	"log"
-)
-
 const (
 	romlen  = 0x8000
 	vramlen = 0x2000
@@ -63,7 +59,7 @@ func (mmu *MMU) LoadROM(buf []byte) {
 	buflen := len(buf)
 
 	if buflen > totalramlen {
-		log.Printf("Insufficient memory capacity for ROM: %#4x", buflen)
+		logger.Warningf("Insufficient memory capacity for ROM: %#4x", buflen)
 	}
 
 	j := 0
@@ -95,13 +91,18 @@ func (mmu *MMU) DisableBios() {
 // Read returns the 8-bit value from the address
 func (mmu *MMU) Read(addr uint16) byte {
 	device, offset := mmu.mmapLocation(addr)
-	return device.Read(offset)
+	result := device.Read(offset)
+	logger.Tracef("Memory read: Address [%#4x] = [%#2x]", addr, result)
+	return result
 }
 
 // Write writes the 8-bit value to the address
 func (mmu *MMU) Write(addr uint16, val byte) {
+	logger.Tracef("Memory write: Address [%#4x] = [%#2x]", addr, val)
+
 	// Traps for MMU on-write functionality
 	if addr == 0XFF46 { // DMA
+		logger.Tracef("Performing DMA")
 		src := uint16(val) << 8
 		if src > 0xF100 {
 			src = 0xF100
@@ -116,6 +117,7 @@ func (mmu *MMU) Write(addr uint16, val byte) {
 		return
 	}
 	if addr == 0xFF50 { // Disable BIOS memory overlay
+		logger.Tracef("Disabling BIOS memory overlay")
 		mmu.DisableBios()
 		return
 	}
@@ -197,6 +199,6 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memoryDevice, offset uint16) {
 		}
 	}
 
-	log.Printf("Encountered unmapped memory location: %#4x", addr)
+	logger.Warningf("Encountered unmapped memory location: %#4x", addr)
 	return mmu.zero, 0
 }

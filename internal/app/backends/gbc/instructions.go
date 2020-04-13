@@ -1,7 +1,5 @@
 package gbc
 
-import "log"
-
 // Add adds the operand into the accumulator (A = A + op). If useCarry is set, it also adds the carry bit.
 func (cpu *CPU) add(operand byte, useCarry bool) {
 	original := cpu.AF.Hi()
@@ -1149,7 +1147,7 @@ func (cpu *CPU) PopulateInstructions() {
 		if v == nil {
 			opcode := k
 			cpu.instructions[k] = func() {
-				log.Printf("Encountered unknown instruction: %#2x", opcode)
+				logger.Warningf("Encountered unknown instruction: %#2x", opcode)
 				cpu.stop = true
 			}
 		}
@@ -1985,7 +1983,7 @@ func (cpu *CPU) PopulateInstructions() {
 		if v == nil {
 			opcode := k
 			cpu.instructions[k] = func() {
-				log.Printf("Encountered unknown CB instruction: %#2x", opcode)
+				logger.Warningf("Encountered unknown CB instruction: %#2x", opcode)
 				cpu.stop = true
 			}
 		}

@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"time"
 
+	"github.com/juju/loggo"
 	"github.com/omstrumpf/goemu/internal/app/console"
 )
 
@@ -30,12 +31,16 @@ const (
 	ConsoleName = "GameBoy Color"
 )
 
+var logger = loggo.GetLogger("goemu.gbc")
+
 // GBC is the toplevel struct containing all the gameboy systems
 type GBC struct {
 	mmu   *MMU
 	cpu   *CPU
 	ppu   *PPU
 	timer *Timer
+
+	totalClocks uint64
 }
 
 // NewGBC constructs a valid GBC struct
@@ -58,8 +63,18 @@ func (gbc *GBC) Tick() {
 	clocks := 0
 
 	for clocks < CyclesPerFrame {
+		if logger.IsTraceEnabled() {
+			pc := gbc.cpu.PC.HiLo()
+			opcode := gbc.mmu.Read(pc)
+			logger.Tracef("%016d: %04x=%02x", gbc.totalClocks, pc, opcode)
+			if pc == 0xc302 {
+				break
+			}
+		}
+
 		c := gbc.cpu.ProcessNextInstruction()
 		clocks += c
+		gbc.totalClocks += uint64(c)
 		gbc.ppu.RunForClocks(c)
 		gbc.timer.RunForClocks(c)
 	}
