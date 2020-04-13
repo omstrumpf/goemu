@@ -74,7 +74,7 @@ func _main() {
 		logger.Tracef("Emulating frame %d", frame)
 		frame++
 
-		if io.ShouldExit() || gameboy.IsStopped() {
+		if io.ShouldExit() {
 			return
 		}
 

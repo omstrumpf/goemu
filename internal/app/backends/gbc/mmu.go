@@ -92,14 +92,11 @@ func (mmu *MMU) DisableBios() {
 func (mmu *MMU) Read(addr uint16) byte {
 	device, offset := mmu.mmapLocation(addr)
 	result := device.Read(offset)
-	logger.Tracef("Memory read: Address [%#4x] = [%#2x]", addr, result)
 	return result
 }
 
 // Write writes the 8-bit value to the address
 func (mmu *MMU) Write(addr uint16, val byte) {
-	logger.Tracef("Memory write: Address [%#4x] = [%#2x]", addr, val)
-
 	// Traps for MMU on-write functionality
 	if addr == 0XFF46 { // DMA
 		logger.Tracef("Performing DMA")

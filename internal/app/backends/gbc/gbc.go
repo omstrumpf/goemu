@@ -113,10 +113,7 @@ func (gbc *GBC) Tick() {
 		if logger.IsTraceEnabled() {
 			pc := gbc.cpu.PC.HiLo()
 			opcode := gbc.mmu.Read(pc)
-			logger.Tracef("%016d: %04x=%02x", gbc.totalClocks, pc, opcode)
-			if pc == 0xc302 {
-				break
-			}
+			logger.Tracef("%016d: %04x=%02x", gbc.totalClocks, pc, opcode) // TODO implement pretty disassembler
 		}
 
 		c := gbc.cpu.ProcessNextInstruction()
