@@ -44,7 +44,7 @@ type GBC struct {
 }
 
 // NewGBC constructs a valid GBC struct
-func NewGBC() *GBC {
+func NewGBC(skiplogo bool) *GBC {
 	gbc := new(GBC)
 
 	gbc.mmu = NewMMU()
@@ -55,7 +55,54 @@ func NewGBC() *GBC {
 	gbc.mmu.ppu = gbc.ppu
 	gbc.mmu.timer = gbc.timer
 
+	if skiplogo {
+		gbc.skipLogo()
+	}
+
 	return gbc
+}
+
+// Set the gameboy to the correct post-boot state
+func (gbc *GBC) skipLogo() {
+	logger.Debugf("Skipping logo boot sequence")
+	gbc.cpu.PC.Set(0x0100)
+	gbc.cpu.AF.Set(0x01B0)
+	gbc.cpu.BC.Set(0x0013)
+	gbc.cpu.DE.Set(0x00D8)
+	gbc.cpu.HL.Set(0x014D)
+	gbc.cpu.SP.Set(0xFFFE)
+	gbc.mmu.Write(0xFF05, 0x00) // TIMA
+	gbc.mmu.Write(0xFF06, 0x00) // TMA
+	gbc.mmu.Write(0xFF07, 0x00) // TAC
+	gbc.mmu.Write(0xFF10, 0x80) // NR10
+	gbc.mmu.Write(0xFF11, 0xBF) // NR11
+	gbc.mmu.Write(0xFF12, 0xF3) // NR12
+	gbc.mmu.Write(0xFF14, 0xBF) // NR14
+	gbc.mmu.Write(0xFF16, 0x3F) // NR21
+	gbc.mmu.Write(0xFF17, 0x00) // NR22
+	gbc.mmu.Write(0xFF19, 0xBF) // NR24
+	gbc.mmu.Write(0xFF1A, 0x7F) // NR30
+	gbc.mmu.Write(0xFF1B, 0xFF) // NR31
+	gbc.mmu.Write(0xFF1C, 0x9F) // NR32
+	gbc.mmu.Write(0xFF1E, 0xBF) // NR33
+	gbc.mmu.Write(0xFF20, 0xFF) // NR41
+	gbc.mmu.Write(0xFF21, 0x00) // NR42
+	gbc.mmu.Write(0xFF22, 0x00) // NR43
+	gbc.mmu.Write(0xFF23, 0xBF) // NR30
+	gbc.mmu.Write(0xFF24, 0x77) // NR50
+	gbc.mmu.Write(0xFF25, 0xF3) // NR51
+	gbc.mmu.Write(0xFF26, 0xF1) // NR52
+	gbc.mmu.Write(0xFF40, 0x91) // LCDC
+	gbc.mmu.Write(0xFF42, 0x00) // SCY
+	gbc.mmu.Write(0xFF43, 0x00) // SCX
+	gbc.mmu.Write(0xFF45, 0x00) // LYC
+	gbc.mmu.Write(0xFF47, 0xFC) // BGP
+	gbc.mmu.Write(0xFF48, 0xFF) // OBP0
+	gbc.mmu.Write(0xFF49, 0xFF) // OBP1
+	gbc.mmu.Write(0xFF4A, 0x00) // WY
+	gbc.mmu.Write(0xFF4B, 0x00) // WX
+	gbc.mmu.Write(0xFFFF, 0x00) // IE
+	gbc.mmu.DisableBios()
 }
 
 // Tick runs the gameboy for a single frame-time

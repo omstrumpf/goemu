@@ -49,7 +49,7 @@ func _main() {
 
 	logger.Tracef("Initializing gameboy")
 
-	gameboy := gbc.NewGBC()
+	gameboy := gbc.NewGBC(*skiplogo)
 
 	logger.Tracef("Loading romfile")
 
@@ -58,11 +58,6 @@ func _main() {
 		panic(err)
 	}
 	gameboy.LoadROM(buf)
-
-	if *skiplogo {
-		logger.Debugf("Skipping logo sequence")
-		// TODO gameboy.SkipLogo()
-	}
 
 	io := io.NewIO(gameboy)
 
