@@ -112,8 +112,8 @@ func (gbc *GBC) Tick() {
 	for clocks < CyclesPerFrame {
 		if logger.IsTraceEnabled() {
 			pc := gbc.cpu.PC.HiLo()
-			opcode := gbc.mmu.Read(pc)
-			logger.Tracef("%016d: %04x=%02x", gbc.totalClocks, pc, opcode) // TODO implement pretty disassembler
+			_, disassembly := gbc.cpu.Disassemble(pc)
+			logger.Tracef("Clk %016d: %04x - %s", gbc.totalClocks, pc, disassembly)
 		}
 
 		c := gbc.cpu.ProcessNextInstruction()
