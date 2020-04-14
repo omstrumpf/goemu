@@ -920,10 +920,10 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 
 		0xE8: func() { // ADD SP,d
-			cpu.add16Signed(cpu.SP.HiLo(), int8(cpu.PC.Inc()), cpu.SP.Set)
+			cpu.add16Signed(cpu.SP.HiLo(), int8(cpu.mmu.Read(cpu.PC.Inc())), cpu.SP.Set)
 		},
 		0xF8: func() { // LD HL,SP,d
-			cpu.add16Signed(cpu.SP.HiLo(), int8(cpu.PC.Inc()), cpu.HL.Set)
+			cpu.add16Signed(cpu.SP.HiLo(), int8(cpu.mmu.Read(cpu.PC.Inc())), cpu.HL.Set)
 		},
 
 		//// Rotate / Shift ////

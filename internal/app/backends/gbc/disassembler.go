@@ -410,9 +410,9 @@ func (cpu *CPU) Disassemble(pc uint16) (uint16, string) {
 	case 0x3B:
 		return pc + 1, "DEC SP"
 	case 0xE8:
-		return pc + 1, "ADD SP,d"
+		return pc + 2, fmt.Sprintf("ADD SP,(%d)", int8(cpu.mmu.Read(pc+1)))
 	case 0xF8:
-		return pc + 1, "LD HL,SP,d"
+		return pc + 2, fmt.Sprintf("LD HL,SP,(%d)", int8(cpu.mmu.Read(pc+1)))
 	case 0x07:
 		return pc + 1, "RLCA"
 	case 0x17:
