@@ -78,7 +78,7 @@ func (cpu *CPU) cp(operand byte) {
 	cpu.setZ(result == 0)
 	cpu.setN(true)
 	cpu.setH((original & 0x0F) > (operand & 0x0F))
-	cpu.setC(original > operand)
+	cpu.setC(original < operand)
 }
 
 // Inc increments the value into the given setter function.
