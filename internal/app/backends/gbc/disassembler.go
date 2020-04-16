@@ -448,15 +448,15 @@ func (cpu *CPU) Disassemble(pc uint16) (uint16, string) {
 	case 0xDA:
 		return pc + 3, fmt.Sprintf("JP C,[%#04x]", cpu.mmu.Read16(pc+1))
 	case 0x18:
-		return pc + 2, fmt.Sprintf("JR [%#02x]", cpu.mmu.Read(pc+1))
+		return pc + 2, fmt.Sprintf("JR [%#02x]", int8(cpu.mmu.Read(pc+1)))
 	case 0x20:
-		return pc + 2, fmt.Sprintf("JR NZ,[%#02x]", cpu.mmu.Read(pc+1))
+		return pc + 2, fmt.Sprintf("JR NZ,[%#02x]", int8(cpu.mmu.Read(pc+1)))
 	case 0x28:
-		return pc + 2, fmt.Sprintf("JR Z,[%#02x]", cpu.mmu.Read(pc+1))
+		return pc + 2, fmt.Sprintf("JR Z,[%#02x]", int8(cpu.mmu.Read(pc+1)))
 	case 0x30:
-		return pc + 2, fmt.Sprintf("JR NC,[%#02x]", cpu.mmu.Read(pc+1))
+		return pc + 2, fmt.Sprintf("JR NC,[%#02x]", int8(cpu.mmu.Read(pc+1)))
 	case 0x38:
-		return pc + 2, fmt.Sprintf("JR C,[%#02x]", cpu.mmu.Read(pc+1))
+		return pc + 2, fmt.Sprintf("JR C,[%#02x]", int8(cpu.mmu.Read(pc+1)))
 	case 0xCD:
 		return pc + 3, fmt.Sprintf("CALL [%#04x]", cpu.mmu.Read16(pc+1))
 	case 0xC4:

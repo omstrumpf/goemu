@@ -90,21 +90,27 @@ func (cpu *CPU) handleInterrupts() {
 	}
 
 	if interruptByte&1 != 0 { // V-Blank
+			logger.Tracef("Handling VBLANK interrupt") 
 		cpu.mmu.interrupts.ResetInterrupt(interruptVBlankBit)
 		cpu.call(0x40)
 	} else if interruptByte&2 != 0 { // LCD STAT
+			logger.Tracef("Handling LCD STAT interrupt")
 		cpu.mmu.interrupts.ResetInterrupt(interruptLCDBit)
 		cpu.call(0x48)
 	} else if interruptByte&4 != 0 { // Timer
+			logger.Tracef("Handling TIMER interrupt")
 		cpu.mmu.interrupts.ResetInterrupt(interruptTimerBit)
 		cpu.call(0x50)
 	} else if interruptByte&8 != 0 { // Serial
+			logger.Tracef("Handling SERIAL interrupt")
 		cpu.mmu.interrupts.ResetInterrupt(interruptSerialBit)
 		cpu.call(0x58)
 	} else if interruptByte&16 != 0 { // Joypad
+			logger.Tracef("Handling JOYPAD interrupt")
 		cpu.mmu.interrupts.ResetInterrupt(interruptJoypadBit)
 		cpu.call(0x60)
 	}
+}
 }
 
 // Flags
@@ -154,4 +160,31 @@ func (cpu *CPU) setC(set bool) {
 	} else {
 		cpu.AF.Set(cpu.AF.HiLo() & ^uint16(1<<4))
 	}
+}
+
+func (cpu *CPU) flagString() string {
+	result := ""
+
+	if cpu.z() {
+		result += "Z"
+	} else {
+		result += "-"
+	}
+	if cpu.n() {
+		result += "N"
+	} else {
+		result += "-"
+	}
+	if cpu.h() {
+		result += "H"
+	} else {
+		result += "-"
+	}
+	if cpu.c() {
+		result += "C"
+	} else {
+		result += "-"
+	}
+
+	return result
 }

@@ -1,7 +1,9 @@
 package gbc
 
 import (
+	"fmt"
 	"image/color"
+	"os"
 	"time"
 
 	"github.com/juju/loggo"
@@ -111,9 +113,7 @@ func (gbc *GBC) Tick() {
 
 	for clocks < CyclesPerFrame {
 		if logger.IsTraceEnabled() {
-			pc := gbc.cpu.PC.HiLo()
-			_, disassembly := gbc.cpu.Disassemble(pc)
-			logger.Tracef("Clk %016d: %04x - %s", gbc.totalClocks, pc, disassembly)
+			fmt.Fprintln(os.Stderr, gbc.traceString()) // Bypassing log for speed and to avoid verbose prints
 		}
 
 		c := gbc.cpu.ProcessNextInstruction()
@@ -168,4 +168,23 @@ func (gbc *GBC) GetScreenHeight() int {
 // GetConsoleName returns the name of this console
 func (gbc *GBC) GetConsoleName() string {
 	return ConsoleName
+}
+
+// traceString produces a string of the current GBC trace, for debugging
+func (gbc *GBC) traceString() string {
+	pc := gbc.cpu.PC.HiLo()
+	_, disassembly := gbc.cpu.Disassemble(pc)
+
+	return fmt.Sprintf("Clk: %08d, A: %02x, F: %s, BC: %04x, DE: %04x, HL: %04x, SP: %04x, (HL): %02x, ppu: %d. %#04x: %s",
+		gbc.totalClocks,
+		gbc.cpu.AF.Hi(),
+		gbc.cpu.flagString(),
+		gbc.cpu.BC.HiLo(),
+		gbc.cpu.DE.HiLo(),
+		gbc.cpu.HL.HiLo(),
+		gbc.cpu.SP.HiLo(),
+		gbc.mmu.Read(gbc.cpu.HL.HiLo()),
+		gbc.ppu.mode,
+		pc,
+		disassembly)
 }
