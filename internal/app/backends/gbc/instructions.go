@@ -329,19 +329,19 @@ func (cpu *CPU) PopulateInstructions() {
 			cpu.DE.SetHi(cpu.BC.Hi())
 		},
 		0x51: func() { // LD D,C
-			cpu.DE.SetHi(cpu.BC.Hi())
+			cpu.DE.SetHi(cpu.BC.Lo())
 		},
 		0x52: func() { // LD D,D
-			cpu.DE.SetHi(cpu.BC.Hi())
+			cpu.DE.SetHi(cpu.DE.Hi())
 		},
 		0x53: func() { // LD D,E
-			cpu.DE.SetHi(cpu.BC.Hi())
+			cpu.DE.SetHi(cpu.DE.Lo())
 		},
 		0x54: func() { // LD D,H
-			cpu.DE.SetHi(cpu.BC.Hi())
+			cpu.DE.SetHi(cpu.HL.Hi())
 		},
 		0x55: func() { // LD D,L
-			cpu.DE.SetHi(cpu.BC.Hi())
+			cpu.DE.SetHi(cpu.HL.Lo())
 		},
 		0x5F: func() { // LD E,A
 			cpu.DE.SetLo(cpu.AF.Hi())
@@ -350,19 +350,19 @@ func (cpu *CPU) PopulateInstructions() {
 			cpu.DE.SetLo(cpu.BC.Hi())
 		},
 		0x59: func() { // LD E,C
-			cpu.DE.SetLo(cpu.BC.Hi())
+			cpu.DE.SetLo(cpu.BC.Lo())
 		},
 		0x5A: func() { // LD E,D
-			cpu.DE.SetLo(cpu.BC.Hi())
+			cpu.DE.SetLo(cpu.DE.Hi())
 		},
 		0x5B: func() { // LD E,E
-			cpu.DE.SetLo(cpu.BC.Hi())
+			cpu.DE.SetLo(cpu.DE.Lo())
 		},
 		0x5C: func() { // LD E,H
-			cpu.DE.SetLo(cpu.BC.Hi())
+			cpu.DE.SetLo(cpu.HL.Hi())
 		},
 		0x5D: func() { // LD E,L
-			cpu.DE.SetLo(cpu.BC.Hi())
+			cpu.DE.SetLo(cpu.HL.Lo())
 		},
 		0x67: func() { // LD H,A
 			cpu.HL.SetHi(cpu.AF.Hi())
@@ -371,19 +371,19 @@ func (cpu *CPU) PopulateInstructions() {
 			cpu.HL.SetHi(cpu.BC.Hi())
 		},
 		0x61: func() { // LD H,C
-			cpu.HL.SetHi(cpu.BC.Hi())
+			cpu.HL.SetHi(cpu.BC.Lo())
 		},
 		0x62: func() { // LD H,D
-			cpu.HL.SetHi(cpu.BC.Hi())
+			cpu.HL.SetHi(cpu.DE.Hi())
 		},
 		0x63: func() { // LD H,E
-			cpu.HL.SetHi(cpu.BC.Hi())
+			cpu.HL.SetHi(cpu.DE.Lo())
 		},
 		0x64: func() { // LD H,H
-			cpu.HL.SetHi(cpu.BC.Hi())
+			cpu.HL.SetHi(cpu.HL.Hi())
 		},
 		0x65: func() { // LD H,L
-			cpu.HL.SetHi(cpu.BC.Hi())
+			cpu.HL.SetHi(cpu.HL.Lo())
 		},
 		0x6F: func() { // LD L,A
 			cpu.HL.SetLo(cpu.AF.Hi())
@@ -392,19 +392,19 @@ func (cpu *CPU) PopulateInstructions() {
 			cpu.HL.SetLo(cpu.BC.Hi())
 		},
 		0x69: func() { // LD L,C
-			cpu.HL.SetLo(cpu.BC.Hi())
+			cpu.HL.SetLo(cpu.BC.Lo())
 		},
 		0x6A: func() { // LD L,D
-			cpu.HL.SetLo(cpu.BC.Hi())
+			cpu.HL.SetLo(cpu.DE.Hi())
 		},
 		0x6B: func() { // LD L,E
-			cpu.HL.SetLo(cpu.BC.Hi())
+			cpu.HL.SetLo(cpu.DE.Lo())
 		},
 		0x6C: func() { // LD L,H
-			cpu.HL.SetLo(cpu.BC.Hi())
+			cpu.HL.SetLo(cpu.HL.Hi())
 		},
 		0x6D: func() { // LD L,L
-			cpu.HL.SetLo(cpu.BC.Hi())
+			cpu.HL.SetLo(cpu.HL.Lo())
 		},
 
 		0x3E: func() { // LD A,n
