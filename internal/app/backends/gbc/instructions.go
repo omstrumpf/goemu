@@ -73,7 +73,7 @@ func (cpu *CPU) or(operand byte) {
 // Cp compares the accumulator with the operand.
 func (cpu *CPU) cp(operand byte) {
 	original := cpu.AF.Hi()
-	result := original - operand
+	result := operand - original
 
 	cpu.setZ(result == 0)
 	cpu.setN(true)
