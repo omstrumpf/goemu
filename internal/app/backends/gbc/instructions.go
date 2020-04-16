@@ -144,7 +144,7 @@ func (cpu *CPU) rotLeft(original byte, useCarry bool, setter func(byte)) {
 
 	setter(result)
 
-	cpu.setZ(false)
+	cpu.setZ(result == 0)
 	cpu.setN(false)
 	cpu.setH(false)
 	cpu.setC(original > 0x7F)
@@ -166,7 +166,7 @@ func (cpu *CPU) rotRight(original byte, useCarry bool, setter func(byte)) {
 
 	setter(result)
 
-	cpu.setZ(false)
+	cpu.setZ(result == 0)
 	cpu.setN(false)
 	cpu.setH(false)
 	cpu.setC(1&original == 1)
