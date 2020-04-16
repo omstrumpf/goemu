@@ -24,6 +24,7 @@ func _main() {
 	loglevel := flag.String("loglevel", "ERROR", "Log level. ERROR, WARNING, DEBUG, TRACE.")
 	skiplogo := flag.Bool("skiplogo", false, "Skip the logo scroll sequence")
 	fastmode := flag.Bool("fastmode", false, "Don't limit emulation speed")
+	frames := flag.Uint64("frames", 0, "Number of frames to emulate. 0 is infinite.")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -70,7 +71,11 @@ func _main() {
 
 	// Game loop
 	frame := uint64(0)
+	maxFrame := *frames - 1
 	for range ticker.C {
+		if maxFrame != 0 && frame > *frames-1 {
+			break
+		}
 		logger.Tracef("Emulating frame %d", frame)
 		frame++
 
