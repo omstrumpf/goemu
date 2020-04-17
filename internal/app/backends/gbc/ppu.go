@@ -18,7 +18,7 @@ type PPU struct {
 	lcdEnable    bool // Enables the entire screen
 	windowMap    bool // Which window map is in use
 	windowEnable bool // Enables the window display
-	bgTileSelect bool // Which tileset is in use
+	tileSelect   bool // Which tileset is in use
 	bgMap        bool // Which background map is in use
 	spriteSize   bool // Size of all sprites
 	spriteEnable bool // Enables rendering sprites
@@ -34,8 +34,10 @@ type PPU struct {
 	interrupt2   bool // Trigger an interrupt on entering mode 2
 	interruptLYC bool // Trigger an interrupt when line matches lineCompare
 
-	scrollX byte // Background scroll X
-	scrollY byte // Background scroll Y
+	bgScrollX  byte // Background scroll X
+	bgScrollY  byte // Background scroll Y
+	wScrollXm7 byte // Window scroll X, minus 7
+	wScrollY   byte // Window scroll Y
 }
 
 // NewPPU constructs a valid PPU struct
@@ -48,10 +50,10 @@ func NewPPU(mmu *MMU) *PPU {
 	ppu.clearScrean()
 
 	ppu.palette = [4]color.RGBA{
-		color.RGBA{255, 255, 255, 0xFF},
-		color.RGBA{192, 192, 192, 0xFF},
-		color.RGBA{96, 96, 96, 0xFF},
-		color.RGBA{0, 0, 0, 0xFF},
+		{255, 255, 255, 0xFF},
+		{192, 192, 192, 0xFF},
+		{96, 96, 96, 0xFF},
+		{0, 0, 0, 0xFF},
 	}
 
 	ppu.mode = 2 // Start in OAM mode
@@ -144,21 +146,55 @@ func (ppu *PPU) renderLine() {
 		bgAddr = 0x9800
 	}
 
-	// The first tile pointer to be used
-	tileShiftY := uint16((ppu.line+ppu.scrollY)>>3) * 32
-	tileShiftX := uint16(ppu.scrollX >> 3)
-	tilePointer := bgAddr + tileShiftY + tileShiftX
+	// Base VRAM address for the window map
+	var wAddr uint16
+	if ppu.windowMap {
+		wAddr = 0x9C00
+	} else {
+		wAddr = 0x9800
+	}
+
+	// Determine whether the window is drawn on this scanline
+	windowOnLine := ppu.windowEnable && ppu.line >= ppu.wScrollY
+	drawingWindow := windowOnLine && ppu.wScrollXm7 < 7
+
+	// Determine initial tile locations
+	var tilePointer uint16 // First tile pointer to be used
+	var tileX, tileY byte  // Coordinates in the tile to start at
+	if drawingWindow {
+		// Line starts in the window
+		tileShiftY := uint16((ppu.line-ppu.wScrollY)>>3) << 5 // TODO this code is duplicated below
+		tileShiftX := uint16(0)                               // Window always starts from the left
+		tilePointer = wAddr + tileShiftY + tileShiftX
+
+		tileX = 7 - ppu.wScrollXm7 // ppu.wScrollXm7 is < 7 already
+		tileY = (ppu.line - ppu.wScrollY) & 0x7
+	} else {
+		// Line starts in the background
+		tileShiftY := uint16((ppu.line+ppu.bgScrollY)>>3) << 5
+		tileShiftX := uint16(ppu.bgScrollX >> 3)
+		tilePointer = bgAddr + tileShiftY + tileShiftX
+
+		tileX = ppu.bgScrollX & 0x7
+		tileY = (ppu.line + ppu.bgScrollY) & 0x7
+	}
 
 	// Address of the current tile data
 	tileAddr := ppu.getTileAddress(tilePointer)
-
-	tileX := ppu.scrollX & 0x7              // Which column within the tile to start at
-	tileY := (ppu.scrollY + ppu.line) & 0x7 // Which row within the tile to use
 
 	screenX := 0             // Which column in the framebuffer to start at
 	screenY := int(ppu.line) // Which row in the framebuffer to use
 
 	for screenX < 160 {
+		// Switch to window tiles if needed
+		if windowOnLine && !drawingWindow && screenX == (int(ppu.wScrollXm7)-7) {
+			drawingWindow = true
+			tileX = 0
+			tileY = (ppu.line - ppu.wScrollY) & 0x7
+			tilePointer = wAddr + (uint16((ppu.line-ppu.wScrollY)>>3) << 5)
+			tileAddr = ppu.getTileAddress(tilePointer)
+		}
+
 		// Move to next tile if needed
 		if tileX == 8 {
 			tileX = 0
@@ -168,7 +204,10 @@ func (ppu *PPU) renderLine() {
 
 		val := ppu.getTileVal(tileAddr, tileX, tileY)
 		pixel := ppu.palette[val]
-		ppu.writePixel(pixel, screenX, screenY)
+
+		if ppu.bgEnable || drawingWindow {
+			ppu.writePixel(pixel, screenX, screenY)
+		}
 
 		screenX++
 		tileX++
@@ -200,7 +239,7 @@ func (ppu *PPU) getTileVal(tileAddr uint16, tileX byte, tileY byte) byte {
 
 // getTileAddress returns the mmu address of the tile pointed to by the mapAddr
 func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
-	if ppu.bgTileSelect {
+	if ppu.tileSelect {
 		tileNum := uint16(ppu.mmu.Read(mapAddr))
 		return uint16(0x8000) + (tileNum * 16)
 	}
@@ -234,7 +273,7 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		if ppc.ppu.windowEnable {
 			ret |= 0x20
 		}
-		if ppc.ppu.bgTileSelect {
+		if ppc.ppu.tileSelect {
 			ret |= 0x10
 		}
 		if ppc.ppu.bgMap {
@@ -270,16 +309,20 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		}
 		return ret
 	case 0xFF42:
-		return ppc.ppu.scrollY
+		return ppc.ppu.bgScrollY
 	case 0xFF43:
-		return ppc.ppu.scrollX
+		return ppc.ppu.bgScrollX
 	case 0xFF44:
 		return ppc.ppu.line
 	case 0xFF45:
 		return ppc.ppu.lineCompare
+	case 0xFF4A:
+		return ppc.ppu.wScrollY
+	case 0xFF4B:
+		return ppc.ppu.wScrollXm7
 	}
 
-	logger.Warningf("Encountered read with unknown PPU control address: %#02x", addr)
+	logger.Warningf("Encountered read with unknown PPU control address: %#04x", addr)
 	return 0
 }
 
@@ -289,7 +332,7 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		ppc.ppu.lcdEnable = (val&0x80 != 0)
 		ppc.ppu.windowMap = (val&0x40 != 0)
 		ppc.ppu.windowEnable = (val&0x20 != 0)
-		ppc.ppu.bgTileSelect = (val&0x10 != 0)
+		ppc.ppu.tileSelect = (val&0x10 != 0)
 		ppc.ppu.bgMap = (val&0x08 != 0)
 		ppc.ppu.spriteSize = (val&0x04 != 0)
 		ppc.ppu.spriteEnable = (val&0x02 != 0)
@@ -302,10 +345,10 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		ppc.ppu.interruptLYC = (val&0x40 != 0)
 		return
 	case 0xFF42:
-		ppc.ppu.scrollY = val
+		ppc.ppu.bgScrollY = val
 		return
 	case 0xFF43:
-		ppc.ppu.scrollX = val
+		ppc.ppu.bgScrollX = val
 		return
 	case 0xFF44:
 		ppc.ppu.line = val
@@ -326,6 +369,12 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 				ppc.ppu.palette[i] = color.RGBA{0, 0, 0, 0xFF}
 			}
 		}
+		return
+	case 0xFF4A:
+		ppc.ppu.wScrollY = val
+		return
+	case 0xFF4B:
+		ppc.ppu.wScrollXm7 = val
 		return
 	}
 

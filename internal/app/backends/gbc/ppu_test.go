@@ -55,8 +55,8 @@ func TestPPUTileAddress(t *testing.T) {
 	mmu.Write(0x9E00, 127)
 	mmu.Write(0x9FFF, 255)
 
-	if ppu.bgTileSelect {
-		t.Error("Expected bgTileSelect to init to false")
+	if ppu.tileSelect {
+		t.Error("Expected tileSelect to init to false")
 	}
 
 	if ppu.getTileAddress(0x9800) != 0x8800 {
@@ -69,7 +69,7 @@ func TestPPUTileAddress(t *testing.T) {
 		t.Errorf("Expected tile at address 0x9BFF to be 0x97F0, got %#4x", ppu.getTileAddress(0x9BFF))
 	}
 
-	ppu.bgTileSelect = true
+	ppu.tileSelect = true
 
 	if ppu.getTileAddress(0x9C00) != 0x8000 {
 		t.Errorf("Expected tile at address 0x9C00 to be 0x8000, got %#4x", ppu.getTileAddress(0x9C00))
@@ -186,7 +186,7 @@ func TestPPURenderLine(t *testing.T) {
 
 	ppu.lcdEnable = true
 	ppu.bgEnable = true
-	ppu.windowMap = true
+	ppu.windowEnable = false
 
 	// Create 4 tiles in each tileset
 	for i := byte(0); i < 8; i++ {
@@ -208,15 +208,9 @@ func TestPPURenderLine(t *testing.T) {
 
 	// Create two lines of background in each map
 	for i := byte(0); i < 32; i++ {
-		mmu.Write(0x9800+uint16(i), i%4) // Map 0, line 0
-	}
-	for i := byte(0); i < 32; i++ {
+		mmu.Write(0x9800+uint16(i), i%4)     // Map 0, line 0
 		mmu.Write(0x9820+uint16(i), (i+1)%4) // Map 0, line 1
-	}
-	for i := byte(0); i < 32; i++ {
 		mmu.Write(0x9C00+uint16(i), (i+2)%4) // Map 1, line 0
-	}
-	for i := byte(0); i < 32; i++ {
 		mmu.Write(0x9C20+uint16(i), (i+3)%4) // Map 1, line 1
 	}
 
@@ -225,91 +219,138 @@ func TestPPURenderLine(t *testing.T) {
 	// Line 0: BG 0, TS 0
 	ppu.line = 0
 	ppu.bgMap = false
-	ppu.bgTileSelect = false
+	ppu.tileSelect = false
 	ppu.renderLine()
 
 	// Line 1: BG 0, TS 1
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = true
+	ppu.tileSelect = true
 	ppu.renderLine()
 
 	// line 2: BG 1, TS 0
 	ppu.line++
 	ppu.bgMap = true
-	ppu.bgTileSelect = false
+	ppu.tileSelect = false
 	ppu.renderLine()
 
 	// Line 3: BG 1, TS 1
 	ppu.line++
 	ppu.bgMap = true
-	ppu.bgTileSelect = true
+	ppu.tileSelect = true
 	ppu.renderLine()
 
 	// Line 4: BG 0, TS 0, ScrollX = 8
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = false
-	ppu.scrollX = 8
+	ppu.tileSelect = false
+	ppu.bgScrollX = 8
 	ppu.renderLine()
 
 	// Line 5: BG 0, TS 0, ScrollX = 14
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = false
-	ppu.scrollX = 14
+	ppu.tileSelect = false
+	ppu.bgScrollX = 14
 	ppu.renderLine()
 
 	// Line 6: BG 0, TS 0, ScrollY = 8
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = false
-	ppu.scrollX = 0
-	ppu.scrollY = 8
+	ppu.tileSelect = false
+	ppu.bgScrollX = 0
+	ppu.bgScrollY = 8
 	ppu.renderLine()
 
 	// Line 7: BG 0, TS 0, ScrollX = 9, ScrollY = 1
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = false
-	ppu.scrollX = 9
-	ppu.scrollY = 1
+	ppu.tileSelect = false
+	ppu.bgScrollX = 9
+	ppu.bgScrollY = 1
 	ppu.renderLine()
 
 	// Line 8: BG 0, TS 0
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = false
-	ppu.scrollX = 0
-	ppu.scrollX = 0
+	ppu.tileSelect = false
+	ppu.bgScrollX = 0
+	ppu.bgScrollY = 0
 	ppu.renderLine()
 
 	// Line 9: BG 0, TS 1
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = true
+	ppu.tileSelect = true
 	ppu.renderLine()
 
 	// Line 10: BG 1, TS 0
 	ppu.line++
 	ppu.bgMap = true
-	ppu.bgTileSelect = false
+	ppu.tileSelect = false
 	ppu.renderLine()
 
 	// Line 11: BG 1, TS 1
 	ppu.line++
 	ppu.bgMap = true
-	ppu.bgTileSelect = true
+	ppu.tileSelect = true
 	ppu.renderLine()
 
 	// Line 12: BG 0, TS 0, Palette Swapped
 	ppu.line++
 	ppu.bgMap = false
-	ppu.bgTileSelect = false
+	ppu.tileSelect = false
 	ppu.palette[3] = color.RGBA{255, 255, 255, 0xFF}
 	ppu.palette[2] = color.RGBA{192, 192, 192, 0xFF}
 	ppu.palette[1] = color.RGBA{96, 96, 96, 0xFF}
 	ppu.palette[0] = color.RGBA{0, 0, 0, 0xFF}
+	ppu.renderLine()
+
+	// Swapping palette back
+	ppu.palette[0] = color.RGBA{255, 255, 255, 0xFF}
+	ppu.palette[1] = color.RGBA{192, 192, 192, 0xFF}
+	ppu.palette[2] = color.RGBA{96, 96, 96, 0xFF}
+	ppu.palette[3] = color.RGBA{0, 0, 0, 0xFF}
+
+	// Line 13: Window enabled but scrolled lower
+	ppu.line++
+	ppu.bgMap = false
+	ppu.tileSelect = false
+	ppu.windowEnable = true
+	ppu.windowMap = true
+	ppu.wScrollXm7 = 0
+	ppu.wScrollY = 14
+	ppu.renderLine()
+
+	// Line 14: Window in middle
+	ppu.line++
+	ppu.wScrollXm7 = 30
+	ppu.renderLine()
+
+	// Line 15: Window aligned left
+	ppu.line++
+	ppu.wScrollXm7 = 7
+	ppu.renderLine()
+
+	// Line 16: Window overflows left
+	ppu.line++
+	ppu.wScrollXm7 = 0
+	ppu.renderLine()
+
+	// Line 17: Window second tile
+	ppu.line++
+	ppu.wScrollXm7 = 7
+	ppu.wScrollY = 9
+	ppu.renderLine()
+
+	// Line 18: Other window map
+	ppu.line++
+	ppu.windowMap = false
+	ppu.renderLine()
+
+	// Line 19: Window with other tileset
+	ppu.line++
+	ppu.tileSelect = true
 	ppu.renderLine()
 
 	expected := []byte{
@@ -391,9 +432,51 @@ func TestPPURenderLine(t *testing.T) {
 		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
 		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
 		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
+		// Line 13
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		// Line 14
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+		3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+		3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+		3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+		3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+		// Line 15
+		2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+		2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+		2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+		2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+		2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+		// Line 16
+		2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+		2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+		2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+		2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+		2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+		// Line 17
+		3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+		3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+		3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+		3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+		3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+		// Line 18
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+		// Line 19
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
+		2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
 	}
 
-	for l := 0; l < 13; l++ {
+	for l := 0; l < 20; l++ {
 		good := true
 		i := 0
 		for i = 0; i < 160; i++ {
@@ -409,7 +492,7 @@ func TestPPURenderLine(t *testing.T) {
 		}
 	}
 
-	// TODO expand this test when windows & sprites are implemented
+	// TODO expand this test when sprites are implemented
 }
 
 func TestPPUTiming(t *testing.T) {
