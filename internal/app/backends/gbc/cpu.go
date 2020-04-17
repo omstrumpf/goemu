@@ -39,15 +39,15 @@ func NewCPU(mmu *MMU) *CPU {
 	return cpu
 }
 
-// ProcessNextInstruction fetches the next instruction, executes it, and increments the clock accordingly
+// ProcessNextInstruction fetches the next instruction, executes it, and returns the clock cycles elapsed
 func (cpu *CPU) ProcessNextInstruction() int {
 	cpu.instructionClock = 0
 
-	if cpu.stop {
-		return cpu.instructionClock
-	}
-
-	if cpu.halt {
+	if cpu.halt || cpu.stop {
+		if cpu.mmu.Read(0xFFFF)&cpu.mmu.Read(0xFF0F)&0x1F != 0 {
+			cpu.halt = false
+			cpu.stop = false // TODO are halt and stop really treated the same?
+		}
 		cpu.instructionClock++
 	} else {
 		// Fetch the next instruction and increment PC
@@ -86,31 +86,28 @@ func (cpu *CPU) handleInterrupts() {
 
 	if interruptByte&0x1F != 0 {
 		cpu.ime = false
-		cpu.halt = false
-	}
-
-	if interruptByte&1 != 0 { // V-Blank
-			logger.Tracef("Handling VBLANK interrupt") 
-		cpu.mmu.interrupts.ResetInterrupt(interruptVBlankBit)
-		cpu.call(0x40)
-	} else if interruptByte&2 != 0 { // LCD STAT
+		if interruptByte&1 != 0 { // V-Blank
+			logger.Tracef("Handling VBLANK interrupt")
+			cpu.mmu.interrupts.ResetInterrupt(interruptVBlankBit)
+			cpu.call(0x40)
+		} else if interruptByte&2 != 0 { // LCD STAT
 			logger.Tracef("Handling LCD STAT interrupt")
-		cpu.mmu.interrupts.ResetInterrupt(interruptLCDBit)
-		cpu.call(0x48)
-	} else if interruptByte&4 != 0 { // Timer
+			cpu.mmu.interrupts.ResetInterrupt(interruptLCDBit)
+			cpu.call(0x48)
+		} else if interruptByte&4 != 0 { // Timer
 			logger.Tracef("Handling TIMER interrupt")
-		cpu.mmu.interrupts.ResetInterrupt(interruptTimerBit)
-		cpu.call(0x50)
-	} else if interruptByte&8 != 0 { // Serial
+			cpu.mmu.interrupts.ResetInterrupt(interruptTimerBit)
+			cpu.call(0x50)
+		} else if interruptByte&8 != 0 { // Serial
 			logger.Tracef("Handling SERIAL interrupt")
-		cpu.mmu.interrupts.ResetInterrupt(interruptSerialBit)
-		cpu.call(0x58)
-	} else if interruptByte&16 != 0 { // Joypad
+			cpu.mmu.interrupts.ResetInterrupt(interruptSerialBit)
+			cpu.call(0x58)
+		} else if interruptByte&16 != 0 { // Joypad
 			logger.Tracef("Handling JOYPAD interrupt")
-		cpu.mmu.interrupts.ResetInterrupt(interruptJoypadBit)
-		cpu.call(0x60)
+			cpu.mmu.interrupts.ResetInterrupt(interruptJoypadBit)
+			cpu.call(0x60)
+		}
 	}
-}
 }
 
 // Flags

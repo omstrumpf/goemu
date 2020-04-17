@@ -175,8 +175,7 @@ func (gbc *GBC) traceString() string {
 	pc := gbc.cpu.PC.HiLo()
 	_, disassembly := gbc.cpu.Disassemble(pc)
 
-	return fmt.Sprintf("Clk: %08d, A: %02x, F: %s, BC: %04x, DE: %04x, HL: %04x, SP: %04x, (HL): %02x, ppu: %d. %#04x: %s",
-		gbc.totalClocks,
+	return fmt.Sprintf("A: %02x, F: %s, BC: %04x, DE: %04x, HL: %04x, SP: %04x, (HL): %02x, ppu: %d. %#04x: %s",
 		gbc.cpu.AF.Hi(),
 		gbc.cpu.flagString(),
 		gbc.cpu.BC.HiLo(),

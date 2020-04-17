@@ -7,13 +7,13 @@ func (cpu *CPU) add(operand byte, useCarry bool) {
 	if useCarry && cpu.c() {
 		carry = 1
 	}
-	result := int16(original) + int16(operand) + int16(carry)
+	result := uint16(original) + uint16(operand) + uint16(carry)
 
 	cpu.AF.SetHi(byte(result))
 
 	cpu.setZ(byte(result) == 0)
 	cpu.setN(false)
-	cpu.setH((operand&0xF)+(original*0xF)+byte(carry) > 0xF)
+	cpu.setH((operand&0x0F)+(original&0x0F)+byte(carry) > 0x0F)
 	cpu.setC(result > 0xFF)
 }
 
@@ -30,7 +30,7 @@ func (cpu *CPU) sub(operand byte, useCarry bool) {
 
 	cpu.setZ(byte(result) == 0)
 	cpu.setN(true)
-	cpu.setH(int16(original&0xF)-int16(operand&0xF)-int16(carry) < 0)
+	cpu.setH(int16(original&0x0F)-int16(operand&0x0F)-int16(carry) < 0) // TODO clean this up
 	cpu.setC(result < 0)
 }
 
@@ -72,13 +72,13 @@ func (cpu *CPU) or(operand byte) {
 
 // Cp compares the accumulator with the operand.
 func (cpu *CPU) cp(operand byte) {
-	original := cpu.AF.Hi()
-	result := operand - original
+	a := cpu.AF.Hi()
+	result := a - operand
 
 	cpu.setZ(result == 0)
 	cpu.setN(true)
-	cpu.setH((original & 0x0F) > (operand & 0x0F))
-	cpu.setC(original < operand)
+	cpu.setH(int16(a&0x0F)-int16(operand&0x0F) < 0)
+	cpu.setC(operand > a)
 }
 
 // Inc increments the value into the given setter function.
@@ -89,7 +89,7 @@ func (cpu *CPU) inc(val byte, setter func(byte)) {
 
 	cpu.setZ(result == 0)
 	cpu.setN(false)
-	cpu.setH(((val & 0xF) + 1) > 0xF)
+	cpu.setH(val&0x0F == 0x0F)
 }
 
 // Dec decrements the value into the given setter function
@@ -100,10 +100,10 @@ func (cpu *CPU) dec(val byte, setter func(byte)) {
 
 	cpu.setZ(result == 0)
 	cpu.setN(true)
-	cpu.setH(val&0xF == 0)
+	cpu.setH(val&0x0F == 0)
 }
 
-// Add16 performs a 16 bit AND into the HL register (HL = HL + val)
+// Add16 performs a 16 bit ADD into the HL register (HL = HL + val)
 func (cpu *CPU) add16(val uint16) {
 	result := uint32(cpu.HL.HiLo()) + uint32(val)
 
@@ -113,7 +113,7 @@ func (cpu *CPU) add16(val uint16) {
 	cpu.setC(result > 0xFFFF)
 }
 
-// Add16Signed performs a 16 bit AND into the given setter function
+// Add16Signed performs a signed 16 bit ADD into the given setter function
 func (cpu *CPU) add16Signed(original uint16, operand int8, setter func(uint16)) {
 	result := int32(original) + int32(operand)
 
@@ -929,15 +929,19 @@ func (cpu *CPU) PopulateInstructions() {
 		//// Rotate / Shift ////
 		0x07: func() { // RLCA
 			cpu.rotLeft(cpu.AF.Hi(), false, cpu.AF.SetHi)
+			cpu.setZ(false)
 		},
 		0x17: func() { // RLA
 			cpu.rotLeft(cpu.AF.Hi(), true, cpu.AF.SetHi)
+			cpu.setZ(false)
 		},
 		0x0F: func() { // RRCA
 			cpu.rotRight(cpu.AF.Hi(), false, cpu.AF.SetHi)
+			cpu.setZ(false)
 		},
 		0x1F: func() { // RRA
 			cpu.rotRight(cpu.AF.Hi(), true, cpu.AF.SetHi)
+			cpu.setZ(false)
 		},
 
 		//// Control ////
@@ -954,9 +958,20 @@ func (cpu *CPU) PopulateInstructions() {
 		0x00: func() { // NOP
 		},
 		0x76: func() { // HALT
-			cpu.halt = true
+			if cpu.ime {
+				logger.Tracef("CPU halting until interrupt (ime enabled)")
+				cpu.halt = true
+			} else {
+				// Handling the HALT bug. See TCAGBD 4.10.
+				if cpu.mmu.Read(0xFFFF)&cpu.mmu.Read(0xFF0F)&0x1F == 0 {
+					logger.Tracef("CPU halting until interrupt (ime disabled)")
+					logger.Tracef("Interrupts: %#2x, %#2x", cpu.mmu.Read(0xFFFF), cpu.mmu.Read(0xFF0F))
+					cpu.halt = true
+				}
+			}
 		},
 		0x10: func() { // STOP
+			logger.Tracef("CPU stopping (low power mode)")
 			cpu.stop = true
 			cpu.PC.Inc()
 		},
