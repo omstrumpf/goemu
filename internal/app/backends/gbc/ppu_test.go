@@ -5,21 +5,6 @@ import (
 	"testing"
 )
 
-func iToRGBA(val byte) color.RGBA {
-	switch val {
-	case 0:
-		return color.RGBA{255, 255, 255, 0xFF}
-	case 1:
-		return color.RGBA{192, 192, 192, 0xFF}
-	case 2:
-		return color.RGBA{96, 96, 96, 0xFF}
-	case 3:
-		return color.RGBA{0, 0, 0, 0xFF}
-	}
-
-	return color.RGBA{255, 255, 255, 0xFF}
-}
-
 func TestPPUInit(t *testing.T) {
 	mmu := NewMMU()
 	ppu := NewPPU(mmu)

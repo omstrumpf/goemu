@@ -319,6 +319,13 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		return ppc.ppu.line
 	case 0xFF45:
 		return ppc.ppu.lineCompare
+	case 0xFF47:
+		var ret byte
+		ret |= (rgbaToI(ppc.ppu.palette[0])) << 6
+		ret |= (rgbaToI(ppc.ppu.palette[1])) << 4
+		ret |= (rgbaToI(ppc.ppu.palette[2])) << 2
+		ret |= (rgbaToI(ppc.ppu.palette[3]))
+		return ret
 	case 0xFF4A:
 		return ppc.ppu.wScrollY
 	case 0xFF4B:
@@ -361,16 +368,7 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		return
 	case 0xFF47:
 		for i := uint8(0); i < 4; i++ {
-			switch (val >> (i * 2)) & 3 {
-			case 0:
-				ppc.ppu.palette[i] = color.RGBA{255, 255, 255, 0xFF}
-			case 1:
-				ppc.ppu.palette[i] = color.RGBA{192, 192, 192, 0xFF}
-			case 2:
-				ppc.ppu.palette[i] = color.RGBA{96, 96, 96, 0xFF}
-			case 3:
-				ppc.ppu.palette[i] = color.RGBA{0, 0, 0, 0xFF}
-			}
+			ppc.ppu.palette[i] = iToRGBA((val >> (i * 2)) & 3)
 		}
 		return
 	case 0xFF4A:
@@ -385,9 +383,43 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 }
 
 //// Helpers ////
+
+// Returns the min of two ints
 func min(a int, b int) int {
 	if a < b {
 		return a
 	}
 	return b
+}
+
+// Maps a palette byte value (0-3) to RGBA
+func iToRGBA(val byte) color.RGBA {
+	switch val {
+	case 0:
+		return color.RGBA{255, 255, 255, 0xFF}
+	case 1:
+		return color.RGBA{192, 192, 192, 0xFF}
+	case 2:
+		return color.RGBA{96, 96, 96, 0xFF}
+	case 3:
+		return color.RGBA{0, 0, 0, 0xFF}
+	}
+
+	return color.RGBA{255, 255, 255, 0xFF}
+}
+
+// Maps an RGBA color to palette byte value (0-3)
+func rgbaToI(c color.RGBA) byte {
+	switch c {
+	case color.RGBA{255, 255, 255, 0xFF}:
+		return 0
+	case color.RGBA{192, 192, 192, 0xFF}:
+		return 1
+	case color.RGBA{96, 96, 96, 0xFF}:
+		return 2
+	case color.RGBA{0, 0, 0, 0xFF}:
+		return 3
+	}
+
+	return 0
 }
