@@ -12,8 +12,10 @@ type PPU struct {
 	memoryControl *ppuControl // Control Regsiter Device
 	oam           *oam        // Object Attribute Memory (sprites)
 
-	framebuffer []color.RGBA  // Frame Buffer
-	palette     [4]color.RGBA // Color Palette
+	framebuffer    []color.RGBA  // Frame Buffer
+	bgPalette      [4]color.RGBA // Background Color Palette
+	spritePalette0 [4]color.RGBA // Sprite Color Palette 0
+	spritePalette1 [4]color.RGBA // Sprite Color Palette 1
 
 	// Control Registers
 	lcdEnable    bool // Enables the entire screen
@@ -50,7 +52,7 @@ func NewPPU(mmu *MMU) *PPU {
 	ppu.framebuffer = make([]color.RGBA, 160*144)
 	ppu.clearScrean()
 
-	ppu.palette = [4]color.RGBA{
+	ppu.bgPalette = [4]color.RGBA{
 		{255, 255, 255, 0xFF},
 		{192, 192, 192, 0xFF},
 		{96, 96, 96, 0xFF},
@@ -141,79 +143,95 @@ func (ppu *PPU) renderLine() {
 		return
 	}
 
-	// Base VRAM address for the background map
-	var bgAddr uint16
-	if ppu.bgMap {
-		bgAddr = 0x9C00
-	} else {
-		bgAddr = 0x9800
-	}
+	// Draw the background if enabled
+	if ppu.bgEnable {
+		// Base VRAM address for the background map
+		var bgAddr uint16
+		if ppu.bgMap {
+			bgAddr = 0x9C00
+		} else {
+			bgAddr = 0x9800
+		}
 
-	// Base VRAM address for the window map
-	var wAddr uint16
-	if ppu.windowMap {
-		wAddr = 0x9C00
-	} else {
-		wAddr = 0x9800
-	}
-
-	// Determine whether the window is drawn on this scanline
-	windowOnLine := ppu.windowEnable && ppu.line >= ppu.wScrollY
-	drawingWindow := windowOnLine && ppu.wScrollXm7 < 7
-
-	// Determine initial tile locations
-	var tilePointer uint16 // First tile pointer to be used
-	var tileX, tileY byte  // Coordinates in the tile to start at
-	if drawingWindow {
-		// Line starts in the window
-		tileShiftY := uint16((ppu.line-ppu.wScrollY)>>3) << 5 // TODO this code is duplicated below
-		tileShiftX := uint16(0)                               // Window always starts from the left
-		tilePointer = wAddr + tileShiftY + tileShiftX
-
-		tileX = 7 - ppu.wScrollXm7 // ppu.wScrollXm7 is < 7 already
-		tileY = (ppu.line - ppu.wScrollY) & 0x7
-	} else {
-		// Line starts in the background
+		// First tile to be drawn
 		tileShiftY := uint16((ppu.line+ppu.bgScrollY)>>3) << 5
 		tileShiftX := uint16(ppu.bgScrollX >> 3)
-		tilePointer = bgAddr + tileShiftY + tileShiftX
+		tilePointer := bgAddr + tileShiftY + tileShiftX
+		tileAddr := ppu.getTileAddress(tilePointer)
 
-		tileX = ppu.bgScrollX & 0x7
-		tileY = (ppu.line + ppu.bgScrollY) & 0x7
+		// Coordinate in the tile to start drawing
+		tileX := ppu.bgScrollX & 0x7
+		tileY := (ppu.line + ppu.bgScrollY) & 0x7
+
+		// Coordinates in the framebuffer to draw
+		screenX := 0
+		screenY := int(ppu.line)
+
+		for screenX < 160 {
+			// Move to next tile if needed
+			if tileX == 8 {
+				tileX = 0
+				tilePointer++
+				tileAddr = ppu.getTileAddress(tilePointer)
+			}
+
+			val := ppu.getTileVal(tileAddr, tileX, tileY)
+			pixel := ppu.bgPalette[val]
+
+			ppu.writePixel(pixel, screenX, screenY)
+
+			screenX++
+			tileX++
+		}
 	}
 
-	// Address of the current tile data
-	tileAddr := ppu.getTileAddress(tilePointer)
+	// Draw the window if enabled
+	if ppu.windowEnable && ppu.line >= ppu.wScrollY {
 
-	screenX := 0             // Which column in the framebuffer to start at
-	screenY := int(ppu.line) // Which row in the framebuffer to use
-
-	for screenX < 160 {
-		// Switch to window tiles if needed
-		if windowOnLine && !drawingWindow && screenX == (int(ppu.wScrollXm7)-7) {
-			drawingWindow = true
-			tileX = 0
-			tileY = (ppu.line - ppu.wScrollY) & 0x7
-			tilePointer = wAddr + (uint16((ppu.line-ppu.wScrollY)>>3) << 5)
-			tileAddr = ppu.getTileAddress(tilePointer)
+		// Base VRAM address for the window map
+		var wAddr uint16
+		if ppu.windowMap {
+			wAddr = 0x9C00
+		} else {
+			wAddr = 0x9800
 		}
 
-		// Move to next tile if needed
-		if tileX == 8 {
+		// First tile to be drawn
+		tileShiftY := uint16((ppu.line-ppu.wScrollY)>>3) << 5
+		tileShiftX := uint16(0) // Window always starts from the left
+		tilePointer := wAddr + tileShiftY + tileShiftX
+		tileAddr := ppu.getTileAddress(tilePointer)
+
+		// Coordinates in the tile to start drawing
+		var tileX, tileY byte
+		// Coordinates in the framebuffer to draw
+		var screenX, screenY int
+		if ppu.wScrollXm7 < 7 {
+			tileX = 7 - ppu.wScrollXm7
+			screenX = 0
+		} else {
 			tileX = 0
-			tilePointer++
-			tileAddr = ppu.getTileAddress(tilePointer)
+			screenX = int(ppu.wScrollXm7) - 7
 		}
+		tileY = (ppu.line - ppu.wScrollY) & 0x7
+		screenY = int(ppu.line)
 
-		val := ppu.getTileVal(tileAddr, tileX, tileY)
-		pixel := ppu.palette[val]
+		for screenX < 160 {
+			// Move to next tile if needed
+			if tileX == 8 {
+				tileX = 0
+				tilePointer++
+				tileAddr = ppu.getTileAddress(tilePointer)
+			}
 
-		if ppu.bgEnable || drawingWindow {
+			val := ppu.getTileVal(tileAddr, tileX, tileY)
+			pixel := ppu.bgPalette[val]
+
 			ppu.writePixel(pixel, screenX, screenY)
-		}
 
-		screenX++
-		tileX++
+			screenX++
+			tileX++
+		}
 	}
 }
 
@@ -321,11 +339,23 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		return ppc.ppu.lineCompare
 	case 0xFF47:
 		var ret byte
-		ret |= (rgbaToI(ppc.ppu.palette[0])) << 6
-		ret |= (rgbaToI(ppc.ppu.palette[1])) << 4
-		ret |= (rgbaToI(ppc.ppu.palette[2])) << 2
-		ret |= (rgbaToI(ppc.ppu.palette[3]))
+		ret |= (rgbaToI(ppc.ppu.bgPalette[0])) << 6
+		ret |= (rgbaToI(ppc.ppu.bgPalette[1])) << 4
+		ret |= (rgbaToI(ppc.ppu.bgPalette[2])) << 2
+		ret |= (rgbaToI(ppc.ppu.bgPalette[3]))
 		return ret
+	case 0xFF48:
+		var ret byte
+		ret |= (rgbaToI(ppc.ppu.spritePalette0[0])) << 6
+		ret |= (rgbaToI(ppc.ppu.spritePalette0[1])) << 4
+		ret |= (rgbaToI(ppc.ppu.spritePalette0[2])) << 2
+		ret |= (rgbaToI(ppc.ppu.spritePalette0[3]))
+	case 0xFF49:
+		var ret byte
+		ret |= (rgbaToI(ppc.ppu.spritePalette1[0])) << 6
+		ret |= (rgbaToI(ppc.ppu.spritePalette1[1])) << 4
+		ret |= (rgbaToI(ppc.ppu.spritePalette1[2])) << 2
+		ret |= (rgbaToI(ppc.ppu.spritePalette1[3]))
 	case 0xFF4A:
 		return ppc.ppu.wScrollY
 	case 0xFF4B:
@@ -368,7 +398,17 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		return
 	case 0xFF47:
 		for i := uint8(0); i < 4; i++ {
-			ppc.ppu.palette[i] = iToRGBA((val >> (i * 2)) & 3)
+			ppc.ppu.bgPalette[i] = iToRGBA((val >> (i * 2)) & 3)
+		}
+		return
+	case 0xFF48:
+		for i := uint8(0); i < 4; i++ {
+			ppc.ppu.spritePalette0[i] = iToRGBA((val >> (i * 2)) & 3)
+		}
+		return
+	case 0xFF49:
+		for i := uint8(0); i < 4; i++ {
+			ppc.ppu.spritePalette1[i] = iToRGBA((val >> (i * 2)) & 3)
 		}
 		return
 	case 0xFF4A:

@@ -19,7 +19,7 @@ func TestPPUInit(t *testing.T) {
 		t.Error("FrameBuffer should initialize to black")
 	}
 
-	if ppu.palette[0] != white || ppu.palette[1] != lightGray || ppu.palette[2] != darkGray || ppu.palette[3] != black {
+	if ppu.bgPalette[0] != white || ppu.bgPalette[1] != lightGray || ppu.bgPalette[2] != darkGray || ppu.bgPalette[3] != black {
 		t.Error("Palette should initialize correctly")
 	}
 
@@ -285,17 +285,17 @@ func TestPPURenderLine(t *testing.T) {
 	ppu.line++
 	ppu.bgMap = false
 	ppu.tileSelect = false
-	ppu.palette[3] = color.RGBA{255, 255, 255, 0xFF}
-	ppu.palette[2] = color.RGBA{192, 192, 192, 0xFF}
-	ppu.palette[1] = color.RGBA{96, 96, 96, 0xFF}
-	ppu.palette[0] = color.RGBA{0, 0, 0, 0xFF}
+	ppu.bgPalette[3] = color.RGBA{255, 255, 255, 0xFF}
+	ppu.bgPalette[2] = color.RGBA{192, 192, 192, 0xFF}
+	ppu.bgPalette[1] = color.RGBA{96, 96, 96, 0xFF}
+	ppu.bgPalette[0] = color.RGBA{0, 0, 0, 0xFF}
 	ppu.renderLine()
 
 	// Swapping palette back
-	ppu.palette[0] = color.RGBA{255, 255, 255, 0xFF}
-	ppu.palette[1] = color.RGBA{192, 192, 192, 0xFF}
-	ppu.palette[2] = color.RGBA{96, 96, 96, 0xFF}
-	ppu.palette[3] = color.RGBA{0, 0, 0, 0xFF}
+	ppu.bgPalette[0] = color.RGBA{255, 255, 255, 0xFF}
+	ppu.bgPalette[1] = color.RGBA{192, 192, 192, 0xFF}
+	ppu.bgPalette[2] = color.RGBA{96, 96, 96, 0xFF}
+	ppu.bgPalette[3] = color.RGBA{0, 0, 0, 0xFF}
 
 	// Line 13: Window enabled but scrolled lower
 	ppu.line++
