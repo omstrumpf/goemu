@@ -78,7 +78,6 @@ func TestMMUMappings(t *testing.T) {
 	mmu.Write(0xBFFF, 0x8) // ERAM
 	mmu.Write(0xC000, 0x9) // WRAM
 	mmu.Write(0xDFFF, 0xA) // WRAM
-	mmu.Write(0xFE00, 0xB) // GOAM
 	mmu.Write(0xFF00, 0xC) // Inputs
 	mmu.Write(0xFF80, 0xD) // ZRAM
 	mmu.Write(0xFFFE, 0xE) // ZRAM
@@ -112,9 +111,6 @@ func TestMMUMappings(t *testing.T) {
 	}
 	if mmu.wram.Read(0x1FFF) != 0xA {
 		t.Errorf("Expected to read 0xA from wram, got %#2x", mmu.wram.Read(0x1FFF))
-	}
-	if mmu.goam.Read(0x0000) != 0xB {
-		t.Errorf("Expected to read 0xB from goam, got %#2x", mmu.goam.Read(0x0000))
 	}
 	if mmu.inputs.Read(0x00) != 0xdf {
 		t.Errorf("Expected to read 0xdf from inputs, got %#2x", mmu.inputs.Read(0x0000))

@@ -10,6 +10,7 @@ type PPU struct {
 	mmu *MMU // Memory Management Unit
 
 	memoryControl *ppuControl // Control Regsiter Device
+	oam           *oam        // Object Attribute Memory (sprites)
 
 	framebuffer []color.RGBA  // Frame Buffer
 	palette     [4]color.RGBA // Color Palette
@@ -61,6 +62,8 @@ func NewPPU(mmu *MMU) *PPU {
 	ppuControl := new(ppuControl)
 	ppuControl.ppu = ppu
 	ppu.memoryControl = ppuControl
+
+	ppu.oam = new(oam)
 
 	return ppu
 }

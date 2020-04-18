@@ -5,7 +5,6 @@ const (
 	vramlen = 0x2000
 	eramlen = 0x2000
 	wramlen = 0x2000
-	goamlen = 0xA0
 	zramlen = 0x80
 
 	totalramlen = 0x10000
@@ -18,7 +17,6 @@ type MMU struct {
 	vram memoryDevice
 	eram memoryDevice
 	wram memoryDevice
-	goam memoryDevice
 	zram memoryDevice
 
 	inputs     *inputMemoryDevice
@@ -41,7 +39,6 @@ func NewMMU() *MMU {
 	mmu.vram = newStandardMemoryDevice(vramlen)
 	mmu.eram = newStandardMemoryDevice(eramlen)
 	mmu.wram = newStandardMemoryDevice(wramlen)
-	mmu.goam = newStandardMemoryDevice(goamlen)
 	mmu.zram = newStandardMemoryDevice(zramlen)
 
 	mmu.inputs = newInputMemoryDevice()
@@ -109,7 +106,7 @@ func (mmu *MMU) Write(addr uint16, val byte) {
 		// Access to memory should be restricted until it is done (except for HRAM).
 
 		for i := uint16(0); i < 0xA0; i++ {
-			mmu.goam.Write(i, mmu.Read(src+i))
+			mmu.ppu.oam.Write(i, mmu.Read(src+i))
 		}
 		return
 	}
@@ -164,7 +161,7 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memoryDevice, offset uint16) {
 		// PPU OAM
 		case 0xE00:
 			if addr < 0xFEA0 {
-				return mmu.goam, addr & 0xFF
+				return mmu.ppu.oam, addr & 0xFF
 			}
 			// Higher addresses always 0
 			return mmu.zero, 0
