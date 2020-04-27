@@ -49,7 +49,7 @@ func NewPPU(mmu *MMU) *PPU {
 
 	ppu.mmu = mmu
 
-	ppu.framebuffer = make([]color.RGBA, 160*144)
+	ppu.framebuffer = make([]color.RGBA, ScreenHeight*ScreenWidth)
 	ppu.clearScrean()
 
 	ppu.bgPalette = [4]color.RGBA{
@@ -143,6 +143,9 @@ func (ppu *PPU) renderLine() {
 		return
 	}
 
+	// BG color values on the current line, for sprite transparency
+	var lineColors [ScreenWidth]uint8
+
 	// Draw the background if enabled
 	if ppu.bgEnable {
 		// Base VRAM address for the background map
@@ -167,7 +170,7 @@ func (ppu *PPU) renderLine() {
 		screenX := 0
 		screenY := int(ppu.line)
 
-		for screenX < 160 {
+		for screenX < ScreenWidth {
 			// Move to next tile if needed
 			if tileX == 8 {
 				tileX = 0
@@ -178,10 +181,54 @@ func (ppu *PPU) renderLine() {
 			val := ppu.getTileVal(tileAddr, tileX, tileY)
 			pixel := ppu.bgPalette[val]
 
+			lineColors[screenX] = val
 			ppu.writePixel(pixel, screenX, screenY)
 
 			screenX++
 			tileX++
+		}
+	}
+
+	// Draw sprites if enabled
+	if ppu.spriteEnable {
+		visibleSprites := ppu.oam.VisibleSpritesOnLine(ppu.line, ppu.spriteSize)
+		for _, sprite := range visibleSprites {
+			tileAddr := 0x8000 + (uint16(sprite.tileNum) << 4)
+
+			palette := ppu.spritePalette0
+			if sprite.paletteFlag {
+				palette = ppu.spritePalette1
+			}
+
+			tileY := ppu.line - (sprite.yPos - 16)
+			if sprite.yFlip {
+				if ppu.spriteSize {
+					tileY = 15 - tileY
+				} else {
+					tileY = 7 - tileY
+				}
+			}
+
+			screenX := int(sprite.xPos) - 8
+			screenY := int(ppu.line)
+			for tileX := byte(0); tileX < 8; tileX++ {
+				if screenX >= 0 && screenX < 160 {
+
+					if sprite.xFlip {
+						tileX = 7 - tileX
+					}
+
+					val := ppu.getTileVal(tileAddr, tileX, tileY)
+
+					if val != 0 && (sprite.priority || lineColors[screenX] == 0) {
+						pixel := palette[val]
+						ppu.writePixel(pixel, screenX, screenY)
+					}
+
+				}
+				screenX++
+			}
+
 		}
 	}
 
@@ -216,7 +263,7 @@ func (ppu *PPU) renderLine() {
 		tileY = (ppu.line - ppu.wScrollY) & 0x7
 		screenY = int(ppu.line)
 
-		for screenX < 160 {
+		for screenX < ScreenWidth {
 			// Move to next tile if needed
 			if tileX == 8 {
 				tileX = 0
@@ -237,7 +284,7 @@ func (ppu *PPU) renderLine() {
 
 // writePixel writes the given RGBA value into the framebuffer at coordinates (x, y)
 func (ppu *PPU) writePixel(val color.RGBA, x int, y int) {
-	ppu.framebuffer[(y*160)+x] = val
+	ppu.framebuffer[(y*ScreenWidth)+x] = val
 }
 
 // getTileVal returns the 2 bit value for a tile pixel
@@ -262,11 +309,11 @@ func (ppu *PPU) getTileVal(tileAddr uint16, tileX byte, tileY byte) byte {
 func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
 	if ppu.tileSelect {
 		tileNum := uint16(ppu.mmu.Read(mapAddr))
-		return uint16(0x8000) + (tileNum * 16)
+		return uint16(0x8000) + (tileNum << 4)
 	}
 
 	tileNum := int16(int8(ppu.mmu.Read(mapAddr)))
-	return uint16(int32(0x9000) + int32(tileNum*16))
+	return uint16(int32(0x9000) + int32(tileNum<<4))
 }
 
 // clearScrean sets the framebuffer to all black

@@ -1,5 +1,7 @@
 package gbc
 
+import "sort"
+
 // sprite represents a gameboy sprite
 type sprite struct {
 	yPos    byte
@@ -66,16 +68,16 @@ func (oam *oam) Write(addr uint16, val byte) {
 		logger.Warningf("Encountered overflowed OAM write")
 	}
 
-	sprite := oam.sprites[spriteNum]
+	sprite := &oam.sprites[spriteNum]
 
 	switch addr & 0x3 {
 	case 0:
 		sprite.yPos = val
 	case 1:
 		sprite.xPos = val
-	case 3:
+	case 2:
 		sprite.tileNum = val
-	case 4:
+	case 3:
 		sprite.priority = (val&0x80 != 0)
 		sprite.yFlip = (val&0x40 != 0)
 		sprite.xFlip = (val&0x20 != 0)
@@ -83,4 +85,38 @@ func (oam *oam) Write(addr uint16, val byte) {
 		sprite.tileBank = (val&0x08 != 0)
 		sprite.paletteNum = val & 0x07
 	}
+}
+
+func (oam *oam) VisibleSpritesOnLine(line byte, tallSprites bool) []*sprite {
+	var ret []*sprite
+
+	height := byte(8)
+	if tallSprites {
+		height = 16
+	}
+
+	// Collect all sprites on the line
+	for i := range oam.sprites {
+		sprite := &oam.sprites[i]
+		if sprite.yPos != 0 && line >= (sprite.yPos-16) && line < (sprite.yPos+height-16) {
+			ret = append(ret, sprite)
+		}
+	}
+
+	// Sort by x position
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].xPos < ret[j].xPos
+	})
+
+	// Keep the first 10 from the left
+	if len(ret) > 10 {
+		ret = ret[:10]
+	}
+
+	// Reverse
+	for l, r := 0, len(ret)-1; l < r; l, r = l+1, r-1 {
+		ret[l], ret[r] = ret[r], ret[l]
+	}
+
+	return ret
 }
