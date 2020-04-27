@@ -75,10 +75,10 @@ func (imd *inputMemoryDevice) Read(addr uint16) byte {
 }
 
 func (imd *inputMemoryDevice) Write(addr uint16, val byte) {
-	if val&1<<4 == 0 {
+	if val&(1<<4) == 0 {
 		imd.directional = true
 	}
-	if val&1<<5 == 0 {
+	if val&(1<<5) == 0 {
 		imd.directional = false
 	}
 }
