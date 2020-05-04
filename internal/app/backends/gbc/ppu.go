@@ -397,12 +397,14 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		ret |= (rgbaToI(ppc.ppu.spritePalette0[1])) << 4
 		ret |= (rgbaToI(ppc.ppu.spritePalette0[2])) << 2
 		ret |= (rgbaToI(ppc.ppu.spritePalette0[3]))
+		return ret
 	case 0xFF49:
 		var ret byte
 		ret |= (rgbaToI(ppc.ppu.spritePalette1[0])) << 6
 		ret |= (rgbaToI(ppc.ppu.spritePalette1[1])) << 4
 		ret |= (rgbaToI(ppc.ppu.spritePalette1[2])) << 2
 		ret |= (rgbaToI(ppc.ppu.spritePalette1[3]))
+		return ret
 	case 0xFF4A:
 		return ppc.ppu.wScrollY
 	case 0xFF4B:
