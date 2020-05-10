@@ -10,5 +10,7 @@ require (
 	github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1 // indirect
 	github.com/go-gl/mathgl v0.0.0-20190713194549-592312d8590a // indirect
 	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pkg/errors v0.8.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
