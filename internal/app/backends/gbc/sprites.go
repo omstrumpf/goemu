@@ -1,6 +1,10 @@
 package gbc
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/omstrumpf/goemu/internal/app/log"
+)
 
 // sprite represents a gameboy sprite
 type sprite struct {
@@ -24,7 +28,7 @@ type oam struct {
 func (oam *oam) Read(addr uint16) byte {
 	spriteNum := addr >> 2
 	if spriteNum >= 40 {
-		logger.Warningf("Encountered overflowed OAM read")
+		log.Warningf("Encountered overflowed OAM read")
 		return 0
 	}
 
@@ -58,14 +62,14 @@ func (oam *oam) Read(addr uint16) byte {
 		return ret
 	}
 
-	logger.Warningf("Unexpected OAM read fallthrough")
+	log.Warningf("Unexpected OAM read fallthrough")
 	return 0
 }
 
 func (oam *oam) Write(addr uint16, val byte) {
 	spriteNum := addr >> 2
 	if spriteNum >= 40 {
-		logger.Warningf("Encountered overflowed OAM write")
+		log.Warningf("Encountered overflowed OAM write")
 	}
 
 	sprite := &oam.sprites[spriteNum]

@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/juju/loggo"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/console"
+	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 const (
@@ -33,8 +33,6 @@ const (
 	// ConsoleName is the name of this console
 	ConsoleName = "GameBoy Color"
 )
-
-var logger = loggo.GetLogger("goemu.gbc")
 
 // GBC is the toplevel struct containing all the gameboy systems
 type GBC struct {
@@ -67,7 +65,7 @@ func NewGBC(skiplogo bool, rom []byte) *GBC {
 
 // Set the gameboy to the correct post-boot state
 func (gbc *GBC) skipLogo() {
-	logger.Debugf("Skipping logo boot sequence")
+	log.Debugf("Skipping logo boot sequence")
 	gbc.cpu.PC.Set(0x0100)
 	gbc.cpu.AF.Set(0x01B0)
 	gbc.cpu.BC.Set(0x0013)
@@ -113,7 +111,7 @@ func (gbc *GBC) Tick() {
 	clocks := 0
 
 	for clocks < CyclesPerFrame {
-		if logger.IsTraceEnabled() {
+		if log.Logger.IsTraceEnabled() {
 			fmt.Fprintln(os.Stderr, gbc.traceString()) // Bypassing log for speed and to avoid verbose prints
 		}
 

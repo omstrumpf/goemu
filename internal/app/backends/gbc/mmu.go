@@ -4,6 +4,7 @@ import (
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/bios"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/memory"
+	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 const (
@@ -72,7 +73,7 @@ func (mmu *MMU) Read(addr uint16) byte {
 func (mmu *MMU) Write(addr uint16, val byte) {
 	// Traps for MMU on-write functionality
 	if addr == 0XFF46 { // DMA
-		logger.Tracef("Performing DMA")
+		log.Tracef("Performing DMA")
 		src := uint16(val) << 8
 		if src > 0xF100 {
 			src = 0xF100
@@ -87,7 +88,7 @@ func (mmu *MMU) Write(addr uint16, val byte) {
 		return
 	}
 	if addr == 0xFF50 { // Disable BIOS memory overlay
-		logger.Tracef("Disabling BIOS memory overlay")
+		log.Tracef("Disabling BIOS memory overlay")
 		mmu.DisableBios()
 		return
 	}
@@ -170,6 +171,6 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memory.Device, offset uint16) {
 		}
 	}
 
-	logger.Warningf("Encountered unmapped memory location: %#4x", addr)
+	log.Warningf("Encountered unmapped memory location: %#4x", addr)
 	return mmu.zero, 0
 }

@@ -1,5 +1,10 @@
 package gbc
 
+import (
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
+	"github.com/omstrumpf/goemu/internal/app/log"
+)
+
 // TODO write timer tests
 
 // Timer is the gameboy's timer device
@@ -45,7 +50,7 @@ func (t *Timer) RunForClocks(clocks int) {
 
 				if t.tima == 0 {
 					t.tima = t.tma
-					t.mmu.interrupts.RequestInterrupt(interruptTimerBit)
+					t.mmu.interrupts.Request(interrupts.TimerBit)
 				}
 			}
 		}
@@ -64,7 +69,7 @@ func (t *Timer) Read(addr uint16) byte {
 		return t.tac
 	}
 
-	logger.Warningf("Encountered unexpected timer read: %#4x", addr)
+	log.Warningf("Encountered unexpected timer read: %#4x", addr)
 	return 0
 }
 
@@ -98,5 +103,5 @@ func (t *Timer) Write(addr uint16, val byte) {
 		return
 	}
 
-	logger.Warningf("Encountered unexpected timer write: %#4x", addr)
+	log.Warningf("Encountered unexpected timer write: %#4x", addr)
 }

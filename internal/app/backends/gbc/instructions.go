@@ -1,5 +1,7 @@
 package gbc
 
+import "github.com/omstrumpf/goemu/internal/app/log"
+
 // Add adds the operand into the accumulator (A = A + op). If useCarry is set, it also adds the carry bit.
 func (cpu *CPU) add(operand byte, useCarry bool) {
 	original := cpu.AF.Hi()
@@ -959,19 +961,19 @@ func (cpu *CPU) PopulateInstructions() {
 		},
 		0x76: func() { // HALT
 			if cpu.ime {
-				logger.Tracef("CPU halting until interrupt (ime enabled)")
+				log.Tracef("CPU halting until interrupt (ime enabled)")
 				cpu.halt = true
 			} else {
 				// Handling the HALT bug. See TCAGBD 4.10.
 				if cpu.mmu.Read(0xFFFF)&cpu.mmu.Read(0xFF0F)&0x1F == 0 {
-					logger.Tracef("CPU halting until interrupt (ime disabled)")
-					logger.Tracef("Interrupts: %#2x, %#2x", cpu.mmu.Read(0xFFFF), cpu.mmu.Read(0xFF0F))
+					log.Tracef("CPU halting until interrupt (ime disabled)")
+					log.Tracef("Interrupts: %#2x, %#2x", cpu.mmu.Read(0xFFFF), cpu.mmu.Read(0xFF0F))
 					cpu.halt = true
 				}
 			}
 		},
 		0x10: func() { // STOP
-			logger.Tracef("CPU stopping (low power mode)")
+			log.Tracef("CPU stopping (low power mode)")
 			cpu.stop = true
 			cpu.PC.Inc()
 		},
@@ -1162,7 +1164,7 @@ func (cpu *CPU) PopulateInstructions() {
 		if v == nil {
 			opcode := k
 			cpu.instructions[k] = func() {
-				logger.Warningf("Encountered unknown instruction: %#2x", opcode)
+				log.Warningf("Encountered unknown instruction: %#2x", opcode)
 				cpu.stop = true
 			}
 		}
@@ -1998,7 +2000,7 @@ func (cpu *CPU) PopulateInstructions() {
 		if v == nil {
 			opcode := k
 			cpu.instructions[k] = func() {
-				logger.Warningf("Encountered unknown CB instruction: %#2x", opcode)
+				log.Warningf("Encountered unknown CB instruction: %#2x", opcode)
 				cpu.stop = true
 			}
 		}

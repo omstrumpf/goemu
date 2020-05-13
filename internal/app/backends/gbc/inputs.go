@@ -2,6 +2,7 @@ package gbc
 
 import (
 	"github.com/omstrumpf/goemu/internal/app/console"
+	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 type inputMemoryDevice struct {
@@ -39,7 +40,7 @@ func (imd *inputMemoryDevice) PressButton(b console.Button) {
 	case console.ButtonA:
 		imd.standardButtons &= ^byte(1)
 	default:
-		logger.Warningf("Attempted to press unrecognized button %d", b)
+		log.Warningf("Attempted to press unrecognized button %d", b)
 	}
 }
 
@@ -62,7 +63,7 @@ func (imd *inputMemoryDevice) ReleaseButton(b console.Button) {
 	case console.ButtonA:
 		imd.standardButtons |= byte(1)
 	default:
-		logger.Warningf("Attempted to release unrecognized button %d", b)
+		log.Warningf("Attempted to release unrecognized button %d", b)
 	}
 }
 

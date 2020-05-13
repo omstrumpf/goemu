@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
+	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 // PPU represents the gameboy's graphics processing unit.
@@ -413,7 +414,7 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 		return ppc.ppu.wScrollXm7
 	}
 
-	logger.Warningf("Encountered read with unknown PPU control address: %#04x", addr)
+	log.Warningf("Encountered read with unknown PPU control address: %#04x", addr)
 	return 0
 }
 
@@ -470,7 +471,7 @@ func (ppc *ppuControl) Write(addr uint16, val byte) {
 		return
 	}
 
-	logger.Warningf("Encountered write with unknown PPU control address: %#4x", addr)
+	log.Warningf("Encountered write with unknown PPU control address: %#4x", addr)
 }
 
 //// Helpers ////

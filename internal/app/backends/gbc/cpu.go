@@ -1,5 +1,10 @@
 package gbc
 
+import (
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
+	"github.com/omstrumpf/goemu/internal/app/log"
+)
+
 // CPU represents the central processing unit. Stores the state and instruction map.
 type CPU struct {
 	AF Register // Accumulator and flags
@@ -87,18 +92,23 @@ func (cpu *CPU) handleInterrupts() {
 	if interruptByte&0x1F != 0 {
 		cpu.ime = false
 		if interruptByte&1 != 0 { // V-Blank
+			log.Tracef("Handling VBLANK interrupt")
 			cpu.mmu.interrupts.Reset(interrupts.VBlankBit)
 			cpu.call(0x40)
 		} else if interruptByte&2 != 0 { // LCD STAT
+			log.Tracef("Handling LCD STAT interrupt")
 			cpu.mmu.interrupts.Reset(interrupts.LCDBit)
 			cpu.call(0x48)
 		} else if interruptByte&4 != 0 { // Timer
+			log.Tracef("Handling TIMER interrupt")
 			cpu.mmu.interrupts.Reset(interrupts.TimerBit)
 			cpu.call(0x50)
 		} else if interruptByte&8 != 0 { // Serial
+			log.Tracef("Handling SERIAL interrupt")
 			cpu.mmu.interrupts.Reset(interrupts.SerialBit)
 			cpu.call(0x58)
 		} else if interruptByte&16 != 0 { // Joypad
+			log.Tracef("Handling JOYPAD interrupt")
 			cpu.mmu.interrupts.Reset(interrupts.JoypadBit)
 			cpu.call(0x60)
 		}

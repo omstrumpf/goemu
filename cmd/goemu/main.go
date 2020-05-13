@@ -10,6 +10,7 @@ import (
 	"github.com/juju/loggo"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc"
 	"github.com/omstrumpf/goemu/internal/app/io"
+	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 // Runs a temporary version of the GBC emulator. Will have a global entrypoint later that allows selecting another backend.
@@ -46,16 +47,15 @@ func _main() {
 	case "TRACE":
 		loggo.ConfigureLoggers(`<root>=TRACE`)
 	}
-	logger := loggo.GetLogger("goemu")
 
-	logger.Tracef("Loading romfile")
+	log.Tracef("Loading romfile")
 
 	buf, err := ioutil.ReadFile(romfile)
 	if err != nil {
 		panic(err)
 	}
 
-	logger.Tracef("Initializing gameboy")
+	log.Tracef("Initializing gameboy")
 
 	gameboy := gbc.NewGBC(*skiplogo, buf)
 
@@ -75,7 +75,7 @@ func _main() {
 		if maxFrame != 0 && frame > *frames-1 {
 			break
 		}
-		logger.Tracef("Emulating frame %d", frame)
+		log.Tracef("Emulating frame %d", frame)
 		frame++
 
 		if io.ShouldExit() {
