@@ -2,6 +2,7 @@ package gbc
 
 import (
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/bios"
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/memory"
 )
 
@@ -23,7 +24,7 @@ type MMU struct {
 	bankController *SimpleBankController
 
 	inputs     *inputMemoryDevice // TODO why isn't this just a memoryDevice. Move central dispatch/control elsewhere.
-	interrupts *interruptMemoryDevice
+	interrupts *interrupts.InterruptDevice
 
 	zero memory.Device
 
@@ -46,7 +47,7 @@ func NewMMU(rom []byte) *MMU {
 	mmu.bankController = NewSimpleBankController(rom)
 
 	mmu.inputs = newInputMemoryDevice()
-	mmu.interrupts = newInterruptMemoryDevice()
+	mmu.interrupts = interrupts.NewInterruptDevice()
 
 	mmu.zero = memory.NewZero()
 

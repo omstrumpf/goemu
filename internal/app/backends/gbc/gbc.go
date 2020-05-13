@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/juju/loggo"
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/console"
 )
 
@@ -127,7 +128,7 @@ func (gbc *GBC) Tick() {
 // PressButton presses the given button
 func (gbc *GBC) PressButton(b console.Button) {
 	gbc.mmu.inputs.PressButton(b)
-	gbc.mmu.interrupts.RequestInterrupt(interruptJoypadBit)
+	gbc.mmu.interrupts.Request(interrupts.JoypadBit)
 }
 
 // ReleaseButton releases the given button

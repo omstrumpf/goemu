@@ -87,24 +87,19 @@ func (cpu *CPU) handleInterrupts() {
 	if interruptByte&0x1F != 0 {
 		cpu.ime = false
 		if interruptByte&1 != 0 { // V-Blank
-			logger.Tracef("Handling VBLANK interrupt")
-			cpu.mmu.interrupts.ResetInterrupt(interruptVBlankBit)
+			cpu.mmu.interrupts.Reset(interrupts.VBlankBit)
 			cpu.call(0x40)
 		} else if interruptByte&2 != 0 { // LCD STAT
-			logger.Tracef("Handling LCD STAT interrupt")
-			cpu.mmu.interrupts.ResetInterrupt(interruptLCDBit)
+			cpu.mmu.interrupts.Reset(interrupts.LCDBit)
 			cpu.call(0x48)
 		} else if interruptByte&4 != 0 { // Timer
-			logger.Tracef("Handling TIMER interrupt")
-			cpu.mmu.interrupts.ResetInterrupt(interruptTimerBit)
+			cpu.mmu.interrupts.Reset(interrupts.TimerBit)
 			cpu.call(0x50)
 		} else if interruptByte&8 != 0 { // Serial
-			logger.Tracef("Handling SERIAL interrupt")
-			cpu.mmu.interrupts.ResetInterrupt(interruptSerialBit)
+			cpu.mmu.interrupts.Reset(interrupts.SerialBit)
 			cpu.call(0x58)
 		} else if interruptByte&16 != 0 { // Joypad
-			logger.Tracef("Handling JOYPAD interrupt")
-			cpu.mmu.interrupts.ResetInterrupt(interruptJoypadBit)
+			cpu.mmu.interrupts.Reset(interrupts.JoypadBit)
 			cpu.call(0x60)
 		}
 	}

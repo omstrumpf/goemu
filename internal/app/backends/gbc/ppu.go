@@ -3,6 +3,8 @@ package gbc
 import (
 	"image/color"
 	"math"
+
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 )
 
 // PPU represents the gameboy's graphics processing unit.
@@ -83,19 +85,19 @@ func (ppu *PPU) RunForClocks(clocks int) {
 				ppu.line++
 
 				if ppu.interruptLYC && ppu.line == ppu.lineCompare {
-					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+					ppu.mmu.interrupts.Request(interrupts.LCDBit)
 				}
 
 				if ppu.line == 143 {
 					ppu.mode = 1
-					ppu.mmu.interrupts.RequestInterrupt(interruptVBlankBit)
+					ppu.mmu.interrupts.Request(interrupts.VBlankBit)
 					if ppu.interrupt1 {
-						ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+						ppu.mmu.interrupts.Request(interrupts.LCDBit)
 					}
 				} else {
 					ppu.mode = 2
 					if ppu.interrupt2 {
-						ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+						ppu.mmu.interrupts.Request(interrupts.LCDBit)
 					}
 				}
 			}
@@ -107,11 +109,11 @@ func (ppu *PPU) RunForClocks(clocks int) {
 				ppu.line = 0
 
 				if ppu.interrupt2 {
-					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+					ppu.mmu.interrupts.Request(interrupts.LCDBit)
 				}
 			} else {
 				if ppu.interruptLYC && ppu.lineCompare == 143 {
-					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+					ppu.mmu.interrupts.Request(interrupts.LCDBit)
 				}
 				ppu.line = byte(144 + math.Round(9*(float64(ppu.timeInMode)/1140)))
 			}
@@ -128,7 +130,7 @@ func (ppu *PPU) RunForClocks(clocks int) {
 				ppu.mode = 0
 
 				if ppu.interrupt0 {
-					ppu.mmu.interrupts.RequestInterrupt(interruptLCDBit)
+					ppu.mmu.interrupts.Request(interrupts.LCDBit)
 				}
 
 				ppu.renderLine()
