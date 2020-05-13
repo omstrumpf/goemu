@@ -1,4 +1,4 @@
-package gbc
+package banking
 
 import "github.com/omstrumpf/goemu/internal/app/log"
 
