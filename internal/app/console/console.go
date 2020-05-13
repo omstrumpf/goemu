@@ -9,8 +9,6 @@ import (
 type Console interface {
 	Tick()
 
-	LoadROM([]byte)
-
 	PressButton(Button)
 	ReleaseButton(Button)
 

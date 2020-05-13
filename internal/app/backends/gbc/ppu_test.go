@@ -6,7 +6,7 @@ import (
 )
 
 func TestPPUInit(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 
@@ -29,7 +29,7 @@ func TestPPUInit(t *testing.T) {
 }
 
 func TestPPUTileAddress(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 
@@ -68,7 +68,7 @@ func TestPPUTileAddress(t *testing.T) {
 }
 
 func TestPPURenderPixel(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 
@@ -114,7 +114,7 @@ func TestPPURenderPixel(t *testing.T) {
 }
 
 func TestPPUWritePixel(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 
@@ -165,7 +165,7 @@ func TestPPUWritePixel(t *testing.T) {
 }
 
 func TestPPURenderLine(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 
@@ -481,7 +481,7 @@ func TestPPURenderLine(t *testing.T) {
 }
 
 func TestPPUTiming(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 

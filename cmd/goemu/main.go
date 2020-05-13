@@ -48,17 +48,16 @@ func _main() {
 	}
 	logger := loggo.GetLogger("goemu")
 
-	logger.Tracef("Initializing gameboy")
-
-	gameboy := gbc.NewGBC(*skiplogo)
-
 	logger.Tracef("Loading romfile")
 
 	buf, err := ioutil.ReadFile(romfile)
 	if err != nil {
 		panic(err)
 	}
-	gameboy.LoadROM(buf)
+
+	logger.Tracef("Initializing gameboy")
+
+	gameboy := gbc.NewGBC(*skiplogo, buf)
 
 	io := io.NewIO(gameboy)
 

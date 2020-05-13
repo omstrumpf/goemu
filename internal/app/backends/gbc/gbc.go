@@ -46,10 +46,10 @@ type GBC struct {
 }
 
 // NewGBC constructs a valid GBC struct
-func NewGBC(skiplogo bool) *GBC {
+func NewGBC(skiplogo bool, rom []byte) *GBC {
 	gbc := new(GBC)
 
-	gbc.mmu = NewMMU()
+	gbc.mmu = NewMMU(rom)
 	gbc.timer = NewTimer(gbc.mmu)
 	gbc.cpu = NewCPU(gbc.mmu)
 	gbc.ppu = NewPPU(gbc.mmu)
@@ -122,11 +122,6 @@ func (gbc *GBC) Tick() {
 		gbc.ppu.RunForClocks(c)
 		gbc.timer.RunForClocks(c)
 	}
-}
-
-// LoadROM loads the given ROM bytes into the MMU
-func (gbc *GBC) LoadROM(rom []byte) {
-	gbc.mmu.LoadROM(rom)
 }
 
 // PressButton presses the given button

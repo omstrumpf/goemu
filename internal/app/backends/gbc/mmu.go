@@ -1,9 +1,12 @@
 package gbc
 
+import (
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/bios"
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/memory"
+)
+
 const (
-	romlen  = 0x8000
 	vramlen = 0x2000
-	eramlen = 0x2000
 	wramlen = 0x2000
 	zramlen = 0x80
 
@@ -12,17 +15,17 @@ const (
 
 // MMU represents the memory management unit.
 type MMU struct {
-	bios memoryDevice
-	rom  memoryDevice
-	vram memoryDevice
-	eram memoryDevice
-	wram memoryDevice
-	zram memoryDevice
+	bios memory.Device
+	vram memory.Device
+	wram memory.Device
+	zram memory.Device
 
-	inputs     *inputMemoryDevice
+	bankController *SimpleBankController
+
+	inputs     *inputMemoryDevice // TODO why isn't this just a memoryDevice. Move central dispatch/control elsewhere.
 	interrupts *interruptMemoryDevice
 
-	zero memoryDevice
+	zero memory.Device
 
 	biosEnable bool
 
@@ -31,53 +34,25 @@ type MMU struct {
 }
 
 // NewMMU constructs a valid MMU struct
-func NewMMU() *MMU {
+func NewMMU(rom []byte) *MMU {
 	mmu := new(MMU)
 
-	mmu.bios = BIOS
-	mmu.rom = newStandardMemoryDevice(romlen)
-	mmu.vram = newStandardMemoryDevice(vramlen)
-	mmu.eram = newStandardMemoryDevice(eramlen)
-	mmu.wram = newStandardMemoryDevice(wramlen)
-	mmu.zram = newStandardMemoryDevice(zramlen)
+	mmu.bios = bios.BIOS
+	mmu.vram = memory.NewSimple(vramlen)
+	mmu.wram = memory.NewSimple(wramlen)
+	mmu.zram = memory.NewSimple(zramlen)
+
+	// TODO use proper memory bank controller
+	mmu.bankController = NewSimpleBankController(rom)
 
 	mmu.inputs = newInputMemoryDevice()
 	mmu.interrupts = newInterruptMemoryDevice()
 
-	mmu.zero = newZeroMemoryDevice()
+	mmu.zero = memory.NewZero()
 
 	mmu.biosEnable = true
 
 	return mmu
-}
-
-// LoadROM loads a ROM into memory
-func (mmu *MMU) LoadROM(buf []byte) {
-	buflen := len(buf)
-
-	if buflen > totalramlen {
-		logger.Warningf("Insufficient memory capacity for ROM: %#4x", buflen)
-	}
-
-	j := 0
-	for i := 0; i < romlen && i+j < buflen; i++ {
-		mmu.rom.Write(uint16(i), buf[i])
-	}
-	j += romlen
-
-	for i := 0; i < vramlen && i+j < buflen; i++ {
-		mmu.vram.Write(uint16(i), buf[i+j])
-	}
-	j += vramlen
-
-	for i := 0; i < eramlen && i+j < buflen; i++ {
-		mmu.eram.Write(uint16(i), buf[i+j])
-	}
-	j += eramlen
-
-	for i := 0; i < wramlen && i+j < buflen; i++ {
-		mmu.eram.Write(uint16(i), buf[i+j])
-	}
 }
 
 // DisableBios disables the BIOS map over the main ROM
@@ -131,7 +106,7 @@ func (mmu *MMU) Write16(addr uint16, val uint16) {
 	mmu.Write(addr+1, byte(val>>8))
 }
 
-func (mmu *MMU) mmapLocation(addr uint16) (md memoryDevice, offset uint16) {
+func (mmu *MMU) mmapLocation(addr uint16) (md memory.Device, offset uint16) {
 	switch addr & 0xF000 {
 	// BIOS is mapped over ROM on startup
 	case 0x0000:
@@ -139,14 +114,15 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memoryDevice, offset uint16) {
 			return mmu.bios, addr
 		}
 		fallthrough
+	// Cartridge ROM
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000:
-		return mmu.rom, addr
+		return mmu.bankController, addr
 	// PPU VRAM
 	case 0x8000, 0x9000:
 		return mmu.vram, addr & 0x1FFF
-	// External RAM
+	// Cartridge RAM
 	case 0xA000, 0xB000:
-		return mmu.eram, addr & 0x1FFF
+		return mmu.bankController, addr
 	// Working RAM
 	case 0xC000, 0xD000:
 		return mmu.wram, addr & 0x1FFF

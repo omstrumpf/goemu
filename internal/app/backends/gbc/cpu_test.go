@@ -3,7 +3,7 @@ package gbc
 import "testing"
 
 func TestCPUInit(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 
 	cpu := NewCPU(mmu)
 
@@ -22,7 +22,7 @@ func TestCPUInit(t *testing.T) {
 }
 
 func TestCPUFlags(t *testing.T) {
-	mmu := NewMMU()
+	mmu := NewMMU(nil)
 
 	cpu := NewCPU(mmu)
 
