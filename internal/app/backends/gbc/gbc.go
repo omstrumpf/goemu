@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/cartridge"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/console"
 	"github.com/omstrumpf/goemu/internal/app/log"
@@ -38,6 +39,7 @@ const (
 type GBC struct {
 	mmu   *MMU
 	cpu   *CPU
+	cart  *cartridge.CART
 	ppu   *PPU
 	timer *Timer
 
@@ -48,7 +50,8 @@ type GBC struct {
 func NewGBC(skiplogo bool, rom []byte) *GBC {
 	gbc := new(GBC)
 
-	gbc.mmu = NewMMU(rom)
+	gbc.cart = cartridge.NewCart(rom)
+	gbc.mmu = NewMMU(gbc.cart.BankController)
 	gbc.timer = NewTimer(gbc.mmu)
 	gbc.cpu = NewCPU(gbc.mmu)
 	gbc.ppu = NewPPU(gbc.mmu)

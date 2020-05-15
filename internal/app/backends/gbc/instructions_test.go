@@ -1,6 +1,10 @@
 package gbc
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/banking"
+)
 
 func TestInstructionsLD(t *testing.T) {
 	instructions := []byte{
@@ -18,7 +22,7 @@ func TestInstructionsLD(t *testing.T) {
 		0x76, // HALT
 	}
 
-	mmu := NewMMU(instructions)
+	mmu := NewMMU(banking.NewROM(instructions)) // TODO ideally there's a way to test instructions without depending on memory banking
 
 	cpu := NewCPU(mmu)
 
@@ -84,7 +88,7 @@ func TestInstructionsStack(t *testing.T) {
 		0x76, // HALT
 	}
 
-	mmu := NewMMU(instructions)
+	mmu := NewMMU(banking.NewROM(instructions))
 
 	cpu := NewCPU(mmu)
 
@@ -175,7 +179,7 @@ func TestInstructionsALU(t *testing.T) {
 		0x76, // HALT
 	}
 
-	mmu := NewMMU(instructions)
+	mmu := NewMMU(banking.NewROM(instructions))
 
 	cpu := NewCPU(mmu)
 
@@ -246,7 +250,7 @@ func TestInstructionsRot(t *testing.T) {
 		0x76, // HALT
 	}
 
-	mmu := NewMMU(instructions)
+	mmu := NewMMU(banking.NewROM(instructions))
 
 	cpu := NewCPU(mmu)
 
@@ -315,7 +319,7 @@ func TestInstructionsCBRot(t *testing.T) {
 		0x76, // HALT
 	}
 
-	mmu := NewMMU(instructions)
+	mmu := NewMMU(banking.NewROM(instructions))
 
 	cpu := NewCPU(mmu)
 

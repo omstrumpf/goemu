@@ -23,7 +23,7 @@ type MMU struct {
 	wram memory.Device
 	zram memory.Device
 
-	bankController *banking.SimpleBankController
+	bankController banking.Controller
 
 	inputs     *inputMemoryDevice // TODO why isn't this just a memoryDevice. Move central dispatch/control elsewhere.
 	interrupts *interrupts.InterruptDevice
@@ -37,7 +37,7 @@ type MMU struct {
 }
 
 // NewMMU constructs a valid MMU struct
-func NewMMU(rom []byte) *MMU {
+func NewMMU(bankController banking.Controller) *MMU {
 	mmu := new(MMU)
 
 	mmu.bios = bios.BIOS
@@ -45,8 +45,7 @@ func NewMMU(rom []byte) *MMU {
 	mmu.wram = memory.NewSimple(wramlen)
 	mmu.zram = memory.NewSimple(zramlen)
 
-	// TODO use proper memory bank controller
-	mmu.bankController = banking.NewSimpleBankController(rom)
+	mmu.bankController = bankController
 
 	mmu.inputs = newInputMemoryDevice()
 	mmu.interrupts = interrupts.NewInterruptDevice()
