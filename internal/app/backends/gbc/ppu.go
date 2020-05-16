@@ -214,9 +214,10 @@ func (ppu *PPU) renderLine() {
 
 			screenX := int(sprite.xPos) - 8
 			screenY := int(ppu.line)
-			for tileX := byte(0); tileX < 8; tileX++ {
+			for x := byte(0); x < 8; x++ {
 				if screenX >= 0 && screenX < 160 {
 
+					tileX := x
 					if sprite.xFlip {
 						tileX = 7 - tileX
 					}
