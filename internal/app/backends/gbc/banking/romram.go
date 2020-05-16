@@ -28,7 +28,7 @@ func (romram *ROMRAM) Read(addr uint16) byte {
 		return romram.ram[addr-0xA000]
 	} else {
 		log.Errorf("ROMRAM controller encountered read out of range: %#04x", addr)
-		return 0
+		return 0xFF
 	}
 }
 

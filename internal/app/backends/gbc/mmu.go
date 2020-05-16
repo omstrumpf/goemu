@@ -29,6 +29,7 @@ type MMU struct {
 	interrupts *interrupts.InterruptDevice
 
 	zero memory.Device
+	high memory.Device
 
 	biosEnable bool
 
@@ -51,6 +52,7 @@ func NewMMU(bankController banking.Controller) *MMU {
 	mmu.interrupts = interrupts.NewInterruptDevice()
 
 	mmu.zero = memory.NewZero()
+	mmu.high = memory.NewHigh()
 
 	mmu.biosEnable = true
 
@@ -172,5 +174,5 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memory.Device, offset uint16) {
 	}
 
 	log.Warningf("Encountered unmapped memory location: %#4x", addr)
-	return mmu.zero, 0
+	return mmu.high, 0
 }

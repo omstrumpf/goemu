@@ -43,7 +43,7 @@ func (id *InterruptDevice) Read(addr uint16) byte {
 	}
 
 	log.Warningf("Encountered unexpected interrupt location: %#4x", addr)
-	return 0
+	return 0xFF
 }
 
 func (id *InterruptDevice) Write(addr uint16, val byte) {

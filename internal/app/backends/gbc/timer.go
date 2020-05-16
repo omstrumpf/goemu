@@ -70,7 +70,7 @@ func (t *Timer) Read(addr uint16) byte {
 	}
 
 	log.Warningf("Encountered unexpected timer read: %#4x", addr)
-	return 0
+	return 0xFF
 }
 
 func (t *Timer) Write(addr uint16, val byte) {

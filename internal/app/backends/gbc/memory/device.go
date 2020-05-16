@@ -48,3 +48,17 @@ func (z *Zero) Read(addr uint16) byte {
 }
 
 func (z *Zero) Write(addr uint16, val byte) {}
+
+// High is a Device that always contains 0xFF
+type High struct{}
+
+// NewHigh creates a High
+func NewHigh() *High {
+	return new(High)
+}
+
+func (h *High) Read(addr uint16) byte {
+	return 0xFF
+}
+
+func (h *High) Write(addr uint16, val byte) {}

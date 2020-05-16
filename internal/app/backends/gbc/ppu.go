@@ -415,7 +415,7 @@ func (ppc *ppuControl) Read(addr uint16) byte {
 	}
 
 	log.Warningf("Encountered read with unknown PPU control address: %#04x", addr)
-	return 0
+	return 0xFF
 }
 
 func (ppc *ppuControl) Write(addr uint16, val byte) {

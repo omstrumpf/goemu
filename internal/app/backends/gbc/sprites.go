@@ -29,7 +29,7 @@ func (oam *oam) Read(addr uint16) byte {
 	spriteNum := addr >> 2
 	if spriteNum >= 40 {
 		log.Warningf("Encountered overflowed OAM read")
-		return 0
+		return 0xFF
 	}
 
 	sprite := oam.sprites[spriteNum]
@@ -63,7 +63,7 @@ func (oam *oam) Read(addr uint16) byte {
 	}
 
 	log.Warningf("Unexpected OAM read fallthrough")
-	return 0
+	return 0xFF
 }
 
 func (oam *oam) Write(addr uint16, val byte) {
