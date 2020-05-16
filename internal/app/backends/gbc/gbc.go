@@ -51,6 +51,9 @@ func NewGBC(skiplogo bool, rom []byte) *GBC {
 	gbc := new(GBC)
 
 	gbc.cart = cartridge.NewCart(rom)
+
+	log.Debugf("Parsed cartridge details:\n%s", gbc.cart.DebugString())
+
 	gbc.mmu = NewMMU(gbc.cart.BankController)
 	gbc.timer = NewTimer(gbc.mmu)
 	gbc.cpu = NewCPU(gbc.mmu)
