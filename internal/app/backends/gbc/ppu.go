@@ -192,50 +192,6 @@ func (ppu *PPU) renderLine() {
 		}
 	}
 
-	// Draw sprites if enabled
-	if ppu.spriteEnable {
-		visibleSprites := ppu.oam.VisibleSpritesOnLine(ppu.line, ppu.spriteSize)
-		for _, sprite := range visibleSprites {
-			tileAddr := 0x8000 + (uint16(sprite.tileNum) << 4)
-
-			palette := ppu.spritePalette0
-			if sprite.paletteFlag {
-				palette = ppu.spritePalette1
-			}
-
-			tileY := ppu.line - (sprite.yPos - 16)
-			if sprite.yFlip {
-				if ppu.spriteSize {
-					tileY = 15 - tileY
-				} else {
-					tileY = 7 - tileY
-				}
-			}
-
-			screenX := int(sprite.xPos) - 8
-			screenY := int(ppu.line)
-			for x := byte(0); x < 8; x++ {
-				if screenX >= 0 && screenX < 160 {
-
-					tileX := x
-					if sprite.xFlip {
-						tileX = 7 - tileX
-					}
-
-					val := ppu.getTileVal(tileAddr, tileX, tileY)
-
-					if val != 0 && (sprite.priority || lineColors[screenX] == 0) {
-						pixel := palette[val]
-						ppu.writePixel(pixel, screenX, screenY)
-					}
-
-				}
-				screenX++
-			}
-
-		}
-	}
-
 	// Draw the window if enabled
 	if ppu.windowEnable && ppu.line >= ppu.wScrollY {
 
@@ -278,12 +234,58 @@ func (ppu *PPU) renderLine() {
 			val := ppu.getTileVal(tileAddr, tileX, tileY)
 			pixel := ppu.bgPalette[val]
 
+			lineColors[screenX] = val
 			ppu.writePixel(pixel, screenX, screenY)
 
 			screenX++
 			tileX++
 		}
 	}
+
+	// Draw sprites if enabled
+	if ppu.spriteEnable {
+		visibleSprites := ppu.oam.VisibleSpritesOnLine(ppu.line, ppu.spriteSize)
+		for _, sprite := range visibleSprites {
+			tileAddr := 0x8000 + (uint16(sprite.tileNum) << 4)
+
+			palette := ppu.spritePalette0
+			if sprite.paletteFlag {
+				palette = ppu.spritePalette1
+			}
+
+			tileY := ppu.line - (sprite.yPos - 16)
+			if sprite.yFlip {
+				if ppu.spriteSize {
+					tileY = 15 - tileY
+				} else {
+					tileY = 7 - tileY
+				}
+			}
+
+			screenX := int(sprite.xPos) - 8
+			screenY := int(ppu.line)
+			for x := byte(0); x < 8; x++ {
+				if screenX >= 0 && screenX < 160 {
+
+					tileX := x
+					if sprite.xFlip {
+						tileX = 7 - tileX
+					}
+
+					val := ppu.getTileVal(tileAddr, tileX, tileY)
+
+					if val != 0 && (!sprite.priority || (lineColors[screenX] == 0)) {
+						pixel := palette[val]
+						ppu.writePixel(pixel, screenX, screenY)
+					}
+
+				}
+				screenX++
+			}
+
+		}
+	}
+
 }
 
 // writePixel writes the given RGBA value into the framebuffer at coordinates (x, y)
