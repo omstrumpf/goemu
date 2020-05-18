@@ -146,7 +146,7 @@ func (ppu *PPU) renderLine() {
 		return
 	}
 
-	// BG color values on the current line, for sprite transparency
+	// BG/window color values on the current line, for sprite transparency
 	var lineColors [ScreenWidth]uint8
 
 	// Draw the background if enabled
@@ -160,10 +160,9 @@ func (ppu *PPU) renderLine() {
 		}
 
 		// First tile to be drawn
-		tileShiftY := uint16((ppu.line+ppu.bgScrollY)>>3) << 5
-		tileShiftX := uint16(ppu.bgScrollX >> 3)
-		tilePointer := bgAddr + tileShiftY + tileShiftX
-		tileAddr := ppu.getTileAddress(tilePointer)
+		mapY := uint16(ppu.line+ppu.bgScrollY) >> 3
+		mapX := uint16(ppu.bgScrollX >> 3)
+		tileAddr := ppu.getTileAddress(bgAddr, mapX, mapY)
 
 		// Coordinate in the tile to start drawing
 		tileX := ppu.bgScrollX & 0x7
@@ -177,8 +176,8 @@ func (ppu *PPU) renderLine() {
 			// Move to next tile if needed
 			if tileX == 8 {
 				tileX = 0
-				tilePointer++
-				tileAddr = ppu.getTileAddress(tilePointer)
+				mapX = (mapX + 1) % 32
+				tileAddr = ppu.getTileAddress(bgAddr, mapX, mapY)
 			}
 
 			val := ppu.getTileVal(tileAddr, tileX, tileY)
@@ -194,7 +193,6 @@ func (ppu *PPU) renderLine() {
 
 	// Draw the window if enabled
 	if ppu.windowEnable && ppu.line >= ppu.wScrollY {
-
 		// Base VRAM address for the window map
 		var wAddr uint16
 		if ppu.windowMap {
@@ -204,10 +202,9 @@ func (ppu *PPU) renderLine() {
 		}
 
 		// First tile to be drawn
-		tileShiftY := uint16((ppu.line-ppu.wScrollY)>>3) << 5
-		tileShiftX := uint16(0) // Window always starts from the left
-		tilePointer := wAddr + tileShiftY + tileShiftX
-		tileAddr := ppu.getTileAddress(tilePointer)
+		mapY := uint16((ppu.line - ppu.wScrollY) >> 3)
+		mapX := uint16(0) // Window always starts from the left
+		tileAddr := ppu.getTileAddress(wAddr, mapX, mapY)
 
 		// Coordinates in the tile to start drawing
 		var tileX, tileY byte
@@ -227,8 +224,8 @@ func (ppu *PPU) renderLine() {
 			// Move to next tile if needed
 			if tileX == 8 {
 				tileX = 0
-				tilePointer++
-				tileAddr = ppu.getTileAddress(tilePointer)
+				mapX = (mapX + 1) % 32
+				tileAddr = ppu.getTileAddress(wAddr, mapX, mapY)
 			}
 
 			val := ppu.getTileVal(tileAddr, tileX, tileY)
@@ -311,8 +308,14 @@ func (ppu *PPU) getTileVal(tileAddr uint16, tileX byte, tileY byte) byte {
 	return val
 }
 
-// getTileAddress returns the mmu address of the tile pointed to by the mapAddr
-func (ppu *PPU) getTileAddress(mapAddr uint16) uint16 {
+// getTileAddress returns the mmu address of the tile at the given 32x32 BG coordinates, in the given map.
+func (ppu *PPU) getTileAddress(baseAddr uint16, x uint16, y uint16) uint16 {
+	if x >= 32 || y >= 32 {
+		log.Errorf("PPU Tile Address out of bounds! (%d, %d)", x, y)
+	}
+
+	mapAddr := baseAddr + (y << 5) + x
+
 	if ppu.tileSelect {
 		tileNum := uint16(ppu.mmu.Read(mapAddr))
 		return uint16(0x8000) + (tileNum << 4)
