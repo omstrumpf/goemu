@@ -66,11 +66,14 @@ func (mbc1 *MBC1) Read(addr uint16) byte {
 func (mbc1 *MBC1) Write(addr uint16, val byte) {
 	if addr < 0x2000 {
 		mbc1.ramEnable = (val&0x0A != 0)
+		log.Tracef("MBC1 setting RAM enable: %t", mbc1.ramEnable)
 	} else if addr < 0x4000 {
 		mbc1.romBank = (mbc1.romBank & 0x60) | uint16(val&0x1F)
+		log.Tracef("MBC1 switching ROM bank to %d", mbc1.romBank)
 	} else if addr < 0x6000 {
 		if mbc1.romRAMModeSelect { // RAM mode
 			mbc1.ramBank = uint16(val & 3)
+			log.Tracef("MBC1 switching RAM bank to %d", mbc1.ramBank)
 		} else { // ROM mode
 			mbc1.romBank = (uint16(val&3) << 5) | (mbc1.romBank & 0x1F)
 		}
