@@ -33,37 +33,61 @@ func TestPPUTileAddress(t *testing.T) {
 	ppu := NewPPU(mmu)
 	mmu.ppu = ppu
 
-	mmu.Write(0x9800, 0x80) // int8(-128)
-	mmu.Write(0x9A00, 0x00) // int8(0)
-	mmu.Write(0x9BFF, 0x7F) // int8(127)
-	mmu.Write(0x9C00, 0)
-	mmu.Write(0x9E00, 127)
-	mmu.Write(0x9FFF, 255)
+	BASE1 := uint16(0x9800)
+	mmu.Write(BASE1, 0x00)    // (0, 0)
+	mmu.Write(BASE1+1, 0x80)  // (1, 0) int8(-128)
+	mmu.Write(BASE1+2, 0x7F)  // (2, 0) int8(127)
+	mmu.Write(BASE1+32, 0x01) // (0, 1)
+	mmu.Write(BASE1+33, 0x02) // (1, 1)
+	mmu.Write(BASE1+68, 0xFF) // (4, 2)
 
-	if ppu.tileSelect {
-		t.Error("Expected tileSelect to init to false")
+	BASE2 := uint16(0x9C00)
+	mmu.Write(BASE2+33, 0x03) // (1, 1)
+
+	if ppu.getTileAddress(BASE1, 0, 0) != 0x9000 {
+		t.Errorf("Expected tile at (0, 0) to be 0x9000, got %#4X", ppu.getTileAddress(BASE1, 0, 0))
 	}
 
-	if ppu.getTileAddress(0x9800) != 0x8800 {
-		t.Errorf("Expected tile at address 0x9800 to be 0x8800, got %#4x", ppu.getTileAddress(0x9800))
+	if ppu.getTileAddress(BASE1, 1, 0) != 0x8800 {
+		t.Errorf("Expected tile at (1, 0) to be 0x8800, got %#4X", ppu.getTileAddress(BASE1, 1, 0))
 	}
-	if ppu.getTileAddress(0x9A00) != 0x9000 {
-		t.Errorf("Expected tile at address 0x9A00 to be 0x9000, got %#4x", ppu.getTileAddress(0x9A00))
+
+	if ppu.getTileAddress(BASE1, 2, 0) != 0x97F0 {
+		t.Errorf("Expected tile at (2, 0) to be 0x97F0, got %#4X", ppu.getTileAddress(BASE1, 2, 0))
 	}
-	if ppu.getTileAddress(0x9BFF) != 0x97F0 {
-		t.Errorf("Expected tile at address 0x9BFF to be 0x97F0, got %#4x", ppu.getTileAddress(0x9BFF))
+
+	if ppu.getTileAddress(BASE1, 0, 1) != 0x9010 {
+		t.Errorf("Expected tile at (0, 1) to be 0x9010, got %#4X", ppu.getTileAddress(BASE1, 0, 1))
+	}
+
+	if ppu.getTileAddress(BASE1, 1, 1) != 0x9020 {
+		t.Errorf("Expected tile at (1, 1) to be 0x9020, got %#4X", ppu.getTileAddress(BASE1, 1, 1))
+	}
+
+	if ppu.getTileAddress(BASE1, 4, 2) != 0x8FF0 {
+		t.Errorf("Expected tile at (4, 2) to be 0x8FF0, got %#4X", ppu.getTileAddress(BASE1, 4, 2))
+	}
+
+	if ppu.getTileAddress(BASE2, 1, 1) != 0x9030 {
+		t.Errorf("Expected tile at (1, 1) in base map 2 to be 0x9030, got %#4X", ppu.getTileAddress(BASE2, 1, 1))
 	}
 
 	ppu.tileSelect = true
 
-	if ppu.getTileAddress(0x9C00) != 0x8000 {
-		t.Errorf("Expected tile at address 0x9C00 to be 0x8000, got %#4x", ppu.getTileAddress(0x9C00))
+	if ppu.getTileAddress(BASE1, 0, 0) != 0x8000 {
+		t.Errorf("Expected tile at (0, 0) TS 1 to be 0x8000, got %#4X", ppu.getTileAddress(BASE1, 0, 0))
 	}
-	if ppu.getTileAddress(0x9E00) != 0x87F0 {
-		t.Errorf("Expected tile at address 0x9E00 to be 0x87F0, got %#4x", ppu.getTileAddress(0x9E00))
+
+	if ppu.getTileAddress(BASE1, 1, 0) != 0x8800 {
+		t.Errorf("Expected tile at (1, 0) TS 1 to be 0x8800, got %#4X", ppu.getTileAddress(BASE1, 1, 0))
 	}
-	if ppu.getTileAddress(0x9FFF) != 0x8FF0 {
-		t.Errorf("Expected tile at address 0x9FFF to be 0x8FF0, got %#4x", ppu.getTileAddress(0x9FFF))
+
+	if ppu.getTileAddress(BASE1, 2, 0) != 0x87F0 {
+		t.Errorf("Expected tile at (2, 0) TS 1 to be 0x87F0, got %#4X", ppu.getTileAddress(BASE1, 2, 0))
+	}
+
+	if ppu.getTileAddress(BASE1, 4, 2) != 0x8FF0 {
+		t.Errorf("Expected tile at (4, 2) TS 1 to be 0x8FF0, got %#4X", ppu.getTileAddress(BASE1, 4, 2))
 	}
 }
 
