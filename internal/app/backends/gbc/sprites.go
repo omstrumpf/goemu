@@ -102,7 +102,7 @@ func (oam *oam) VisibleSpritesOnLine(line byte, tallSprites bool) []*sprite {
 	// Collect all sprites on the line
 	for i := range oam.sprites {
 		sprite := &oam.sprites[i]
-		if sprite.yPos != 0 && line >= (sprite.yPos-16) && line < (sprite.yPos+height-16) {
+		if sprite.yPos != 0 && line+16 >= sprite.yPos && line+16-height < sprite.yPos {
 			ret = append(ret, sprite)
 		}
 	}
