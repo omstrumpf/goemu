@@ -32,7 +32,7 @@ const (
 	ScreenHeight = 144
 
 	// ConsoleName is the name of this console
-	ConsoleName = "GameBoy Color"
+	ConsoleName = "GameBoy"
 )
 
 // GBC is the toplevel struct containing all the gameboy systems
@@ -168,6 +168,11 @@ func (gbc *GBC) GetScreenHeight() int {
 // GetConsoleName returns the name of this console
 func (gbc *GBC) GetConsoleName() string {
 	return ConsoleName
+}
+
+// GetGameName returns the name of the inserted cartridge
+func (gbc *GBC) GetGameName() string {
+	return gbc.cart.Title()
 }
 
 // traceString produces a string of the current GBC trace, for debugging

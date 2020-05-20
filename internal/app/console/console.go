@@ -19,6 +19,7 @@ type Console interface {
 	GetScreenWidth() int
 	GetScreenHeight() int
 	GetConsoleName() string
+	GetGameName() string
 }
 
 // Button represents a button on the console

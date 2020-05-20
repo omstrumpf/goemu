@@ -124,3 +124,8 @@ func (c *CART) DebugString() string {
 		c.ramSize,
 	)
 }
+
+// Title returns the cartridge title
+func (c *CART) Title() string {
+	return string(c.title[:])
+}

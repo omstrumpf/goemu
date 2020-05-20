@@ -75,7 +75,7 @@ func (io *IO) ShouldExit() bool {
 
 func (io *IO) setupWindow() {
 	win, err := pixelgl.NewWindow(pixelgl.WindowConfig{
-		Title:     "GoEmu Emulator (" + io.console.GetConsoleName() + ")",
+		Title:     "GoEmu Emulator (" + io.console.GetConsoleName() + " - " + io.console.GetGameName() + ")",
 		Bounds:    pixel.R(0, 0, float64(io.console.GetScreenWidth()), float64(io.console.GetScreenHeight())),
 		Resizable: true,
 	})
