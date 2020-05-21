@@ -1,12 +1,15 @@
-package gbc
+package audio
 
 import (
 	"github.com/omstrumpf/goemu/internal/app/console"
 	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
+// Bitrate is the number of samples output per second
+const Bitrate int = 44100
+
 // BufferLength is the number of samples to buffer in the APU's output channel
-const BufferLength int = AudioBitrate // 1 second worth of buffer
+const BufferLength int = Bitrate // 1 second worth of buffer
 
 // APU is the gameboy's Audio Processing Unit
 type APU struct {
@@ -27,6 +30,11 @@ func NewAPU() *APU {
 // RunForClocks runs the APU for the given number of clock cycles
 func (apu *APU) RunForClocks(clocks int) {
 	// TODO
+}
+
+// GetOutputChannel returns the channel that the APU writes to.
+func (apu *APU) GetOutputChannel() chan console.AudioSample {
+	return apu.outchan
 }
 
 func (apu *APU) enqueueSample(val float64) {

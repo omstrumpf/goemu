@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/audio"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/cartridge"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/console"
@@ -25,9 +26,6 @@ const (
 	// CyclesPerFrame is the number of cycles in a single frame
 	CyclesPerFrame = ClockSpeed / FPS
 
-	// AudioBitrate is the number of audio samples output per real-time second
-	AudioBitrate = 44100
-
 	// ScreenWidth is the width of the screen
 	ScreenWidth = 160
 
@@ -44,7 +42,7 @@ type GBC struct {
 	cpu   *CPU
 	cart  *cartridge.CART
 	ppu   *PPU
-	apu   *APU
+	apu   *audio.APU
 	timer *Timer
 
 	totalClocks uint64
@@ -62,7 +60,7 @@ func NewGBC(skiplogo bool, rom []byte) *GBC {
 	gbc.timer = NewTimer(gbc.mmu)
 	gbc.cpu = NewCPU(gbc.mmu)
 	gbc.ppu = NewPPU(gbc.mmu)
-	gbc.apu = NewAPU()
+	gbc.apu = audio.NewAPU()
 
 	gbc.mmu.ppu = gbc.ppu
 	gbc.mmu.timer = gbc.timer
@@ -158,12 +156,12 @@ func (gbc *GBC) GetFrameBuffer() []color.RGBA {
 
 // GetAudioChannel returns a channel with the gameboy's stereo audio values
 func (gbc *GBC) GetAudioChannel() chan console.AudioSample {
-	return gbc.apu.outchan
+	return gbc.apu.GetOutputChannel()
 }
 
 // GetAudioBitrate returns the gameboy's audio bitrate
 func (gbc *GBC) GetAudioBitrate() int {
-	return AudioBitrate
+	return audio.Bitrate
 }
 
 // GetFrameTime returns the real-time duration of a single frame
