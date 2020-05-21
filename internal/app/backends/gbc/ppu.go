@@ -12,8 +12,7 @@ import (
 type PPU struct {
 	mmu *MMU // Memory Management Unit
 
-	memoryControl *ppuControl // Control Regsiter Device
-	oam           *oam        // Object Attribute Memory (sprites)
+	oam *oam // Object Attribute Memory (sprites)
 
 	framebuffer    []color.RGBA  // Frame Buffer
 	bgPalette      [4]color.RGBA // Background Color Palette
@@ -63,10 +62,6 @@ func NewPPU(mmu *MMU) *PPU {
 	}
 
 	ppu.mode = 2 // Start in OAM mode
-
-	ppuControl := new(ppuControl)
-	ppuControl.ppu = ppu
-	ppu.memoryControl = ppuControl
 
 	ppu.oam = new(oam)
 
@@ -332,148 +327,143 @@ func (ppu *PPU) clearScrean() {
 	}
 }
 
-//// Control Registers ////
-type ppuControl struct {
-	ppu *PPU
-}
-
-func (ppc *ppuControl) Read(addr uint16) byte {
+func (ppu *PPU) Read(addr uint16) byte {
 	switch addr {
 	case 0xFF40:
 		var ret byte
-		if ppc.ppu.lcdEnable {
+		if ppu.lcdEnable {
 			ret |= 0x80
 		}
-		if ppc.ppu.windowMap {
+		if ppu.windowMap {
 			ret |= 0x40
 		}
-		if ppc.ppu.windowEnable {
+		if ppu.windowEnable {
 			ret |= 0x20
 		}
-		if ppc.ppu.tileSelect {
+		if ppu.tileSelect {
 			ret |= 0x10
 		}
-		if ppc.ppu.bgMap {
+		if ppu.bgMap {
 			ret |= 0x08
 		}
-		if ppc.ppu.spriteSize {
+		if ppu.spriteSize {
 			ret |= 0x04
 		}
-		if ppc.ppu.spriteEnable {
+		if ppu.spriteEnable {
 			ret |= 0x02
 		}
-		if ppc.ppu.bgEnable {
+		if ppu.bgEnable {
 			ret |= 0x01
 		}
 		return ret
 	case 0xFF41:
 		var ret byte
-		ret = ppc.ppu.mode
-		if ppc.ppu.line == ppc.ppu.lineCompare {
+		ret = ppu.mode
+		if ppu.line == ppu.lineCompare {
 			ret |= 0x04
 		}
-		if ppc.ppu.interrupt0 {
+		if ppu.interrupt0 {
 			ret |= 0x08
 		}
-		if ppc.ppu.interrupt1 {
+		if ppu.interrupt1 {
 			ret |= 0x10
 		}
-		if ppc.ppu.interrupt2 {
+		if ppu.interrupt2 {
 			ret |= 0x20
 		}
-		if ppc.ppu.interruptLYC {
+		if ppu.interruptLYC {
 			ret |= 0x40
 		}
 		return ret
 	case 0xFF42:
-		return ppc.ppu.bgScrollY
+		return ppu.bgScrollY
 	case 0xFF43:
-		return ppc.ppu.bgScrollX
+		return ppu.bgScrollX
 	case 0xFF44:
-		return ppc.ppu.line
+		return ppu.line
 	case 0xFF45:
-		return ppc.ppu.lineCompare
+		return ppu.lineCompare
 	case 0xFF47:
 		var ret byte
-		ret |= (rgbaToI(ppc.ppu.bgPalette[0])) << 6
-		ret |= (rgbaToI(ppc.ppu.bgPalette[1])) << 4
-		ret |= (rgbaToI(ppc.ppu.bgPalette[2])) << 2
-		ret |= (rgbaToI(ppc.ppu.bgPalette[3]))
+		ret |= (rgbaToI(ppu.bgPalette[0])) << 6
+		ret |= (rgbaToI(ppu.bgPalette[1])) << 4
+		ret |= (rgbaToI(ppu.bgPalette[2])) << 2
+		ret |= (rgbaToI(ppu.bgPalette[3]))
 		return ret
 	case 0xFF48:
 		var ret byte
-		ret |= (rgbaToI(ppc.ppu.spritePalette0[0])) << 6
-		ret |= (rgbaToI(ppc.ppu.spritePalette0[1])) << 4
-		ret |= (rgbaToI(ppc.ppu.spritePalette0[2])) << 2
-		ret |= (rgbaToI(ppc.ppu.spritePalette0[3]))
+		ret |= (rgbaToI(ppu.spritePalette0[0])) << 6
+		ret |= (rgbaToI(ppu.spritePalette0[1])) << 4
+		ret |= (rgbaToI(ppu.spritePalette0[2])) << 2
+		ret |= (rgbaToI(ppu.spritePalette0[3]))
 		return ret
 	case 0xFF49:
 		var ret byte
-		ret |= (rgbaToI(ppc.ppu.spritePalette1[0])) << 6
-		ret |= (rgbaToI(ppc.ppu.spritePalette1[1])) << 4
-		ret |= (rgbaToI(ppc.ppu.spritePalette1[2])) << 2
-		ret |= (rgbaToI(ppc.ppu.spritePalette1[3]))
+		ret |= (rgbaToI(ppu.spritePalette1[0])) << 6
+		ret |= (rgbaToI(ppu.spritePalette1[1])) << 4
+		ret |= (rgbaToI(ppu.spritePalette1[2])) << 2
+		ret |= (rgbaToI(ppu.spritePalette1[3]))
 		return ret
 	case 0xFF4A:
-		return ppc.ppu.wScrollY
+		return ppu.wScrollY
 	case 0xFF4B:
-		return ppc.ppu.wScrollXm7
+		return ppu.wScrollXm7
 	}
 
 	log.Warningf("Encountered read with unknown PPU control address: %#04x", addr)
 	return 0xFF
 }
 
-func (ppc *ppuControl) Write(addr uint16, val byte) {
+func (ppu *PPU) Write(addr uint16, val byte) {
 	switch addr {
 	case 0xFF40:
-		ppc.ppu.lcdEnable = (val&0x80 != 0)
-		ppc.ppu.windowMap = (val&0x40 != 0)
-		ppc.ppu.windowEnable = (val&0x20 != 0)
-		ppc.ppu.tileSelect = (val&0x10 != 0)
-		ppc.ppu.bgMap = (val&0x08 != 0)
-		ppc.ppu.spriteSize = (val&0x04 != 0)
-		ppc.ppu.spriteEnable = (val&0x02 != 0)
-		ppc.ppu.bgEnable = (val&0x01 != 0)
+		ppu.lcdEnable = (val&0x80 != 0)
+		ppu.windowMap = (val&0x40 != 0)
+		ppu.windowEnable = (val&0x20 != 0)
+		ppu.tileSelect = (val&0x10 != 0)
+		ppu.bgMap = (val&0x08 != 0)
+		ppu.spriteSize = (val&0x04 != 0)
+		ppu.spriteEnable = (val&0x02 != 0)
+		ppu.bgEnable = (val&0x01 != 0)
 		return
 	case 0xFF41:
-		ppc.ppu.interrupt0 = (val&0x08 != 0)
-		ppc.ppu.interrupt1 = (val&0x10 != 0)
-		ppc.ppu.interrupt2 = (val&0x20 != 0)
-		ppc.ppu.interruptLYC = (val&0x40 != 0)
+		ppu.interrupt0 = (val&0x08 != 0)
+		ppu.interrupt1 = (val&0x10 != 0)
+		ppu.interrupt2 = (val&0x20 != 0)
+		ppu.interruptLYC = (val&0x40 != 0)
 		return
 	case 0xFF42:
-		ppc.ppu.bgScrollY = val
+		ppu.bgScrollY = val
 		return
 	case 0xFF43:
-		ppc.ppu.bgScrollX = val
+		ppu.bgScrollX = val
 		return
 	case 0xFF44:
-		ppc.ppu.line = val
+		ppu.line = val
 		return
 	case 0xFF45:
-		ppc.ppu.lineCompare = val
+		ppu.lineCompare = val
 		return
 	case 0xFF47:
 		for i := uint8(0); i < 4; i++ {
-			ppc.ppu.bgPalette[i] = iToRGBA((val >> (i * 2)) & 3)
+			ppu.bgPalette[i] = iToRGBA((val >> (i * 2)) & 3)
 		}
 		return
 	case 0xFF48:
 		for i := uint8(0); i < 4; i++ {
-			ppc.ppu.spritePalette0[i] = iToRGBA((val >> (i * 2)) & 3)
+			ppu.spritePalette0[i] = iToRGBA((val >> (i * 2)) & 3)
 		}
 		return
 	case 0xFF49:
 		for i := uint8(0); i < 4; i++ {
-			ppc.ppu.spritePalette1[i] = iToRGBA((val >> (i * 2)) & 3)
+			ppu.spritePalette1[i] = iToRGBA((val >> (i * 2)) & 3)
 		}
 		return
 	case 0xFF4A:
-		ppc.ppu.wScrollY = val
+		ppu.wScrollY = val
 		return
 	case 0xFF4B:
-		ppc.ppu.wScrollXm7 = val
+		ppu.wScrollXm7 = val
 		return
 	}
 
