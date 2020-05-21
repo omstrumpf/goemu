@@ -25,6 +25,9 @@ const (
 	// CyclesPerFrame is the number of cycles in a single frame
 	CyclesPerFrame = ClockSpeed / FPS
 
+	// AudioBitrate is the number of audio samples output per real-time second
+	AudioBitrate = 44100
+
 	// ScreenWidth is the width of the screen
 	ScreenWidth = 160
 
@@ -41,6 +44,7 @@ type GBC struct {
 	cpu   *CPU
 	cart  *cartridge.CART
 	ppu   *PPU
+	apu   *APU
 	timer *Timer
 
 	totalClocks uint64
@@ -58,6 +62,7 @@ func NewGBC(skiplogo bool, rom []byte) *GBC {
 	gbc.timer = NewTimer(gbc.mmu)
 	gbc.cpu = NewCPU(gbc.mmu)
 	gbc.ppu = NewPPU(gbc.mmu)
+	gbc.apu = NewAPU()
 
 	gbc.mmu.ppu = gbc.ppu
 	gbc.mmu.timer = gbc.timer
@@ -125,6 +130,7 @@ func (gbc *GBC) Tick() {
 		clocks += c
 		gbc.totalClocks += uint64(c)
 		gbc.ppu.RunForClocks(c)
+		gbc.apu.RunForClocks(c)
 		gbc.timer.RunForClocks(c)
 	}
 }
@@ -148,6 +154,16 @@ func (gbc *GBC) IsStopped() bool {
 // GetFrameBuffer returns the gameboy's frame buffer, a slice of RGBA values
 func (gbc *GBC) GetFrameBuffer() []color.RGBA {
 	return gbc.ppu.framebuffer
+}
+
+// GetAudioChannel returns a channel with the gameboy's stereo audio values
+func (gbc *GBC) GetAudioChannel() chan console.AudioSample {
+	return gbc.apu.outchan
+}
+
+// GetAudioBitrate returns the gameboy's audio bitrate
+func (gbc *GBC) GetAudioBitrate() int {
+	return AudioBitrate
 }
 
 // GetFrameTime returns the real-time duration of a single frame

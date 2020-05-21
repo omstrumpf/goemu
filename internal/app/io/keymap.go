@@ -23,4 +23,12 @@ var functionKeys = map[pixelgl.Button]func(*IO){
 	pixelgl.KeyP: func(io *IO) {
 		io.paused = !io.paused
 	},
+	pixelgl.KeyM: func(io *IO) {
+		if io.muted {
+			io.unmute()
+		} else {
+			io.mute()
+		}
+		io.muted = !io.muted
+	},
 }

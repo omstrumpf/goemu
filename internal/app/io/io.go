@@ -2,13 +2,17 @@ package io
 
 import (
 	"image/color"
+	"time"
 
+	"github.com/faiface/beep"
+	"github.com/faiface/beep/speaker"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/omstrumpf/goemu/internal/app/console"
+	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
-// IO manages the graphical output of the emulator
+// IO manages the graphical and audio output of the emulator
 type IO struct {
 	console console.Console
 
@@ -16,6 +20,7 @@ type IO struct {
 	pic *pixel.PictureData
 
 	paused bool
+	muted  bool
 }
 
 // NewIO constructs a valid IO struct
@@ -26,6 +31,7 @@ func NewIO(console console.Console) *IO {
 
 	io.setupWindow()
 	io.setupPicture()
+	io.setupAudio()
 
 	return io
 }
@@ -94,6 +100,32 @@ func (io *IO) setupPicture() {
 	}
 }
 
+func (io *IO) setupAudio() {
+	sampleRate := beep.SampleRate(io.console.GetAudioBitrate())
+	speaker.Init(sampleRate, sampleRate.N(time.Second/10))
+
+	channel := io.console.GetAudioChannel()
+
+	streamer := beep.StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
+		numStreamed := 0
+
+		for i := range samples {
+			select {
+			case sample := <-channel:
+				samples[i][0] = sample.L()
+				samples[i][1] = sample.R()
+				numStreamed++
+			default:
+				break
+			}
+		}
+
+		return numStreamed, true
+	})
+
+	speaker.Play(streamer)
+}
+
 func (io *IO) getScaleFactor() float64 {
 	scaleWidth := io.win.Bounds().W() / float64(io.console.GetScreenWidth())
 	scaleHeight := io.win.Bounds().H() / float64(io.console.GetScreenHeight())
@@ -102,4 +134,12 @@ func (io *IO) getScaleFactor() float64 {
 		return scaleWidth
 	}
 	return scaleHeight
+}
+
+func (io *IO) mute() {
+	log.Errorf("Mute not implemented!") // TODO
+}
+
+func (io *IO) unmute() {
+	log.Errorf("Unmute not implemented!") // TODO
 }
