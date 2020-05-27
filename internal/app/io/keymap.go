@@ -29,6 +29,5 @@ var functionKeys = map[pixelgl.Button]func(*IO){
 		} else {
 			io.mute()
 		}
-		io.muted = !io.muted
 	},
 }

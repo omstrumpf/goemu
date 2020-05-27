@@ -1,6 +1,7 @@
 package io
 
 import (
+	"fmt"
 	"image/color"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/omstrumpf/goemu/internal/app/console"
-	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 // IO manages the graphical and audio output of the emulator
@@ -104,7 +104,7 @@ func (io *IO) setupAudio() {
 	sampleRate := beep.SampleRate(io.console.GetAudioBitrate())
 	speaker.Init(sampleRate, sampleRate.N(time.Second/10))
 
-	channel := io.console.GetAudioChannel()
+	channel := *io.console.GetAudioChannel()
 
 	streamer := beep.StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
 		numStreamed := 0
@@ -112,8 +112,13 @@ func (io *IO) setupAudio() {
 		for i := range samples {
 			select {
 			case sample := <-channel:
-				samples[i][0] = sample.L()
-				samples[i][1] = sample.R()
+				if !io.muted {
+					samples[i][0] = sample.L()
+					samples[i][1] = sample.R()
+				} else {
+					samples[i][0] = 0
+					samples[i][1] = 0
+				}
 				numStreamed++
 			default:
 				break
@@ -137,9 +142,13 @@ func (io *IO) getScaleFactor() float64 {
 }
 
 func (io *IO) mute() {
-	log.Errorf("Mute not implemented!") // TODO
+	fmt.Println("Muting audio.")
+
+	io.muted = true
 }
 
 func (io *IO) unmute() {
-	log.Errorf("Unmute not implemented!") // TODO
+	fmt.Println("Unmuting audio.")
+
+	io.muted = false
 }
