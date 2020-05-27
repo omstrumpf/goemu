@@ -1,6 +1,7 @@
 package gbc
 
 import (
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/audio"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/banking"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/bios"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
@@ -34,6 +35,7 @@ type MMU struct {
 	biosEnable bool
 
 	ppu   *PPU
+	apu   *audio.APU
 	timer *Timer
 }
 
@@ -163,8 +165,8 @@ func (mmu *MMU) mmapLocation(addr uint16) (md memory.Device, offset uint16) {
 				default:
 					return mmu.zero, 0 // Unimplemented
 				}
-			case 0x10, 0x20, 0x30: // Unimplemented
-				return mmu.zero, 0
+			case 0x10, 0x20, 0x30: // APU Control
+				return mmu.apu, addr
 			case 0x40, 0x50, 0x60, 0x70: // PPU Control
 				return mmu.ppu, addr
 			case 0x80, 0x90, 0xA0, 0xB0, 0xC0, 0xD0, 0xE0, 0xF0: // ZRAM

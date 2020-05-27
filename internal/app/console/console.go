@@ -16,7 +16,7 @@ type Console interface {
 
 	GetFrameBuffer() []color.RGBA
 	GetFrameTime() time.Duration
-	GetAudioChannel() chan AudioSample
+	GetAudioChannel() *chan AudioSample
 	GetAudioBitrate() int
 	GetScreenWidth() int
 	GetScreenHeight() int

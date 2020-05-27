@@ -63,6 +63,7 @@ func NewGBC(skiplogo bool, rom []byte) *GBC {
 	gbc.apu = audio.NewAPU()
 
 	gbc.mmu.ppu = gbc.ppu
+	gbc.mmu.apu = gbc.apu
 	gbc.mmu.timer = gbc.timer
 
 	if skiplogo {
@@ -155,7 +156,7 @@ func (gbc *GBC) GetFrameBuffer() []color.RGBA {
 }
 
 // GetAudioChannel returns a channel with the gameboy's stereo audio values
-func (gbc *GBC) GetAudioChannel() chan console.AudioSample {
+func (gbc *GBC) GetAudioChannel() *chan console.AudioSample {
 	return gbc.apu.GetOutputChannel()
 }
 
