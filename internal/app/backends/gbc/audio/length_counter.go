@@ -1,7 +1,5 @@
 package audio
 
-import "github.com/omstrumpf/goemu/internal/app/log"
-
 type lengthCounter struct {
 	timer *timer
 
@@ -13,7 +11,7 @@ type lengthCounter struct {
 func newLengthCounter() *lengthCounter {
 	lc := lengthCounter{}
 
-	lc.timer = newTimer(4096, lc.tick)
+	lc.timer = newTimerByHz(256, lc.tick)
 
 	return &lc
 }
@@ -25,9 +23,6 @@ func (lc *lengthCounter) runForClocks(clocks int) {
 func (lc *lengthCounter) tick() {
 	if lc.enabled && lc.volumeCounter > 0 {
 		lc.volumeCounter--
-		if lc.volumeCounter == 0 {
-			log.Debugf("LC1 hit zero")
-		}
 	}
 }
 
@@ -48,6 +43,5 @@ func (lc *lengthCounter) getEnabled() bool {
 }
 
 func (lc *lengthCounter) setEnabled(val bool) {
-	log.Debugf("Setting LC1 enabled: %t", val)
 	lc.enabled = val
 }

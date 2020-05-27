@@ -28,7 +28,7 @@ func NewAPU() *APU {
 
 	apu.outchan = make(chan console.AudioSample, bufferLength)
 
-	apu.sampleTimer = newTimer(24, apu.takeSample) // TODO all these magic numbers should be calculated based on sample rate / GBC clock speed
+	apu.sampleTimer = newTimerByHz(Bitrate, apu.takeSample)
 
 	apu.channel1 = newChannel()
 	apu.channel2 = newChannel()

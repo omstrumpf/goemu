@@ -8,23 +8,18 @@ import (
 
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/audio"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/cartridge"
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/constants"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/console"
 	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 const (
-	// ClockSpeed is the number of CPU cycles emulated per second. Increase to speed-up game time.
-	ClockSpeed = 1048576
-
-	// FPS is the target frames per second for the display
-	FPS = 60
-
 	// FrameTime is the real-time duration of a single frame
-	FrameTime = time.Second / FPS
+	FrameTime = time.Second / constants.TargetFPS
 
 	// CyclesPerFrame is the number of cycles in a single frame
-	CyclesPerFrame = ClockSpeed / FPS
+	CyclesPerFrame = constants.ClockSpeed / constants.TargetFPS
 
 	// ScreenWidth is the width of the screen
 	ScreenWidth = 160

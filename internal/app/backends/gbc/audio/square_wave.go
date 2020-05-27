@@ -14,7 +14,7 @@ type squareWave struct {
 func newSquareWave() *squareWave {
 	sw := squareWave{}
 
-	sw.updateFrequency(0x7FF)
+	sw.timer = newTimerByClocks(1, sw.tick)
 
 	sw.duty = 2
 
@@ -44,5 +44,5 @@ var dutyMap [4][8]float64 = [4][8]float64{
 
 func (sw *squareWave) updateFrequency(freq uint32) {
 	sw.frequency = freq
-	sw.timer = newTimer(2048-int(freq), sw.tick) // TODO making a new timer every time sucks
+	sw.timer.resetDuration(2048 - int(freq))
 }
