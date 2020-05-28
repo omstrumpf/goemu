@@ -78,22 +78,6 @@ func (apu *APU) enqueueSample(l float64, r float64) {
 }
 
 func (apu *APU) Read(addr uint16) byte {
-	switch addr {
-	case 0xFF10:
-	case 0xFF11:
-	case 0xFF12:
-	case 0xFF13:
-		return byte(apu.channel1.squareWave.frequency)
-	case 0xFF14:
-		triggerBit := byte(1 << 7)
-		lengthEnableBit := byte(0)
-		if apu.channel1.lengthCounter.getEnabled() {
-			lengthEnableBit = 1 << 6
-		}
-		frequencyBits := byte((apu.channel1.squareWave.frequency >> 8) & 0b0000_0111)
-		emptyBits := byte(0b0011_1000)
-		return triggerBit | lengthEnableBit | emptyBits | frequencyBits
-	}
 
 	// log.Warningf("Encountered read with unknown APU control address: %#04x", addr)
 	return 0xFF
@@ -104,38 +88,33 @@ func (apu *APU) Write(addr uint16, val byte) {
 	case 0xFF10:
 	case 0xFF11:
 		apu.channel1.squareWave.duty = (val & 0b1100_0000) >> 6
-		apu.channel1.lengthCounter.setCounter(val & 0b0011_0000)
+		apu.channel1.lengthCounter.counter = (val & 0b0011_1111)
 	case 0xFF12:
+		apu.channel1.volumeEnvelope.initVolume = (val & 0b1111_0000) >> 4
+		apu.channel1.volumeEnvelope.mode = (val & 0b0000_1000) != 0
+		apu.channel1.volumeEnvelope.sweepPeriod = (val & 0b0000_0111)
 	case 0xFF13:
 		apu.channel1.squareWave.updateFrequency((apu.channel1.squareWave.frequency & 0x700) | uint32(val))
 	case 0xFF14:
 		if val&(1<<7) != 0 {
-			// TODO clean this garbage up
-			if apu.channel1.lengthCounter.counter == 0 {
-				apu.channel1.lengthCounter.setCounter(64)
-			}
-			apu.channel1.lengthCounter.setEnabled(true)
-			apu.channel1.squareWave.updateFrequency(apu.channel1.squareWave.frequency)
-
-			// TODO trigger
+			log.Tracef("APU CH1 Trigger. Frequency: %d", apu.channel1.squareWave.frequency)
+			apu.channel1.trigger()
 		}
 		apu.channel1.squareWave.updateFrequency((uint32(val&0x7) << 8) | (apu.channel1.squareWave.frequency & 0xFF))
 	case 0xFF15:
 	case 0xFF16:
 		apu.channel2.squareWave.duty = (val & 0b1100_0000) >> 6
-		apu.channel2.lengthCounter.setCounter(val & 0b0011_0000)
+		apu.channel2.lengthCounter.counter = (val & 0b0011_1111)
 	case 0xFF17:
+		apu.channel2.volumeEnvelope.initVolume = (val & 0b1111_0000) >> 4
+		apu.channel2.volumeEnvelope.mode = (val & 0b0000_1000) != 0
+		apu.channel2.volumeEnvelope.sweepPeriod = (val & 0b0000_0111)
 	case 0xFF18:
 		apu.channel2.squareWave.updateFrequency((apu.channel2.squareWave.frequency & 0x700) | uint32(val))
 	case 0xFF19:
 		if val&(1<<7) != 0 {
-			if apu.channel2.lengthCounter.counter == 0 {
-				apu.channel2.lengthCounter.setCounter(64)
-			}
-			apu.channel2.lengthCounter.setEnabled(true)
-			apu.channel2.squareWave.updateFrequency(apu.channel2.squareWave.frequency)
-
-			// TODO trigger
+			log.Tracef("APU CH2 Trigger. Frequency: %d", apu.channel2.squareWave.frequency)
+			apu.channel2.trigger()
 		}
 		apu.channel2.squareWave.updateFrequency((uint32(val&0x7) << 8) | (apu.channel2.squareWave.frequency & 0xFF))
 	}

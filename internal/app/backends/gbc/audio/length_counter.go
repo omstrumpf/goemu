@@ -3,13 +3,14 @@ package audio
 type lengthCounter struct {
 	timer *timer
 
-	counter byte
+	initCounter byte
+	counter     byte
 
 	enabled bool
 }
 
-func newLengthCounter() *lengthCounter {
-	lc := lengthCounter{}
+func newLengthCounter(maxLength byte) *lengthCounter {
+	lc := lengthCounter{initCounter: maxLength}
 
 	lc.timer = newTimerByHz(256, lc.tick)
 
@@ -30,18 +31,9 @@ func (lc *lengthCounter) channelEnabled() bool {
 	return lc.counter > 0
 }
 
-func (lc *lengthCounter) getCounter() byte {
-	return lc.counter
-}
-
-func (lc *lengthCounter) setCounter(val byte) {
-	lc.counter = val
-}
-
-func (lc *lengthCounter) getEnabled() bool {
-	return lc.enabled
-}
-
-func (lc *lengthCounter) setEnabled(val bool) {
-	lc.enabled = val
+func (lc *lengthCounter) trigger() {
+	if lc.counter == 0 {
+		lc.counter = lc.initCounter
+	}
+	lc.enabled = true
 }
