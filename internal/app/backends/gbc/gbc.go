@@ -41,6 +41,7 @@ type GBC struct {
 	timer *Timer
 
 	totalClocks uint64
+	extraClocks int // Extra clocks emulated in the last frame
 }
 
 // NewGBC constructs a valid GBC struct
@@ -113,7 +114,7 @@ func (gbc *GBC) skipLogo() {
 
 // Tick runs the gameboy for a single frame-time
 func (gbc *GBC) Tick() {
-	clocks := 0
+	clocks := gbc.extraClocks
 
 	for clocks < CyclesPerFrame {
 		if log.Logger.IsTraceEnabled() {
@@ -127,6 +128,8 @@ func (gbc *GBC) Tick() {
 		gbc.apu.RunForClocks(c)
 		gbc.timer.RunForClocks(c)
 	}
+
+	gbc.extraClocks = clocks - CyclesPerFrame
 }
 
 // PressButton presses the given button
@@ -190,7 +193,7 @@ func (gbc *GBC) traceString() string {
 	pc := gbc.cpu.PC.HiLo()
 	_, disassembly := gbc.cpu.Disassemble(pc)
 
-	return fmt.Sprintf("A: %02x, F: %s, BC: %04x, DE: %04x, HL: %04x, SP: %04x, (HL): %02x, ppu: %d. %#04x: %s",
+	return fmt.Sprintf("A: %02x, F: %s, BC: %04x, DE: %04x, HL: %04x, SP: %04x, (HL): %02x, ppu: %d, clk: %18d. %#04x: %s",
 		gbc.cpu.AF.Hi(),
 		gbc.cpu.flagString(),
 		gbc.cpu.BC.HiLo(),
@@ -199,6 +202,7 @@ func (gbc *GBC) traceString() string {
 		gbc.cpu.SP.HiLo(),
 		gbc.mmu.Read(gbc.cpu.HL.HiLo()),
 		gbc.ppu.mode,
+		gbc.totalClocks,
 		pc,
 		disassembly)
 }

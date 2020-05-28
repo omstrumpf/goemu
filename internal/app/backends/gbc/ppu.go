@@ -2,7 +2,6 @@ package gbc
 
 import (
 	"image/color"
-	"math"
 
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/log"
@@ -84,7 +83,7 @@ func (ppu *PPU) RunForClocks(clocks int) {
 					ppu.mmu.interrupts.Request(interrupts.LCDBit)
 				}
 
-				if ppu.line == 143 {
+				if ppu.line == 144 {
 					ppu.mode = 1
 					ppu.mmu.interrupts.Request(interrupts.VBlankBit)
 					if ppu.interrupt1 {
@@ -111,7 +110,7 @@ func (ppu *PPU) RunForClocks(clocks int) {
 				if ppu.interruptLYC && ppu.lineCompare == 143 {
 					ppu.mmu.interrupts.Request(interrupts.LCDBit)
 				}
-				ppu.line = byte(144 + math.Round(9*(float64(ppu.timeInMode)/1140)))
+				ppu.line = byte(144 + ppu.timeInMode/144)
 			}
 		case 2: // OAM
 			if ppu.timeInMode == 21 {
