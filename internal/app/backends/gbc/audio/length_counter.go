@@ -3,7 +3,7 @@ package audio
 type lengthCounter struct {
 	timer *timer
 
-	volumeCounter byte
+	counter byte
 
 	enabled bool
 }
@@ -21,21 +21,21 @@ func (lc *lengthCounter) runForClocks(clocks int) {
 }
 
 func (lc *lengthCounter) tick() {
-	if lc.enabled && lc.volumeCounter > 0 {
-		lc.volumeCounter--
+	if lc.enabled && lc.counter > 0 {
+		lc.counter--
 	}
 }
 
 func (lc *lengthCounter) channelEnabled() bool {
-	return lc.volumeCounter > 0
+	return lc.counter > 0
 }
 
 func (lc *lengthCounter) getCounter() byte {
-	return lc.volumeCounter
+	return lc.counter
 }
 
 func (lc *lengthCounter) setCounter(val byte) {
-	lc.volumeCounter = val
+	lc.counter = val
 }
 
 func (lc *lengthCounter) getEnabled() bool {

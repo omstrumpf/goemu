@@ -33,6 +33,8 @@ func NewAPU() *APU {
 	apu.channel1 = newChannel()
 	apu.channel2 = newChannel()
 
+	apu.initDefaults()
+
 	return apu
 }
 
@@ -108,7 +110,8 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.channel1.squareWave.updateFrequency((apu.channel1.squareWave.frequency & 0x700) | uint32(val))
 	case 0xFF14:
 		if val&(1<<7) != 0 {
-			if apu.channel1.lengthCounter.volumeCounter == 0 {
+			// TODO clean this garbage up
+			if apu.channel1.lengthCounter.counter == 0 {
 				apu.channel1.lengthCounter.setCounter(64)
 			}
 			apu.channel1.lengthCounter.setEnabled(true)
@@ -126,7 +129,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.channel2.squareWave.updateFrequency((apu.channel2.squareWave.frequency & 0x700) | uint32(val))
 	case 0xFF19:
 		if val&(1<<7) != 0 {
-			if apu.channel2.lengthCounter.volumeCounter == 0 {
+			if apu.channel2.lengthCounter.counter == 0 {
 				apu.channel2.lengthCounter.setCounter(64)
 			}
 			apu.channel2.lengthCounter.setEnabled(true)
@@ -138,4 +141,34 @@ func (apu *APU) Write(addr uint16, val byte) {
 	}
 
 	// log.Warningf("Encountered write with unknown APU control address: %#4x", addr)
+}
+
+func (apu *APU) resetDefaults() {
+	apu.Write(0xFF10, 0x80)
+	apu.Write(0xFF11, 0xBF)
+	apu.Write(0xFF12, 0xF3)
+	apu.Write(0xFF14, 0xBF)
+	apu.Write(0xFF16, 0x3F)
+	apu.Write(0xFF17, 0x00)
+	apu.Write(0xFF19, 0xBF)
+	apu.Write(0xFF1A, 0x7F)
+	apu.Write(0xFF1B, 0xFF)
+	apu.Write(0xFF1C, 0x9F)
+	apu.Write(0xFF1E, 0xBF)
+	apu.Write(0xFF20, 0xFF)
+	apu.Write(0xFF21, 0x00)
+	apu.Write(0xFF22, 0x00)
+	apu.Write(0xFF23, 0xBF)
+	apu.Write(0xFF24, 0x77)
+	apu.Write(0xFF25, 0xF3)
+	apu.Write(0xFF26, 0xF1)
+}
+
+func (apu *APU) initDefaults() {
+	apu.resetDefaults()
+	apu.Write(0xFF13, 0xFF)
+	apu.Write(0xFF15, 0xFF)
+	apu.Write(0xFF18, 0xFF)
+	apu.Write(0xFF1D, 0xFF)
+	apu.Write(0xFF1F, 0xFF)
 }
