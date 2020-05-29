@@ -1,23 +1,25 @@
 package audio
 
 type channel struct {
-	squareWave     *squareWave
-	lengthCounter  *lengthCounter
-	volumeEnvelope *envelope
+	source        signalSource
+	lengthCounter *lengthCounter
+	volume        volumeUnit
+	dac           *dac
 }
 
-func newChannel() *channel {
+func newChannel(source signalSource, lengthCounter *lengthCounter, volume volumeUnit) *channel {
 	c := channel{}
 
-	c.squareWave = newSquareWave()
-	c.lengthCounter = newLengthCounter(64) // TODO this should be 256 for channel 3
-	c.volumeEnvelope = newEnvelope()
+	c.source = source
+	c.lengthCounter = lengthCounter
+	c.volume = volume
+	c.dac = newDAC()
 
 	return &c
 }
 
 func (c *channel) runForClocks(clocks int) {
-	c.squareWave.runForClocks(clocks)
+	c.source.runForClocks(clocks)
 	c.lengthCounter.runForClocks(clocks)
 }
 
@@ -26,13 +28,13 @@ func (c *channel) sample() float64 {
 		return 0
 	}
 
-	// 1-bit output from wave source is multiplied by the 4-bit volume, and converted to analog voltage.
+	// digital output from source is multiplied by volume unit, and converted to analog voltage.
 
-	bit := c.squareWave.sample()
+	src := c.source.sample()
 
-	volume := c.volumeEnvelope.sample()
+	volume := c.volume.sample()
 
-	return dac(bit * volume)
+	return c.dac.convert(byte(float64(src) * volume))
 }
 
 func (c *channel) enabled() bool {
@@ -41,6 +43,6 @@ func (c *channel) enabled() bool {
 
 func (c *channel) trigger() {
 	c.lengthCounter.trigger()
-	c.volumeEnvelope.trigger()
-	c.squareWave.trigger()
+	c.volume.trigger()
+	c.source.trigger()
 }

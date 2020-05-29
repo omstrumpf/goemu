@@ -41,8 +41,8 @@ func (envelope *envelope) tick() {
 	}
 }
 
-func (envelope *envelope) sample() byte {
-	return byte(envelope.volume)
+func (envelope *envelope) sample() float64 {
+	return float64(envelope.volume)
 }
 
 func (envelope *envelope) trigger() {
