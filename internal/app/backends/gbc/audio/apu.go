@@ -6,7 +6,8 @@ import (
 )
 
 // Bitrate is the number of samples output per second
-const Bitrate int = 44100
+// const Bitrate int = 44100
+const Bitrate int = 43690
 
 const bufferLength int = Bitrate // 1 second worth of buffer
 
@@ -28,13 +29,12 @@ type APU struct {
 	envelope2      *envelope
 	envelope4      *envelope
 	volumeShifter  *volumeShifter
+	sweep          *sweep
 
 	channel1 *channel
 	channel2 *channel
 	channel3 *channel
 	channel4 *channel
-
-	dropping bool
 }
 
 // NewAPU constructs a valid APU struct
@@ -46,6 +46,7 @@ func NewAPU() *APU {
 	apu.sampleTimer = newTimerByHz(Bitrate, apu.takeSample)
 
 	apu.squareWave1 = newSquareWave()
+	apu.sweep = newSweep(apu.squareWave1)
 	apu.squareWave2 = newSquareWave()
 	apu.dataWave = newDataWave()
 	apu.noiseWave = newNoiseWave()
@@ -74,6 +75,7 @@ func (apu *APU) RunForClocks(clocks int) {
 	apu.channel2.runForClocks(clocks)
 	apu.channel3.runForClocks(clocks)
 	apu.channel4.runForClocks(clocks)
+	apu.sweep.runForClocks(clocks)
 	apu.sampleTimer.runForClocks(clocks)
 }
 
@@ -99,26 +101,23 @@ func (apu *APU) enqueueSample(l float64, r float64) {
 	select {
 	case apu.outchan <- sample:
 		log.Tracef("APU produced audio sample: %v", sample)
-		apu.dropping = false
 	default:
-		if !apu.dropping {
-			log.Warningf("APU output buffer full. Dropping samples.")
-		} else {
-			apu.dropping = true
-		}
+		log.Warningf("APU output buffer full. Dropping samples.")
 	}
 }
 
 func (apu *APU) Read(addr uint16) byte {
 
-	// log.Warningf("Encountered read with unknown APU control address: %#04x", addr)
+	log.Warningf("Encountered read with unknown APU control address: %#04x", addr)
 	return 0xFF
 }
 
 func (apu *APU) Write(addr uint16, val byte) {
 	switch addr {
 	case 0xFF10: // CH1 Sweep
-		log.Debugf("APU write to sweep register: %#02x", val)
+		apu.sweep.period = (val & 0b0111_0000) >> 4
+		apu.sweep.negate = (val & 0b0000_1000) != 0
+		apu.sweep.shift = (val & 0b0000_0111)
 	case 0xFF11: // CH1 Duty and Length Counter
 		apu.squareWave1.duty = (val & 0b1100_0000) >> 6
 		apu.lengthCounter1.counter = (val & 0b0011_1111)
@@ -134,6 +133,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.squareWave1.frequency = (uint32(val&0x7) << 8) | (apu.squareWave1.frequency & 0xFF)
 		if val&(1<<7) != 0 {
 			log.Tracef("APU CH1 Trigger. Frequency: %d", apu.squareWave1.frequency)
+			apu.sweep.trigger()
 			apu.channel1.trigger()
 		}
 	case 0xFF15: // Unused
@@ -161,14 +161,14 @@ func (apu *APU) Write(addr uint16, val byte) {
 	case 0xFF1C: // CH3 volume code
 		apu.volumeShifter.volumeCode = (val & 0b0110_0000) >> 5
 	case 0xFF1D: // CH3 frequency LSB
-		apu.dataWave.updateFrequency((apu.dataWave.frequency & 0x700) | uint32(val))
+		apu.dataWave.frequency = (apu.dataWave.frequency & 0x700) | uint32(val)
 	case 0xFF1E: // CH3 trigger, length enable, frequency MSB
 		apu.lengthCounter3.enabled = (val & (1 << 6)) != 0
+		apu.dataWave.frequency = (uint32(val&0x7) << 8) | (apu.dataWave.frequency & 0xFF)
 		if val&(1<<7) != 0 {
 			log.Tracef("APU CH3 Trigger. Frequency: %d", apu.dataWave.frequency)
 			apu.channel3.trigger()
 		}
-		apu.dataWave.updateFrequency((uint32(val&0x7) << 8) | (apu.dataWave.frequency & 0xFF))
 	case 0xFF1F: // Unused
 	case 0xFF20: // CH4 length counter
 		apu.lengthCounter4.counter = (val & 0b0011_1111)
@@ -181,6 +181,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.noiseWave.clockShift = (val & 0b1111_0000) >> 4
 		apu.noiseWave.widthMode = (val & 0b0000_1000) != 0
 		apu.noiseWave.divisorCode = (val & 0b0000_0111)
+		apu.noiseWave.updateDivisor(apu.noiseWave.divisorCode)
 	case 0xFF23: // CH4 trigger, length enable
 		apu.lengthCounter4.enabled = (val & (1 << 6)) != 0
 		if (val & (1 << 7)) != 0 {

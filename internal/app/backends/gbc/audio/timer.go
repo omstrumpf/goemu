@@ -18,18 +18,25 @@ func newTimerByClocks(clocks int, callback func()) *timer {
 }
 
 func newTimerByHz(period int, callback func()) *timer {
-	clocks := int(math.Round(float64(constants.ClockSpeed / float64(period))))
+	clocks := int(math.Round(float64(constants.ClockSpeed) / float64(period)))
 	return newTimerByClocks(clocks, callback)
 }
 
 func (t *timer) runForClocks(clocks int) {
-	for c := 0; c < clocks; c++ {
-		t.countdown--
+	if t.period == 0 {
+		return
+	}
 
-		if t.countdown == 0 {
-			t.countdown = t.period
-			t.callback()
-		}
+	if clocks > t.period {
+		t.runForClocks(clocks - t.period)
+		clocks = t.period
+	}
+
+	t.countdown -= clocks
+
+	if t.countdown <= 0 {
+		t.countdown += t.period
+		t.callback()
 	}
 }
 

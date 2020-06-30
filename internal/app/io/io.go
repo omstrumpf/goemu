@@ -10,6 +10,7 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/omstrumpf/goemu/internal/app/console"
+	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
 // IO manages the graphical and audio output of the emulator
@@ -121,6 +122,7 @@ func (io *IO) setupAudio() {
 				}
 				numStreamed++
 			default:
+				log.Debugf("ran out of samples")
 				break
 			}
 		}

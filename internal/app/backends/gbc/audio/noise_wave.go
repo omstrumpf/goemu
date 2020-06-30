@@ -1,7 +1,5 @@
 package audio
 
-import "github.com/omstrumpf/goemu/internal/app/log"
-
 type noiseWave struct {
 	timer *timer
 
@@ -50,36 +48,15 @@ func (nw *noiseWave) tickLSFR() {
 }
 
 func (nw *noiseWave) sample() byte {
-	return byte(nw.lsfr&1) ^ 1
+	return (byte(nw.lsfr) ^ 0xFF) & 1
 }
 
 func (nw *noiseWave) trigger() {
 	nw.lsfr = 0xFFFF
+	nw.updateDivisor(nw.divisorCode)
+	nw.countdown = 1 << nw.clockShift
 }
 
 func (nw *noiseWave) updateDivisor(code byte) {
-	var duration int
-	switch code {
-	case 0:
-		duration = 8
-	case 1:
-		duration = 16
-	case 2:
-		duration = 32
-	case 3:
-		duration = 48
-	case 4:
-		duration = 64
-	case 5:
-		duration = 80
-	case 6:
-		duration = 96
-	case 7:
-		duration = 112
-	default:
-		duration = 8
-		log.Errorf("Noise wave divisor got invalid code: %#02x", code)
-	}
-
-	nw.timer.resetDuration(duration)
+	nw.timer.resetDuration(int(code) + 1)
 }

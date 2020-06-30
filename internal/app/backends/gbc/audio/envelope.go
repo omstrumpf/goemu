@@ -27,6 +27,7 @@ func (envelope *envelope) runForClocks(clocks int) {
 func (envelope *envelope) tick() {
 	if envelope.sweepPeriod != 0 {
 		envelope.sweepCounter--
+
 		if envelope.sweepCounter == 0 {
 			envelope.sweepCounter = envelope.sweepPeriod
 

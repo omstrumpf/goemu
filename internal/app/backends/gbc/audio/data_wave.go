@@ -35,6 +35,7 @@ func (dw *dataWave) sample() byte {
 
 func (dw *dataWave) trigger() {
 	dw.positionCounter = 0
+	dw.updateFrequency(dw.frequency)
 }
 
 func (dw *dataWave) updateFrequency(freq uint32) {
