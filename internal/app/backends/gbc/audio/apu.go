@@ -92,6 +92,8 @@ func (apu *APU) takeSample() {
 	s += apu.channel3.sample()
 	s += apu.channel4.sample()
 
+	s /= 4
+
 	apu.enqueueSample(s, s)
 }
 
