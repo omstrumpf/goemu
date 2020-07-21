@@ -37,3 +37,7 @@ func (lc *lengthCounter) trigger() {
 	}
 	lc.enabled = true
 }
+
+func (lc *lengthCounter) updateCounter(val byte) {
+	lc.counter = lc.initCounter - val + 1
+}

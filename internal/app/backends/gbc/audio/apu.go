@@ -120,7 +120,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.sweep.shift = (val & 0b0000_0111)
 	case 0xFF11: // CH1 Duty and Length Counter
 		apu.squareWave1.duty = (val & 0b1100_0000) >> 6
-		apu.lengthCounter1.counter = (val & 0b0011_1111)
+		apu.lengthCounter1.updateCounter(val & 0b0011_1111)
 	case 0xFF12: // CH1 Envelope
 		apu.envelope1.initVolume = (val & 0b1111_0000) >> 4
 		apu.envelope1.mode = (val & 0b0000_1000) != 0
@@ -139,7 +139,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 	case 0xFF15: // Unused
 	case 0xFF16: // CH2 Duty and Length Counter
 		apu.squareWave2.duty = (val & 0b1100_0000) >> 6
-		apu.lengthCounter2.counter = (val & 0b0011_1111)
+		apu.lengthCounter2.updateCounter(val & 0b0011_1111)
 	case 0xFF17: // CH2 Envelope
 		apu.envelope2.initVolume = (val & 0b1111_0000) >> 4
 		apu.envelope2.mode = (val & 0b0000_1000) != 0
@@ -157,7 +157,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 	case 0xFF1A: // CH3 DAC power
 		apu.channel3.dac.enabled = (val&0b1000_0000 != 0)
 	case 0xFF1B: // CH3 length counter
-		apu.lengthCounter3.counter = val
+		apu.lengthCounter3.updateCounter(val)
 	case 0xFF1C: // CH3 volume code
 		apu.volumeShifter.volumeCode = (val & 0b0110_0000) >> 5
 	case 0xFF1D: // CH3 frequency LSB
@@ -171,7 +171,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 		}
 	case 0xFF1F: // Unused
 	case 0xFF20: // CH4 length counter
-		apu.lengthCounter4.counter = (val & 0b0011_1111)
+		apu.lengthCounter4.updateCounter(val & 0b0011_1111)
 	case 0xFF21: // CH4 envelope
 		apu.envelope4.initVolume = (val & 0b1111_0000) >> 4
 		apu.envelope4.mode = (val & 0b0000_1000) != 0
