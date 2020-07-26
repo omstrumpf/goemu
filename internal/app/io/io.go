@@ -122,7 +122,7 @@ func (io *IO) setupAudio() {
 				}
 				numStreamed++
 			default:
-				log.Debugf("ran out of samples")
+				log.Tracef("ran out of samples")
 				break
 			}
 		}
