@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/audio"
@@ -185,7 +186,7 @@ func (gbc *GBC) GetConsoleName() string {
 
 // GetGameName returns the name of the inserted cartridge
 func (gbc *GBC) GetGameName() string {
-	return gbc.cart.Title()
+	return strings.ToValidUTF8(gbc.cart.Title(), "")
 }
 
 // traceString produces a string of the current GBC trace, for debugging
