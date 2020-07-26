@@ -21,6 +21,7 @@ func newChannel(source signalSource, lengthCounter *lengthCounter, volume volume
 func (c *channel) runForClocks(clocks int) {
 	c.source.runForClocks(clocks)
 	c.lengthCounter.runForClocks(clocks)
+	c.volume.runForClocks(clocks)
 }
 
 func (c *channel) sample() float64 {
