@@ -31,6 +31,11 @@ type APU struct {
 	volumeShifter  *volumeShifter
 	sweep          *sweep
 
+	volumeLeft   byte
+	volumeRight  byte
+	outputSelect byte
+	enable       bool
+
 	channel1 *channel
 	channel2 *channel
 	channel3 *channel
@@ -71,11 +76,14 @@ func NewAPU() *APU {
 
 // RunForClocks runs the APU for the given number of clock cycles
 func (apu *APU) RunForClocks(clocks int) {
-	apu.channel1.runForClocks(clocks)
-	apu.channel2.runForClocks(clocks)
-	apu.channel3.runForClocks(clocks)
-	apu.channel4.runForClocks(clocks)
-	apu.sweep.runForClocks(clocks)
+	if apu.enable {
+		apu.channel1.runForClocks(clocks)
+		apu.channel2.runForClocks(clocks)
+		apu.channel3.runForClocks(clocks)
+		apu.channel4.runForClocks(clocks)
+		apu.sweep.runForClocks(clocks)
+	}
+
 	apu.sampleTimer.runForClocks(clocks)
 }
 
@@ -85,19 +93,50 @@ func (apu *APU) GetOutputChannel() *chan console.AudioSample {
 }
 
 func (apu *APU) takeSample() {
-	s := float64(0)
+	if !apu.enable {
+		apu.enqueueSample(0, 0)
+		return
+	}
 
-	s += apu.channel1.sample()
-	s += apu.channel2.sample()
-	s += apu.channel3.sample()
-	s += apu.channel4.sample()
+	l := float64(0)
+	r := float64(0)
 
-	s /= 4
+	if apu.outputSelect&0b1000_0000 > 0 {
+		l += apu.channel4.sample()
+	}
+	if apu.outputSelect&0b0100_0000 > 0 {
+		l += apu.channel3.sample()
+	}
+	if apu.outputSelect&0b0010_0000 > 0 {
+		l += apu.channel2.sample()
+	}
+	if apu.outputSelect&0b0001_0000 > 0 {
+		l += apu.channel1.sample()
+	}
+	if apu.outputSelect&0b0000_1000 > 0 {
+		r += apu.channel4.sample()
+	}
+	if apu.outputSelect&0b0000_0100 > 0 {
+		r += apu.channel3.sample()
+	}
+	if apu.outputSelect&0b0000_0010 > 0 {
+		r += apu.channel2.sample()
+	}
+	if apu.outputSelect&0b0000_0001 > 0 {
+		r += apu.channel1.sample()
+	}
 
-	apu.enqueueSample(s, s)
+	l = l * float64(apu.volumeLeft+1) / 64
+	r = r * float64(apu.volumeRight+1) / 64
+
+	apu.enqueueSample(l, r)
 }
 
 func (apu *APU) enqueueSample(l float64, r float64) {
+	if l < -1 || l > 1 || r < -1 || r > 1 {
+		log.Warningf("APU produced sample out of range: (%f, %f). Clipping will occur.", l, r)
+	}
+
 	sample := console.StereoSample(l, r)
 
 	select {
@@ -191,17 +230,21 @@ func (apu *APU) Write(addr uint16, val byte) {
 			apu.channel4.trigger()
 		}
 	case 0xFF24: // Controls
+		apu.volumeLeft = (val & 0b0111_0000) >> 4
+		apu.volumeRight = (val & 0b0000_0111)
 	case 0xFF25: // Controls
+		apu.outputSelect = val
 	case 0xFF26: // Controls
+		apu.enable = (val & 0b1000_0000) != 0
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37,
 		0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
 		// Wave data
 		tableOffset := addr - 0xFF30
 		apu.dataWave.data[tableOffset] = (val & 0xF0) >> 4
 		apu.dataWave.data[tableOffset+1] = val & 0x0F
+	default:
+		log.Warningf("Encountered write with unknown APU control address: %#4x", addr)
 	}
-
-	// log.Warningf("Encountered write with unknown APU control address: %#4x", addr)
 }
 
 func (apu *APU) resetDefaults() {
