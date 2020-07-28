@@ -40,6 +40,8 @@ type APU struct {
 	channel2 *channel
 	channel3 *channel
 	channel4 *channel
+
+	lastWrites map[uint16]byte
 }
 
 // NewAPU constructs a valid APU struct
@@ -68,6 +70,8 @@ func NewAPU() *APU {
 	apu.channel2 = newChannel(apu.squareWave2, apu.lengthCounter2, apu.envelope2)
 	apu.channel3 = newChannel(apu.dataWave, apu.lengthCounter3, apu.volumeShifter)
 	apu.channel4 = newChannel(apu.noiseWave, apu.lengthCounter4, apu.envelope4)
+
+	apu.lastWrites = make(map[uint16]byte)
 
 	apu.initDefaults()
 
@@ -148,12 +152,82 @@ func (apu *APU) enqueueSample(l float64, r float64) {
 }
 
 func (apu *APU) Read(addr uint16) byte {
+	switch addr {
+	case 0xFF10:
+		return apu.lastWrites[addr] | 0x80
+	case 0xFF11:
+		return apu.lastWrites[addr] | 0x3F
+	case 0xFF12:
+		return apu.lastWrites[addr] | 0x00
+	case 0xFF13:
+		return apu.lastWrites[addr] | 0xFF
+	case 0xFF14:
+		return apu.lastWrites[addr] | 0xBF
+	case 0xFF15:
+		return apu.lastWrites[addr] | 0xFF
+	case 0xFF16:
+		return apu.lastWrites[addr] | 0x3F
+	case 0xFF17:
+		return apu.lastWrites[addr] | 0x00
+	case 0xFF18:
+		return apu.lastWrites[addr] | 0xFF
+	case 0xFF19:
+		return apu.lastWrites[addr] | 0xBF
+	case 0xFF1A:
+		return apu.lastWrites[addr] | 0x7F
+	case 0xFF1B:
+		return apu.lastWrites[addr] | 0xFF
+	case 0xFF1C:
+		return apu.lastWrites[addr] | 0x9F
+	case 0xFF1D:
+		return apu.lastWrites[addr] | 0xFF
+	case 0xFF1E:
+		return apu.lastWrites[addr] | 0xBF
+	case 0xFF1F:
+		return apu.lastWrites[addr] | 0xFF
+	case 0xFF20:
+		return apu.lastWrites[addr] | 0xFF
+	case 0xFF21:
+		return apu.lastWrites[addr] | 0x00
+	case 0xFF22:
+		return apu.lastWrites[addr] | 0x00
+	case 0xFF23:
+		return apu.lastWrites[addr] | 0xBF
+	case 0xFF24:
+		return apu.lastWrites[addr] | 0x00
+	case 0xFF25:
+		return apu.lastWrites[addr] | 0x00
+	case 0xFF26:
+		ret := byte(0b0111_0000)
+
+		if apu.enable {
+			ret |= 0b1000_0000
+		}
+		if apu.channel4.enabled() {
+			ret |= 0b0000_1000
+		}
+		if apu.channel3.enabled() {
+			ret |= 0b0000_0100
+		}
+		if apu.channel2.enabled() {
+			ret |= 0b0000_0010
+		}
+		if apu.channel1.enabled() {
+			ret |= 0b0000_0001
+		}
+
+		return ret
+	case 0xFF27, 0xFF28, 0xFF29, 0xFF2A, 0xFF2B, 0xFF2C, 0xFF2D, 0xFF2E, 0xFF2F:
+		return 0xFF
+	}
 
 	log.Warningf("Encountered read with unknown APU control address: %#04x", addr)
 	return 0xFF
 }
 
 func (apu *APU) Write(addr uint16, val byte) {
+	apu.lastWrites[addr] = val
+
 	switch addr {
 	case 0xFF10: // CH1 Sweep
 		apu.sweep.period = (val & 0b0111_0000) >> 4

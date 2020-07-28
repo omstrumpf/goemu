@@ -39,7 +39,7 @@ func (c *channel) sample() float64 {
 }
 
 func (c *channel) enabled() bool {
-	return c.lengthCounter.channelEnabled() && true // TODO master volume control switch
+	return c.lengthCounter.channelEnabled() && true
 }
 
 func (c *channel) trigger() {
