@@ -242,10 +242,12 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.envelope1.sweepPeriod = (val & 0b0000_0111)
 		apu.channel1.dac.enabled = (val&0b1111_1000 != 0)
 	case 0xFF13: // CH1 Frequency LSB
-		apu.squareWave1.frequency = (apu.squareWave1.frequency & 0x700) | uint32(val)
+		apu.squareWave1.frequency = (apu.squareWave1.frequency & 0x700) | uint16(val)
+		apu.squareWave1.updateFrequency()
 	case 0xFF14: // CH1 Trigger, Length Enable, Frequency MSB
 		apu.lengthCounter1.enabled = (val & (1 << 6)) != 0
-		apu.squareWave1.frequency = (uint32(val&0x7) << 8) | (apu.squareWave1.frequency & 0xFF)
+		apu.squareWave1.frequency = (uint16(val&0x7) << 8) | (apu.squareWave1.frequency & 0xFF)
+		apu.squareWave1.updateFrequency()
 		if val&(1<<7) != 0 {
 			log.Tracef("APU CH1 Trigger. Frequency: %d", apu.squareWave1.frequency)
 			apu.sweep.trigger()
@@ -261,10 +263,12 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.envelope2.sweepPeriod = (val & 0b0000_0111)
 		apu.channel2.dac.enabled = (val&0b1111_1000 != 0)
 	case 0xFF18: // CH2 Frequency LSB
-		apu.squareWave2.frequency = (apu.squareWave2.frequency & 0x700) | uint32(val)
+		apu.squareWave2.frequency = (apu.squareWave2.frequency & 0x700) | uint16(val)
+		apu.squareWave2.updateFrequency()
 	case 0xFF19: // CH2 Trigger, Length Enable, Frequency MSB
 		apu.lengthCounter2.enabled = (val & (1 << 6)) != 0
-		apu.squareWave2.frequency = (uint32(val&0x7) << 8) | (apu.squareWave2.frequency & 0xFF)
+		apu.squareWave2.frequency = (uint16(val&0x7) << 8) | (apu.squareWave2.frequency & 0xFF)
+		apu.squareWave2.updateFrequency()
 		if val&(1<<7) != 0 {
 			log.Tracef("APU CH2 Trigger. Frequency: %d", apu.squareWave2.frequency)
 			apu.channel2.trigger()
@@ -276,10 +280,12 @@ func (apu *APU) Write(addr uint16, val byte) {
 	case 0xFF1C: // CH3 volume code
 		apu.volumeShifter.volumeCode = (val & 0b0110_0000) >> 5
 	case 0xFF1D: // CH3 frequency LSB
-		apu.dataWave.frequency = (apu.dataWave.frequency & 0x700) | uint32(val)
+		apu.dataWave.frequency = (apu.dataWave.frequency & 0x700) | uint16(val)
+		apu.dataWave.updateFrequency()
 	case 0xFF1E: // CH3 trigger, length enable, frequency MSB
 		apu.lengthCounter3.enabled = (val & (1 << 6)) != 0
-		apu.dataWave.frequency = (uint32(val&0x7) << 8) | (apu.dataWave.frequency & 0xFF)
+		apu.dataWave.frequency = (uint16(val&0x7) << 8) | (apu.dataWave.frequency & 0xFF)
+		apu.dataWave.updateFrequency()
 		if val&(1<<7) != 0 {
 			log.Tracef("APU CH3 Trigger. Frequency: %d", apu.dataWave.frequency)
 			apu.channel3.trigger()

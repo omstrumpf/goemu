@@ -6,7 +6,7 @@ type squareWave struct {
 	duty        byte
 	dutyCounter int
 
-	frequency uint32
+	frequency uint16
 
 	enabled bool
 
@@ -42,7 +42,7 @@ func (sw *squareWave) sample() byte {
 }
 
 func (sw *squareWave) trigger() {
-	sw.updateFrequency(sw.frequency)
+	sw.updateFrequency()
 
 	sw.enabled = true
 
@@ -53,9 +53,8 @@ func (sw *squareWave) trigger() {
 	// job of timing? itself around this fact.
 }
 
-func (sw *squareWave) updateFrequency(freq uint32) {
-	sw.frequency = freq
-	sw.timer.resetDuration(2048 - int(freq))
+func (sw *squareWave) updateFrequency() {
+	sw.timer.period = 2048 - int(sw.frequency)
 }
 
 var dutyMap [4][8]byte = [4][8]byte{

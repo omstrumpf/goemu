@@ -12,7 +12,7 @@ type sweep struct {
 	enabled bool
 	negate  bool
 
-	freqShadow uint32
+	freqShadow uint16
 }
 
 func newSweep(squareWave *squareWave) *sweep {
@@ -64,7 +64,7 @@ func (sweep *sweep) calculateNewFrequency() {
 	if newFreq > 2047 {
 		sweep.squareWave.enabled = false
 	} else {
-		sweep.squareWave.updateFrequency(newFreq)
+		sweep.squareWave.frequency = newFreq
 		sweep.freqShadow = newFreq
 	}
 }

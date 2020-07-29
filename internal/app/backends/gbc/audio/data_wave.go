@@ -6,7 +6,7 @@ type dataWave struct {
 	data            [32]byte
 	positionCounter byte
 
-	frequency uint32
+	frequency uint16
 
 	value byte // Current value of the wave
 }
@@ -35,10 +35,10 @@ func (dw *dataWave) sample() byte {
 
 func (dw *dataWave) trigger() {
 	dw.positionCounter = 0
-	dw.updateFrequency(dw.frequency)
+
+	dw.updateFrequency()
 }
 
-func (dw *dataWave) updateFrequency(freq uint32) {
-	dw.frequency = freq
-	dw.timer.resetDuration((2048 - int(freq)) / 2)
+func (dw *dataWave) updateFrequency() {
+	dw.timer.period = (2048 - int(dw.frequency)) / 2
 }
