@@ -3,6 +3,8 @@ package console
 import (
 	"image/color"
 	"time"
+
+	"github.com/omstrumpf/goemu/internal/app/console/audio"
 )
 
 // Console is the interface for a console backend
@@ -16,7 +18,7 @@ type Console interface {
 
 	GetFrameBuffer() []color.RGBA
 	GetFrameTime() time.Duration
-	GetAudioChannel() *chan AudioSample
+	GetAudioChannel() *chan audio.ChanneledSample
 	GetAudioBitrate() int
 	GetScreenWidth() int
 	GetScreenHeight() int

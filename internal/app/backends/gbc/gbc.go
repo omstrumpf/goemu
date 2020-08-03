@@ -12,6 +12,7 @@ import (
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/constants"
 	"github.com/omstrumpf/goemu/internal/app/backends/gbc/interrupts"
 	"github.com/omstrumpf/goemu/internal/app/console"
+	console_audio "github.com/omstrumpf/goemu/internal/app/console/audio"
 	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
@@ -155,7 +156,7 @@ func (gbc *GBC) GetFrameBuffer() []color.RGBA {
 }
 
 // GetAudioChannel returns a channel with the gameboy's stereo audio values
-func (gbc *GBC) GetAudioChannel() *chan console.AudioSample {
+func (gbc *GBC) GetAudioChannel() *chan console_audio.ChanneledSample {
 	return gbc.apu.GetOutputChannel()
 }
 

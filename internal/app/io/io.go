@@ -2,15 +2,13 @@ package io
 
 import (
 	"fmt"
-	"image/color"
 	"time"
 
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/speaker"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/omstrumpf/goemu/internal/app/console"
-	"github.com/omstrumpf/goemu/internal/app/log"
+	"github.com/omstrumpf/goemu/internal/app/io/audio"
+	audio_inspector "github.com/omstrumpf/goemu/internal/app/io/audio/inspector"
 )
 
 // IO manages the graphical and audio output of the emulator
@@ -19,6 +17,9 @@ type IO struct {
 
 	win *pixelgl.Window
 	pic *pixel.PictureData
+
+	audioInspector *audio_inspector.AudioInspector
+	audioPlayer    *audio.Player
 
 	paused bool
 	muted  bool
@@ -30,9 +31,12 @@ func NewIO(console console.Console) *IO {
 
 	io.console = console
 
+	io.audioInspector = audio_inspector.NewAudioInspector() // TODO only open this at user request
+	io.audioPlayer = audio.NewPlayer(io.console.GetAudioBitrate())
+
 	io.setupWindow()
-	io.setupPicture()
-	io.setupAudio()
+
+	go io.distributeAudio()
 
 	return io
 }
@@ -66,6 +70,8 @@ func (io *IO) Render() {
 	io.win.SetMatrix(mat)
 
 	io.win.Update()
+
+	io.audioInspector.Render()
 }
 
 // ShouldEmulate returns true if the emulator should emulate (not paused)
@@ -89,9 +95,7 @@ func (io *IO) setupWindow() {
 	}
 
 	io.win = win
-}
 
-func (io *IO) setupPicture() {
 	io.pic = &pixel.PictureData{
 		Pix:    io.console.GetFrameBuffer(),
 		Stride: io.console.GetScreenWidth(),
@@ -99,36 +103,23 @@ func (io *IO) setupPicture() {
 	}
 }
 
-func (io *IO) setupAudio() {
-	sampleRate := beep.SampleRate(io.console.GetAudioBitrate())
-	speaker.Init(sampleRate, sampleRate.N(time.Second/10))
+func (io *IO) distributeAudio() {
+	channel := io.console.GetAudioChannel()
 
-	channel := *io.console.GetAudioChannel()
-
-	streamer := beep.StreamerFunc(func(samples [][2]float64) (n int, ok bool) {
-		numStreamed := 0
-
-		for i := range samples {
-			select {
-			case sample := <-channel:
-				if !io.muted {
-					samples[i][0] = sample.L()
-					samples[i][1] = sample.R()
-				} else {
-					samples[i][0] = 0
-					samples[i][1] = 0
-				}
-				numStreamed++
-			default:
-				log.Tracef("ran out of samples")
-				break
-			}
+	for {
+		if io == nil {
+			return
 		}
 
-		return numStreamed, true
-	})
-
-	speaker.Play(streamer)
+		select {
+		case sample := <-*channel:
+			io.audioPlayer.InputChannel <- sample.Combine()
+			// TODO this assumes 4 channels
+			io.audioInspector.InputChannel <- [4]float64{sample.Channels[0].M(), sample.Channels[1].M(), sample.Channels[2].M(), sample.Channels[3].M()}
+		default:
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
 }
 
 func (io *IO) getScaleFactor() float64 {

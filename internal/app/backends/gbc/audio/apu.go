@@ -1,7 +1,7 @@
 package audio
 
 import (
-	"github.com/omstrumpf/goemu/internal/app/console"
+	"github.com/omstrumpf/goemu/internal/app/console/audio"
 	"github.com/omstrumpf/goemu/internal/app/log"
 )
 
@@ -13,7 +13,7 @@ const bufferLength int = Bitrate // 1 second worth of buffer
 
 // APU is the gameboy's Audio Processing Unit
 type APU struct {
-	outchan chan console.AudioSample
+	outchan chan audio.ChanneledSample
 
 	sampleTimer *timer
 
@@ -48,7 +48,7 @@ type APU struct {
 func NewAPU() *APU {
 	apu := new(APU)
 
-	apu.outchan = make(chan console.AudioSample, bufferLength)
+	apu.outchan = make(chan audio.ChanneledSample, bufferLength)
 
 	apu.sampleTimer = newTimerByHz(Bitrate, apu.takeSample)
 
@@ -92,57 +92,55 @@ func (apu *APU) RunForClocks(clocks int) {
 }
 
 // GetOutputChannel returns the channel that the APU writes to.
-func (apu *APU) GetOutputChannel() *chan console.AudioSample {
+func (apu *APU) GetOutputChannel() *chan audio.ChanneledSample {
 	return &apu.outchan
 }
 
 func (apu *APU) takeSample() {
+	sample := audio.ChanneledSample{Channels: []audio.Sample{
+		{0, 0},
+		{0, 0},
+		{0, 0},
+		{0, 0},
+	}}
+
 	if !apu.enable {
-		apu.enqueueSample(0, 0)
+		apu.enqueueSample(sample)
 		return
 	}
 
-	l := float64(0)
-	r := float64(0)
+	volumeLeft := float64(apu.volumeLeft+1) / 64
+	volumeRight := float64(apu.volumeRight+1) / 64
 
 	if apu.outputSelect&0b1000_0000 > 0 {
-		l += apu.channel4.sample()
+		sample.Channels[3][0] += apu.channel4.sample() * volumeLeft
 	}
 	if apu.outputSelect&0b0100_0000 > 0 {
-		l += apu.channel3.sample()
+		sample.Channels[2][0] += apu.channel3.sample() * volumeLeft
 	}
 	if apu.outputSelect&0b0010_0000 > 0 {
-		l += apu.channel2.sample()
+		sample.Channels[1][0] += apu.channel2.sample() * volumeLeft
 	}
 	if apu.outputSelect&0b0001_0000 > 0 {
-		l += apu.channel1.sample()
+		sample.Channels[0][0] += apu.channel1.sample() * volumeLeft
 	}
 	if apu.outputSelect&0b0000_1000 > 0 {
-		r += apu.channel4.sample()
+		sample.Channels[3][1] += apu.channel4.sample() * volumeRight
 	}
 	if apu.outputSelect&0b0000_0100 > 0 {
-		r += apu.channel3.sample()
+		sample.Channels[2][1] += apu.channel3.sample() * volumeRight
 	}
 	if apu.outputSelect&0b0000_0010 > 0 {
-		r += apu.channel2.sample()
+		sample.Channels[1][1] += apu.channel2.sample() * volumeRight
 	}
 	if apu.outputSelect&0b0000_0001 > 0 {
-		r += apu.channel1.sample()
+		sample.Channels[0][1] += apu.channel1.sample() * volumeRight
 	}
 
-	l = l * float64(apu.volumeLeft+1) / 64
-	r = r * float64(apu.volumeRight+1) / 64
-
-	apu.enqueueSample(l, r)
+	apu.enqueueSample(sample)
 }
 
-func (apu *APU) enqueueSample(l float64, r float64) {
-	if l < -1 || l > 1 || r < -1 || r > 1 {
-		log.Warningf("APU produced sample out of range: (%f, %f). Clipping will occur.", l, r)
-	}
-
-	sample := console.StereoSample(l, r)
-
+func (apu *APU) enqueueSample(sample audio.ChanneledSample) {
 	select {
 	case apu.outchan <- sample:
 		log.Tracef("APU produced audio sample: %v", sample)
