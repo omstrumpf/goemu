@@ -5,17 +5,20 @@ type channel struct {
 	lengthCounter *lengthCounter
 	volume        volumeUnit
 	dac           *dac
+
+	enabled bool
 }
 
-func newChannel(source signalSource, lengthCounter *lengthCounter, volume volumeUnit) *channel {
-	c := channel{}
+func newChannel(maxLength int, source signalSource, volume volumeUnit) *channel {
+	c := &channel{
+		source: source,
+		volume: volume,
+		dac:    newDAC(),
+	}
 
-	c.source = source
-	c.lengthCounter = lengthCounter
-	c.volume = volume
-	c.dac = newDAC()
+	c.lengthCounter = newLengthCounter(c, maxLength)
 
-	return &c
+	return c
 }
 
 func (c *channel) runForClocks(clocks int) {
@@ -25,7 +28,7 @@ func (c *channel) runForClocks(clocks int) {
 }
 
 func (c *channel) sample() float64 {
-	if !c.enabled() { // Channel is disabled, output 0
+	if !c.enabled { // Channel is disabled, output 0
 		return 0
 	}
 
@@ -38,12 +41,25 @@ func (c *channel) sample() float64 {
 	return c.dac.convert(byte(float64(src) * volume))
 }
 
-func (c *channel) enabled() bool {
-	return c.lengthCounter.channelEnabled() && true
-}
-
 func (c *channel) trigger() {
+	if c.dac.enabled {
+		c.enabled = true
+	}
+
 	c.lengthCounter.trigger()
 	c.volume.trigger()
 	c.source.trigger()
+}
+
+func (c *channel) disableDAC() {
+	c.enabled = false
+	c.dac.enabled = false
+}
+
+func (c *channel) enableDAC() {
+	c.dac.enabled = true
+}
+
+func (c *channel) active() bool {
+	return c.enabled && c.dac.enabled
 }
