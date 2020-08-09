@@ -30,7 +30,7 @@ type APU struct {
 	volumeLeft   byte
 	volumeRight  byte
 	outputSelect byte
-	enable       bool
+	enabled      bool
 
 	channel1 *channel
 	channel2 *channel
@@ -72,7 +72,7 @@ func NewAPU() *APU {
 
 // RunForClocks runs the APU for the given number of clock cycles
 func (apu *APU) RunForClocks(clocks int) {
-	if apu.enable {
+	if apu.enabled {
 		apu.channel1.runForClocks(clocks)
 		apu.channel2.runForClocks(clocks)
 		apu.channel3.runForClocks(clocks)
@@ -96,7 +96,7 @@ func (apu *APU) takeSample() {
 		{0, 0},
 	}}
 
-	if !apu.enable {
+	if !apu.enabled {
 		apu.enqueueSample(sample)
 		return
 	}
@@ -139,6 +139,24 @@ func (apu *APU) enqueueSample(sample audio.ChanneledSample) {
 	default:
 		log.Warningf("APU output buffer full. Dropping samples.")
 	}
+}
+
+func (apu *APU) enable() {
+	apu.enabled = true
+}
+
+func (apu *APU) disable() {
+	// Write 0 to all APU registers
+	for addr := uint16(0xFF10); addr < 0xFF26; addr++ {
+		apu.Write(addr, 0)
+	}
+
+	apu.channel1.disableDAC()
+	apu.channel2.disableDAC()
+	apu.channel3.disableDAC()
+	apu.channel4.disableDAC()
+
+	apu.enabled = false
 }
 
 func (apu *APU) Read(addr uint16) byte {
@@ -188,7 +206,7 @@ func (apu *APU) Read(addr uint16) byte {
 	case 0xFF25:
 		return apu.lastWrites[addr] | 0x00
 	case 0xFF26:
-		if !apu.enable {
+		if !apu.enabled {
 			return 0b0111_0000
 		}
 
@@ -213,7 +231,7 @@ func (apu *APU) Read(addr uint16) byte {
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37,
 		0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
 		// Wave data
-		tableOffset := addr - 0xFF30
+		tableOffset := (addr - 0xFF30) * 2
 		return (apu.dataWave.data[tableOffset] << 4) | (apu.dataWave.data[tableOffset+1])
 	}
 
@@ -222,7 +240,7 @@ func (apu *APU) Read(addr uint16) byte {
 }
 
 func (apu *APU) Write(addr uint16, val byte) {
-	if !apu.enable && addr < 0xFF26 {
+	if !apu.enabled && addr < 0xFF26 {
 		return
 	}
 
@@ -249,10 +267,15 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.squareWave1.frequency = (apu.squareWave1.frequency & 0x700) | uint16(val)
 		apu.squareWave1.updateFrequency()
 	case 0xFF14: // CH1 Trigger, Length Enable, Frequency MSB
-		apu.channel1.lengthCounter.enabled = (val & 0b0100_0000) != 0
+		trigger := val&0b1000_0000 != 0
+		if (val & 0b0100_0000) != 0 {
+			apu.channel1.lengthCounter.enable(trigger)
+		} else {
+			apu.channel1.lengthCounter.disable()
+		}
 		apu.squareWave1.frequency = (uint16(val&0x7) << 8) | (apu.squareWave1.frequency & 0xFF)
 		apu.squareWave1.updateFrequency()
-		if val&(1<<7) != 0 {
+		if trigger {
 			log.Tracef("APU CH1 Trigger. Frequency: %d", apu.squareWave1.frequency)
 			apu.sweep.trigger()
 			apu.channel1.trigger()
@@ -274,10 +297,15 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.squareWave2.frequency = (apu.squareWave2.frequency & 0x700) | uint16(val)
 		apu.squareWave2.updateFrequency()
 	case 0xFF19: // CH2 Trigger, Length Enable, Frequency MSB
-		apu.channel2.lengthCounter.enabled = (val & 0b0100_0000) != 0
+		trigger := val&0b1000_0000 != 0
+		if (val & 0b0100_0000) != 0 {
+			apu.channel2.lengthCounter.enable(trigger)
+		} else {
+			apu.channel2.lengthCounter.disable()
+		}
 		apu.squareWave2.frequency = (uint16(val&0x7) << 8) | (apu.squareWave2.frequency & 0xFF)
 		apu.squareWave2.updateFrequency()
-		if val&(1<<7) != 0 {
+		if trigger {
 			log.Tracef("APU CH2 Trigger. Frequency: %d", apu.squareWave2.frequency)
 			apu.channel2.trigger()
 		}
@@ -295,10 +323,15 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.dataWave.frequency = (apu.dataWave.frequency & 0x700) | uint16(val)
 		apu.dataWave.updateFrequency()
 	case 0xFF1E: // CH3 trigger, length enable, frequency MSB
-		apu.channel3.lengthCounter.enabled = (val & 0b0100_0000) != 0
+		trigger := val&0b1000_0000 != 0
+		if (val & 0b0100_0000) != 0 {
+			apu.channel3.lengthCounter.enable(trigger)
+		} else {
+			apu.channel3.lengthCounter.disable()
+		}
 		apu.dataWave.frequency = (uint16(val&0x7) << 8) | (apu.dataWave.frequency & 0xFF)
 		apu.dataWave.updateFrequency()
-		if val&(1<<7) != 0 {
+		if trigger {
 			log.Tracef("APU CH3 Trigger. Frequency: %d", apu.dataWave.frequency)
 			apu.channel3.trigger()
 		}
@@ -320,8 +353,13 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.noiseWave.divisorCode = (val & 0b0000_0111)
 		apu.noiseWave.updateDivisor(apu.noiseWave.divisorCode)
 	case 0xFF23: // CH4 trigger, length enable
-		apu.channel4.lengthCounter.enabled = (val & 0b0100_0000) != 0
-		if (val & 0b1000_0000) != 0 {
+		trigger := val&0b1000_0000 != 0
+		if (val & 0b0100_0000) != 0 {
+			apu.channel4.lengthCounter.enable(trigger)
+		} else {
+			apu.channel4.lengthCounter.disable()
+		}
+		if trigger {
 			log.Tracef("APU CH4 Trigger.")
 			apu.channel4.trigger()
 		}
@@ -331,13 +369,17 @@ func (apu *APU) Write(addr uint16, val byte) {
 	case 0xFF25: // Controls
 		apu.outputSelect = val
 	case 0xFF26: // Controls
-		apu.enable = (val & 0b1000_0000) != 0
+		if (val & 0b1000_0000) != 0 {
+			apu.enable()
+		} else {
+			apu.disable()
+		}
 	case 0xFF27, 0xFF28, 0xFF29, 0xFF2A, 0xFF2B, 0xFF2C, 0xFF2D, 0xFF2E, 0xFF2F:
 		// Unused
 	case 0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37,
 		0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F:
 		// Wave data
-		tableOffset := addr - 0xFF30
+		tableOffset := (addr - 0xFF30) * 2
 		apu.dataWave.data[tableOffset] = (val & 0xF0) >> 4
 		apu.dataWave.data[tableOffset+1] = val & 0x0F
 	default:
