@@ -91,6 +91,12 @@ func NewCart(rom []byte) *CART {
 		c.cartType = MBC1RAMBAT
 		c.BankController = banking.NewMBC1(rom, c.romSize, c.ramSize)
 		// TODO implement BAT autosave. Every frame?
+	case 0x05:
+		c.cartType = MBC2
+		c.BankController = banking.NewMBC2(rom)
+	case 0x06:
+		c.cartType = MBC2BAT
+		c.BankController = banking.NewMBC2(rom)
 	case 0x08:
 		c.cartType = ROMRAM
 		c.BankController = banking.NewROMRAM(rom)

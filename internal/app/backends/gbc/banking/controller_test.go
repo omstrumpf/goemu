@@ -235,3 +235,73 @@ func TestMBC1Overflow(t *testing.T) {
 		t.Errorf("Expected MBC1 to select RAM bank 2 and return overflow value of 0xFF, got %#02X", c.Read(0xA000))
 	}
 }
+
+func TestMBC2ROM(t *testing.T) {
+	c := NewMBC2(bigTestData(0x1000000, 0x1000))
+
+	if c.Read(0x1000) != 0x01 || c.Read(0x3000) != 0x03 {
+		t.Errorf("Expected NewMBC2 to accept data argument.")
+	}
+
+	if c.Read(0x4000) != 0x04 {
+		t.Errorf("Expected MBC2.Read to find 0x04 at rom bank 1, got %#02X", c.Read(0x4000))
+	}
+
+	if c.Read(0x7FFF) != 0x07 {
+		t.Errorf("Expected MBC2.Read to find 0x07 at rom bank 1, got %#02X", c.Read(0x7FFF))
+	}
+
+	// Select bank 4
+	c.Write(0x2100, 4)
+	if c.Read(0x4000) != 0x10 {
+		t.Errorf("Expected MBC2 to switch to bank 4 and read 0x10, got %#02X", c.Read(0x4000))
+	}
+
+	// Select bank 0, skip to bank 1
+	c.Write(0x2100, 0)
+	if c.Read(0x4000) != 0x04 {
+		t.Errorf("Expected MBC2 to skip over bank 0 and read 0x04. got %#02X", c.Read(0x4000))
+	}
+}
+
+func TestMBC2RAM(t *testing.T) {
+	c := NewMBC2(nil)
+
+	// Write to disabled RAM
+	c.Write(0xA000, 0xAA)
+
+	// Enable RAM
+	c.Write(0x0000, 0x0A)
+
+	if c.Read(0xA000) != 0x00 {
+		t.Errorf("Expected MBC2 to not write to RAM when disabled, got %#02X", c.Read(0xA000))
+	}
+
+	// 4 bit (lo) read/write from RAM
+	c.Write(0xA000, 0xCB)
+	if c.Read(0xA000) != 0x0B {
+		t.Errorf("Expected MBC2 to write/read 0x0B from enabled RAM, got %#02x", c.Read(0xA000))
+	}
+
+	// 4 bit (hi) read/write from RAM
+	c.Write(0xA001, 0xBC)
+	if c.Read(0xA001) != 0x0C {
+		t.Errorf("Expected MBC2 to write/read 0x0C from enabled RAM, got %#02X", c.Read(0xA001))
+	}
+
+	// Disable RAM
+	c.Write(0x0000, 0x0)
+
+	if c.Read(0xA000) != 0xFF {
+		t.Errorf("Expected MBC2 to read 0xFF from disabled RAM, got %#02X", c.Read(0xA000))
+	}
+
+	c.Write(0xA000, 0xEE)
+
+	// Enable RAM
+	c.Write(0x0000, 0x0A)
+
+	if c.Read(0xA000) != 0x0B {
+		t.Errorf("Expected MBC2 to read previously written value of 0x0B after re-enabling RAM, got %#02X", c.Read(0xA000))
+	}
+}
