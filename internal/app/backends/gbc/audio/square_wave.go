@@ -8,13 +8,11 @@ type squareWave struct {
 
 	frequency uint16
 
-	enabled bool
-
 	value byte // Current binary value of the wave
 }
 
 func newSquareWave() *squareWave {
-	sw := squareWave{enabled: true}
+	sw := squareWave{}
 
 	sw.timer = newTimerByClocks(1, sw.tick)
 
@@ -34,17 +32,11 @@ func (sw *squareWave) tick() {
 }
 
 func (sw *squareWave) sample() byte {
-	if sw.enabled {
-		return sw.value
-	}
-
-	return 0
+	return sw.value
 }
 
 func (sw *squareWave) trigger() {
 	sw.updateFrequency()
-
-	sw.enabled = true
 
 	// TODO:
 	// Upon the channel INIT trigger bit being set for either channel 1

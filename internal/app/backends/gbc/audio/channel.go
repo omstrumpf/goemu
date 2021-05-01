@@ -43,7 +43,7 @@ func (c *channel) sample() float64 {
 
 func (c *channel) trigger() {
 	if c.dac.enabled {
-		c.enabled = true
+		c.enable()
 	}
 
 	c.lengthCounter.trigger()
@@ -58,6 +58,14 @@ func (c *channel) disableDAC() {
 
 func (c *channel) enableDAC() {
 	c.dac.enabled = true
+}
+
+func (c *channel) disable() {
+	c.enabled = false
+}
+
+func (c *channel) enable() {
+	c.enabled = true
 }
 
 func (c *channel) active() bool {

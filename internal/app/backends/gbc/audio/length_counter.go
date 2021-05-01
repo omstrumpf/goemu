@@ -30,7 +30,7 @@ func (lc *lengthCounter) tick() {
 		lc.counter--
 
 		if lc.counter == 0 {
-			lc.channel.enabled = false
+			lc.channel.disable()
 		}
 	}
 }

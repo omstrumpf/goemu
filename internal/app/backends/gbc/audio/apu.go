@@ -49,7 +49,6 @@ func NewAPU() *APU {
 	apu.sampleTimer = newTimerByHz(Bitrate, apu.takeSample)
 
 	apu.squareWave1 = newSquareWave()
-	apu.sweep = newSweep(apu.squareWave1)
 	apu.squareWave2 = newSquareWave()
 	apu.dataWave = newDataWave()
 	apu.noiseWave = newNoiseWave()
@@ -62,6 +61,8 @@ func NewAPU() *APU {
 	apu.channel2 = newChannel(64, apu.squareWave2, apu.envelope2)
 	apu.channel3 = newChannel(256, apu.dataWave, apu.volumeShifter)
 	apu.channel4 = newChannel(64, apu.noiseWave, apu.envelope4)
+
+	apu.sweep = newSweep(apu.channel1, apu.squareWave1)
 
 	apu.lastWrites = make(map[uint16]byte)
 
@@ -277,8 +278,8 @@ func (apu *APU) Write(addr uint16, val byte) {
 		apu.squareWave1.updateFrequency()
 		if trigger {
 			log.Tracef("APU CH1 Trigger. Frequency: %d", apu.squareWave1.frequency)
-			apu.sweep.trigger()
 			apu.channel1.trigger()
+			apu.sweep.trigger()
 		}
 	case 0xFF15: // Unused
 	case 0xFF16: // CH2 Duty and Length Counter
