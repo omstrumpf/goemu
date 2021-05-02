@@ -1,7 +1,6 @@
 goemu
 .vscode/
-roms/blargg/
-roms/mooneye/
+roms/test/
 roms/super_mario_land.gb
 roms/tetris.gb
 roms/dr-mario.gb
