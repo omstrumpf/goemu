@@ -10,8 +10,8 @@ type MBC2 struct {
 	// 2k total RAM, accessed 4 bits at a time cause there are only 4 data lines.
 	ram [0x800]byte
 
-	romBank uint16
-	ramBank uint16
+	romBank uint8
+	ramBank uint8
 
 	ramEnable bool
 }
@@ -46,10 +46,10 @@ func (mbc2 *MBC2) Read(addr uint16) byte {
 		}
 		log.Debugf("MBC2 encountered ROM read out of range: %#04x", addr)
 		return 0xFF
-	} else if addr >= 0xA000 && addr < 0xA200 {
+	} else if addr >= 0xA000 && addr < 0xC000 {
 		// RAM
 		if mbc2.ramEnable {
-			ramOffset := int(addr-0xA000) / 2
+			ramOffset := int(addr&0b0000_0001_1111_1111) / 2
 			hilo := int(addr-0xA000) % 2
 
 			if ramOffset < len(mbc2.ram) {
@@ -85,12 +85,12 @@ func (mbc2 *MBC2) Write(addr uint16, val byte) {
 		}
 		if addr&0b0000_0001_0000_0000 > 0 {
 			// The least significant bit of the upper address byte must be '1' to select a ROM bank
-			mbc2.romBank = uint16(val & 0b0000_1111)
+			mbc2.romBank = uint8(val & 0b0000_1111)
 		}
-	} else if addr >= 0xA000 && addr < 0xA200 {
+	} else if addr >= 0xA000 && addr < 0xC000 {
 		// RAM
 		if mbc2.ramEnable {
-			ramOffset := int(addr-0xA000) / 2
+			ramOffset := int(addr&0b0000_0001_1111_1111) / 2
 			hilo := int(addr-0xA000) % 2
 
 			if ramOffset < len(mbc2.ram) {

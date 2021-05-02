@@ -289,6 +289,15 @@ func TestMBC2RAM(t *testing.T) {
 		t.Errorf("Expected MBC2 to write/read 0x0C from enabled RAM, got %#02X", c.Read(0xA001))
 	}
 
+	// RAM access repeats throuch to 0xC000
+	if c.Read(0xA200) != 0x0B {
+		t.Errorf("Expected MBC2 RAM to repeat every 0x0200 and read 0x0B, got %#02X", c.Read(0xA200))
+	}
+	c.Write(0xB405, 0x0E)
+	if c.Read(0xA605) != 0x0E {
+		t.Errorf("Expected MBC2 RAM to repeat every 0x0200 and write/read 0x0E, got %#02X", c.Read(0xA605))
+	}
+
 	// Disable RAM
 	c.Write(0x0000, 0x0)
 
