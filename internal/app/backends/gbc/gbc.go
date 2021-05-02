@@ -129,6 +129,7 @@ func (gbc *GBC) Tick() {
 		gbc.ppu.RunForClocks(c)
 		gbc.apu.RunForClocks(c)
 		gbc.timer.RunForClocks(c)
+		gbc.cart.BankController.RunForClocks(c)
 	}
 
 	gbc.extraClocks = clocks - CyclesPerFrame

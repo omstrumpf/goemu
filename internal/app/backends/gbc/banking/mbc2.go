@@ -33,6 +33,9 @@ func NewMBC2(data []byte) *MBC2 {
 	return mbc2
 }
 
+// RunForClocks is unused on the MBC2
+func (mbc2 *MBC2) RunForClocks(clocks int) {}
+
 func (mbc2 *MBC2) Read(addr uint16) byte {
 	if addr < 0x4000 {
 		// Fixed ROM bank 0

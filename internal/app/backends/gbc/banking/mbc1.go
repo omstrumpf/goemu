@@ -34,6 +34,9 @@ func NewMBC1(data []byte, romSize uint32, ramSize uint32) *MBC1 {
 	return mbc1
 }
 
+// RunForClocks is unused on the MBC1
+func (mbc1 *MBC1) RunForClocks(clocks int) {}
+
 func (mbc1 *MBC1) Read(addr uint16) byte {
 	if addr < 0x4000 {
 		return mbc1.rom[addr]

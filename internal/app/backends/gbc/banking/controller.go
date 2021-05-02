@@ -5,5 +5,7 @@ type Controller interface {
 	Read(uint16) byte
 	Write(uint16, byte)
 
+	RunForClocks(int)
+
 	// TODO add save interactions
 }

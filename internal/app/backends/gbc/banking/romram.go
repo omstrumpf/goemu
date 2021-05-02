@@ -21,6 +21,9 @@ func NewROMRAM(data []byte) *ROMRAM {
 	return romram
 }
 
+// RunForClocks is unused on the ROMRAM controller
+func (romram *ROMRAM) RunForClocks(clocks int) {}
+
 func (romram *ROMRAM) Read(addr uint16) byte {
 	if addr < 0x8000 {
 		return romram.rom[addr]

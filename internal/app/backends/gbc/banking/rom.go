@@ -20,6 +20,9 @@ func NewROM(data []byte) *ROM {
 	return rom
 }
 
+// RunForClocks is unused on the ROM controller
+func (rom *ROM) RunForClocks(clocks int) {}
+
 func (rom *ROM) Read(addr uint16) byte {
 	if addr >= 0x8000 {
 		log.Errorf("ROM controller encountered read out of range: %#04x", addr)
