@@ -135,11 +135,13 @@ func (io *IO) getScaleFactor() float64 {
 func (io *IO) mute() {
 	fmt.Println("Muting audio.")
 
+	io.audioPlayer.SetMute(true)
 	io.muted = true
 }
 
 func (io *IO) unmute() {
 	fmt.Println("Unmuting audio.")
 
+	io.audioPlayer.SetMute(false)
 	io.muted = false
 }
