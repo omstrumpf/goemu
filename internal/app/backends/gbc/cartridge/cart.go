@@ -100,6 +100,21 @@ func NewCart(rom []byte) *CART {
 	case 0x08:
 		c.cartType = ROMRAM
 		c.BankController = banking.NewROMRAM(rom)
+	case 0x0F:
+		c.cartType = MBC3TIMBAT
+		c.BankController = banking.NewMBC3(rom)
+	case 0x10:
+		c.cartType = MBC3TIMRAMBAT
+		c.BankController = banking.NewMBC3(rom)
+	case 0x11:
+		c.cartType = MBC3
+		c.BankController = banking.NewMBC3(rom)
+	case 0x12:
+		c.cartType = MBC3RAM
+		c.BankController = banking.NewMBC3(rom)
+	case 0x13:
+		c.cartType = MBC3RAMBAT
+		c.BankController = banking.NewMBC3(rom)
 	default:
 		log.Warningf("Unsupported cartridge controller type (%#02x). Defaulting to simple ROM controller.", rom[0x0147])
 		fallthrough
