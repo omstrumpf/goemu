@@ -106,3 +106,15 @@ func (mbc1 *MBC1) Write(addr uint16, val byte) {
 		mbc1.romBank++
 	}
 }
+
+func (mbc1 *MBC1) GetRamSave() []byte {
+	return mbc1.ram[:]
+}
+
+func (mbc1 *MBC1) LoadRamSave(data []byte) {
+	if len(data) > len(mbc1.ram) {
+		log.Warningf("MBC1 controller loading oversized RAM save. Data will be truncated.")
+	}
+
+	copy(mbc1.ram[:], data)
+}

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"path"
 	"time"
 
 	"github.com/faiface/pixel/pixelgl" // I/O
@@ -21,11 +22,11 @@ func main() {
 func _main() {
 	fmt.Println("Welcome to goemu!")
 
-	// testmode := flag.Bool("testmode", false, "Run the emulator in testmode, and produce a hash of the steady-state screen output")
 	loglevel := flag.String("loglevel", "ERROR", "Log level. ERROR, WARNING, DEBUG, TRACE.")
 	skiplogo := flag.Bool("skiplogo", false, "Skip the logo scroll sequence")
 	fastmode := flag.Bool("fastmode", false, "Don't limit emulation speed")
 	frames := flag.Uint64("frames", 0, "Number of frames to emulate. 0 is infinite.")
+	savefile := flag.String("savefile", "", "File to read/write cartridge save data to")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -50,14 +51,27 @@ func _main() {
 
 	log.Tracef("Loading romfile")
 
-	buf, err := ioutil.ReadFile(romfile)
+	rom, err := ioutil.ReadFile(romfile)
 	if err != nil {
 		panic(err)
 	}
 
+	log.Tracef("Loading ram savefile")
+
+	if len(*savefile) == 0 {
+		romName := path.Base(romfile)[:len(path.Base(romfile))-len(path.Ext(romfile))]
+
+		*savefile = (romName + ".save")
+	}
+
+	ram, err := ioutil.ReadFile(*savefile)
+	if err != nil {
+		log.Warningf("Failed to read savefile: %v", err)
+	}
+
 	log.Tracef("Initializing gameboy")
 
-	gameboy := gbc.NewGBC(*skiplogo, buf)
+	gameboy := gbc.NewGBC(*skiplogo, rom, ram)
 
 	io := io.NewIO(gameboy)
 
@@ -79,6 +93,11 @@ func _main() {
 		frame++
 
 		if io.ShouldExit() {
+			err := ioutil.WriteFile(*savefile, gameboy.GetRAMSave(), 0644)
+			if err != nil {
+				log.Errorf("Failed to write to savefile: %v", err)
+			}
+
 			return
 		}
 

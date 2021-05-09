@@ -241,3 +241,17 @@ func (mbc3 *MBC3) Write(addr uint16, val byte) {
 		log.Errorf("MBC3 encountered write out of range: %#04x = %#02x", addr, val)
 	}
 }
+
+func (mbc3 *MBC3) GetRamSave() []byte {
+	return append(mbc3.rtc.live[:], mbc3.ram[:]...)
+}
+
+func (mbc3 *MBC3) LoadRamSave(data []byte) {
+	copy(mbc3.rtc.live[:], data[:5])
+
+	if len(data)-5 > len(mbc3.ram) {
+		log.Warningf("MBC3 controller loading oversized RAM save. Data will be truncated.")
+	}
+
+	copy(mbc3.ram[:], data[5:])
+}

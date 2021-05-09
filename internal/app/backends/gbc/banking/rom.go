@@ -35,3 +35,13 @@ func (rom *ROM) Read(addr uint16) byte {
 func (rom *ROM) Write(addr uint16, val byte) {
 	log.Warningf("ROM controller write encountered: %#04x", addr)
 }
+
+func (rom *ROM) GetRamSave() []byte {
+	return []byte{}
+}
+
+func (rom *ROM) LoadRamSave(data []byte) {
+	if len(data) > 0 {
+		log.Warningf("RAM controller cannot load RAM save file.")
+	}
+}

@@ -1,5 +1,6 @@
 goemu
 .vscode/
+*.save
 roms/test/
 roms/super_mario_land.gb
 roms/tetris.gb

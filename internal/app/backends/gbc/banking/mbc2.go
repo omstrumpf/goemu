@@ -110,3 +110,15 @@ func (mbc2 *MBC2) Write(addr uint16, val byte) {
 		log.Errorf("MBC2 encountered write out of range: %#04x = %#02x", addr, val)
 	}
 }
+
+func (mbc2 *MBC2) GetRamSave() []byte {
+	return mbc2.ram[:]
+}
+
+func (mbc2 *MBC2) LoadRamSave(data []byte) {
+	if len(data) > len(mbc2.ram) {
+		log.Warningf("MBC2 controller loading oversized RAM save. Data will be truncated.")
+	}
+
+	copy(mbc2.ram[:], data)
+}

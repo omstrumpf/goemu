@@ -47,10 +47,14 @@ type GBC struct {
 }
 
 // NewGBC constructs a valid GBC struct
-func NewGBC(skiplogo bool, rom []byte) *GBC {
+func NewGBC(skiplogo bool, rom []byte, ram []byte) *GBC {
 	gbc := new(GBC)
 
 	gbc.cart = cartridge.NewCart(rom)
+
+	if len(ram) > 0 {
+		gbc.cart.BankController.LoadRamSave(ram)
+	}
 
 	log.Debugf("Parsed cartridge details:\n%s", gbc.cart.DebugString())
 
@@ -189,6 +193,11 @@ func (gbc *GBC) GetConsoleName() string {
 // GetGameName returns the name of the inserted cartridge
 func (gbc *GBC) GetGameName() string {
 	return strings.ToValidUTF8(gbc.cart.Title(), "")
+}
+
+// GetRAMSave
+func (gbc *GBC) GetRAMSave() []byte {
+	return gbc.cart.BankController.GetRamSave()
 }
 
 // traceString produces a string of the current GBC trace, for debugging

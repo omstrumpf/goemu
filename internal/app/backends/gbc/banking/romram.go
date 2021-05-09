@@ -44,3 +44,15 @@ func (romram *ROMRAM) Write(addr uint16, val byte) {
 		log.Errorf("ROMRAM controller write out of range: %#04x", addr)
 	}
 }
+
+func (romram *ROMRAM) GetRamSave() []byte {
+	return romram.ram[:]
+}
+
+func (romram *ROMRAM) LoadRamSave(data []byte) {
+	if len(data) > len(romram.ram) {
+		log.Warningf("ROMRAM controller loading oversized RAM save. Data will be truncated.")
+	}
+
+	copy(romram.ram[:], data)
+}

@@ -7,5 +7,6 @@ type Controller interface {
 
 	RunForClocks(int)
 
-	// TODO add save interactions
+	GetRamSave() []byte
+	LoadRamSave([]byte)
 }
