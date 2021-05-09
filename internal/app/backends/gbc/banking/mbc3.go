@@ -70,7 +70,7 @@ func (rtc *rtc) runForClocks(clocks int) {
 
 	rtc.clocksSinceLastSecond += clocks
 
-	if rtc.clocksSinceLastSecond >= constants.BaseClockSpeed {
+	for rtc.clocksSinceLastSecond >= constants.BaseClockSpeed {
 		rtc.clocksSinceLastSecond -= constants.BaseClockSpeed
 		rtc.incSeconds()
 	}
@@ -166,22 +166,27 @@ func (mbc3 *MBC3) Read(addr uint16) byte {
 		log.Debugf("MBC3 encountered ROM read out of range: %#04x", addr)
 		return 0xFF
 	} else if addr >= 0xA000 && addr < 0xC000 {
-		if mbc3.ramTimBank < 0x04 {
-			// Variable RAM bank
-			bankOffset := 0x2000 * uint32(mbc3.ramTimBank)
-			ramOffset := int(uint32(addr-0xA000) + bankOffset)
-			if ramOffset < len(mbc3.ram) {
-				return mbc3.ram[ramOffset]
+		if mbc3.ramTimEnable {
+			if mbc3.ramTimBank < 0x04 {
+				// Variable RAM bank
+				bankOffset := 0x2000 * uint32(mbc3.ramTimBank)
+				ramOffset := int(uint32(addr-0xA000) + bankOffset)
+				if ramOffset < len(mbc3.ram) {
+					return mbc3.ram[ramOffset]
+				}
+				log.Debugf("MBC3 encountered RAM read out of range: %#04x", addr)
+				return 0xFF
+			} else if mbc3.ramTimBank >= 0x08 && mbc3.ramTimBank < 0x0D {
+				// RTC registers
+				return mbc3.rtc.read(mbc3.ramTimBank - 0x08)
 			}
-			log.Debugf("MBC3 encountered RAM read out of range: %#04x", addr)
-			return 0xFF
-		} else if mbc3.ramTimBank >= 0x08 && mbc3.ramTimBank < 0x0D {
-			// RTC registers
-			return mbc3.rtc.read(mbc3.ramTimBank - 0x08)
-		}
 
-		log.Debugf("MBC3 encountered RAM/RTC read with invalid bank: %#04x (bank %#02x)", addr, mbc3.ramTimBank)
-		return 0xFF
+			log.Debugf("MBC3 encountered RAM/RTC read with invalid bank: %#04x (bank %#02x)", addr, mbc3.ramTimBank)
+			return 0xFF
+		} else {
+			log.Debugf("MBC3 encountered read from disabled RAM: %#04x", addr)
+			return 0xFF
+		}
 	} else {
 		log.Errorf("MBC3 encountered read out of range: %#04x", addr)
 		return 0xFF
@@ -213,20 +218,24 @@ func (mbc3 *MBC3) Write(addr uint16, val byte) {
 		// RTC latch clock
 		mbc3.rtc.latch(val)
 	} else if addr >= 0xA000 && addr < 0xC000 {
-		if mbc3.ramTimBank < 0x04 {
-			// Variable RAM bank
-			bankOffset := 0x2000 * uint32(mbc3.ramTimBank)
-			ramOffset := int(uint32(addr-0xA000) + bankOffset)
-			if ramOffset < len(mbc3.ram) {
-				mbc3.ram[ramOffset] = val
+		if mbc3.ramTimEnable {
+			if mbc3.ramTimBank < 0x04 {
+				// Variable RAM bank
+				bankOffset := 0x2000 * uint32(mbc3.ramTimBank)
+				ramOffset := int(uint32(addr-0xA000) + bankOffset)
+				if ramOffset < len(mbc3.ram) {
+					mbc3.ram[ramOffset] = val
+				} else {
+					log.Debugf("MBC3 encountered RAM write out of range: %#04x", addr)
+				}
+			} else if mbc3.ramTimBank >= 0x08 && mbc3.ramTimBank < 0x0D {
+				// RTC registers
+				mbc3.rtc.write(mbc3.ramTimBank-0x08, val)
 			} else {
-				log.Debugf("MBC3 encountered RAM write out of range: %#04x", addr)
+				log.Debugf("MBC3 encountered RAM/RTC write with invalid bank: %#04x = %#02x (bank %#02x)", addr, val, mbc3.ramTimBank)
 			}
-		} else if mbc3.ramTimBank >= 0x08 && mbc3.ramTimBank < 0x0D {
-			// RTC registers
-			mbc3.rtc.write(mbc3.ramTimBank-0x08, val)
 		} else {
-			log.Debugf("MBC3 encountered RAM/RTC write with invalid bank: %#04x = %#02x (bank %#02x)", addr, val, mbc3.ramTimBank)
+			log.Debugf("MBC3 encountered write to disabled RAM: %#04x = %#02x", addr, val)
 		}
 	} else {
 		log.Errorf("MBC3 encountered write out of range: %#04x = %#02x", addr, val)

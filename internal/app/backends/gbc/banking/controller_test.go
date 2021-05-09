@@ -2,6 +2,8 @@ package banking
 
 import (
 	"testing"
+
+	"github.com/omstrumpf/goemu/internal/app/backends/gbc/constants"
 )
 
 var TESTDATA = []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
@@ -312,5 +314,270 @@ func TestMBC2RAM(t *testing.T) {
 
 	if c.Read(0xA000) != 0x0B {
 		t.Errorf("Expected MBC2 to read previously written value of 0x0B after re-enabling RAM, got %#02X", c.Read(0xA000))
+	}
+}
+
+func TestMBC3ROM(t *testing.T) {
+	c := NewMBC3(bigTestData(0x1000000, 0x1000))
+
+	if c.Read(0x1000) != 0x01 || c.Read(0x3000) != 0x03 {
+		t.Errorf("Expected NewMBC3 to accept data argument.")
+	}
+
+	if c.Read(0x4000) != 0x04 {
+		t.Errorf("Expected MBC3.Read to find 0x04 at rom bank 0, got %#02X", c.Read(0x4000))
+	}
+
+	if c.Read(0x7FFF) != 0x07 {
+		t.Errorf("Expected MBC3.Read to find 0x07 at rom bank 0, got %#02X", c.Read(0x7FFF))
+	}
+
+	// Select bank 4
+	c.Write(0x2000, 4)
+	if c.Read(0x4000) != 0x10 {
+		t.Errorf("Expected MBC3 to switch to bank 4 and read 0x10, got %#02X", c.Read(0x4000))
+	}
+
+	// 0x0000 still shows bank 0
+	if c.Read(0x1000) != 0x01 {
+		t.Errorf("Expected MBC3.Read to find 0x07 at rom bank 0 while bank 4 is selected, got %#02X", c.Read(0x7FFF))
+	}
+
+	// Select bank 0
+	c.Write(0x2000, 0)
+	if c.Read(0x4000) != 0x04 {
+		t.Errorf("Expected MBC3 to switch to bank 0 and read 0x04. got %#02X", c.Read(0x4000))
+	}
+}
+
+func TestMBC3RAM(t *testing.T) {
+	c := NewMBC3(nil)
+
+	// Write to disabled RAM
+	c.Write(0xA000, 0xAA)
+
+	// Enable RAM
+	c.Write(0x0000, 0x0A)
+
+	if c.Read(0xA000) != 0x00 {
+		t.Errorf("Expected MBC3 to not write to RAM when disabled, got %#02X", c.Read(0xA000))
+	}
+
+	// Write to enabled RAM
+	c.Write(0xA000, 0xBB)
+	if c.Read(0xA000) != 0xBB {
+		t.Errorf("Expected MBC3 to write/read from enabled ram successfuly, got %#02X", c.Read(0xA000))
+	}
+
+	// Switch to bank 3
+	c.Write(0x2000, 0x03)
+
+	c.Write(0xA000, 0xCC)
+	c.Write(0xB000, 0xDD)
+
+	if c.Read(0xA000) != 0xCC {
+		t.Errorf("Expected MBC3 to switch to bank 3 and write/read 0xCC, got %#02X", c.Read(0xA000))
+	}
+
+	if c.Read(0xB000) != 0xDD {
+		t.Errorf("Expected MBC3 to switch to bank 3 and write/read 0xDD, got %#02X", c.Read(0xB000))
+	}
+
+	// Disable RAM
+	c.Write(0x0000, 0x0)
+
+	if c.Read(0xA000) != 0xFF {
+		t.Errorf("Expected MBC3 to read 0xFF from disabled RAM, got %#02X", c.Read(0xA000))
+	}
+
+	c.Write(0xA000, 0xEE)
+
+	// Enable RAM
+	c.Write(0x0000, 0x0A)
+
+	if c.Read(0xA000) != 0xCC {
+		t.Errorf("Expected MBC3 to read previously written value of 0xCC after re-enabling RAM, got %#02X", c.Read(0xA000))
+	}
+}
+
+func TestMBC3RTC(t *testing.T) {
+	// NOTE: These are basic tests, consider running the rtc test rom from: https://github.com/aaaaaa123456789/rtc3test
+	c := NewMBC3(nil)
+
+	// Enable RAM / RTC registers
+	c.Write(0x0000, 0x0A)
+
+	// Latch
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	// Select RTC register RCHS
+	c.Write(0x4000, 0x08)
+
+	if c.Read(0xA000) != 0x00 {
+		t.Errorf("Expected RTC to initialize to 0 seconds, got %#02x", c.Read(0xA000))
+	}
+
+	// Wait for 2 minutes 10 seconds
+	c.RunForClocks(constants.BaseClockSpeed * 130)
+
+	if c.Read(0xA000) != 0x00 {
+		t.Errorf("Expected RTC registers to persist until latched, got %#02x", c.Read(0xA000))
+	}
+
+	// Latch
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	if c.Read(0xA000) != 0x0A {
+		t.Errorf("Expected RTCS to count 10 seconds, got %#02x", c.Read(0xA000))
+	}
+
+	// Select RTCM
+	c.Write(0x4000, 0x09)
+	if c.Read(0xA000) != 0x02 {
+		t.Errorf("Expected RTCMto count 2 minutes, got %#02x", c.Read(0xA000))
+	}
+
+	// Wait for 26 hours
+	c.RunForClocks(constants.BaseClockSpeed * 60 * 60 * 26)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	c.Write(0x4000, 0x08)
+	if c.Read(0xA000) != 10 {
+		t.Errorf("Expected RTCS to count 10 seconds, got %d", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x09)
+	if c.Read(0xA000) != 2 {
+		t.Errorf("Expected RTCM to count 2 minutes, got %d", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x0A)
+	if c.Read(0xA000) != 2 {
+		t.Errorf("Expected RTCH to count 2 hours, got %d", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x0B)
+	if c.Read(0xA000) != 1 {
+		t.Errorf("Expected RTCDL to count 1 day, got %d", c.Read(0xA000))
+	}
+
+	// Wait for 300 days
+	c.RunForClocks(constants.BaseClockSpeed * 60 * 60 * 24 * 300)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	if c.Read(0xA000) != 0x2D {
+		t.Errorf("Expected RTCDL to count 0x2D, got %#02X", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x0C)
+	if c.Read(0xA000) != 0x01 {
+		t.Errorf("Expected RTCH to read 0x01, got %#02X", c.Read(0xA000))
+	}
+
+	// Halt the RTC
+	c.Write(0xA000, 0b0100_0001)
+
+	// Wait 23 seconds while halted
+	c.RunForClocks(constants.BaseClockSpeed * 23)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	c.Write(0x4000, 0x08)
+	if c.Read(0xA000) != 10 {
+		t.Errorf("Expected RTC not to count while halted, read %d", c.Read(0xA000))
+	}
+
+	// Resume RTC
+	c.Write(0x4000, 0x0C)
+	c.Write(0xA000, 0b0000_0001)
+
+	// Wait for 300 more days
+	c.RunForClocks(constants.BaseClockSpeed * 60 * 60 * 24 * 300)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	c.Write(0x4000, 0x0B)
+	if c.Read(0xA000) != 89 {
+		t.Errorf("Expected RTCDL to count 0x2D, got %d", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x0C)
+	if c.Read(0xA000) != 0b1000_0000 {
+		t.Errorf("Expected RTCDH to read 0b10000000, got %b", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x08)
+	c.Write(0xA000, 0xFF)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+	if c.Read(0xA000) != 0b0011_1111 {
+		t.Errorf("Expected RTCS to be masked to 5 bits, got %b", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x09)
+	c.Write(0xA000, 0xFF)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+	if c.Read(0xA000) != 0b0011_1111 {
+		t.Errorf("Expected RTCM to be masked to 5 bits, got %b", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x0A)
+	c.Write(0xA000, 0xFF)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+	if c.Read(0xA000) != 0b0001_1111 {
+		t.Errorf("Expected RTCM to be masked to 4 bits, got %b", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x0C)
+	c.Write(0xA000, 0xFF)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+	if c.Read(0xA000) != 0b1100_0001 {
+		t.Errorf("Expected RTCDL to be masked to 0b11000001, got %b", c.Read(0xA000))
+	}
+	c.Write(0xA000, 0x0)
+
+	// Write 61 seconds to RTCS
+	c.Write(0x4000, 0x08)
+	c.Write(0xA000, 61)
+
+	// Write 0 minutes to RTCM
+	c.Write(0x4000, 0x09)
+	c.Write(0xA000, 0)
+
+	// Wait 2 seconds
+	c.RunForClocks(constants.BaseClockSpeed * 2)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	c.Write(0x4000, 0x09)
+	if c.Read(0xA000) != 0 {
+		t.Errorf("Expected RTCM to remain 0, got %d", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x08)
+	if c.Read(0xA000) != 0x3F {
+		t.Errorf("Expected RTCS to read 0x3F, got %#02X", c.Read(0xA000))
+	}
+
+	// Wait 1 more second
+	c.RunForClocks(constants.BaseClockSpeed)
+	c.Write(0x6000, 0x00)
+	c.Write(0x6000, 0x01)
+
+	c.Write(0x4000, 0x08)
+	if c.Read(0xA000) != 0 {
+		t.Errorf("Expected RTCS to read 0, got %#02X", c.Read(0xA000))
+	}
+
+	c.Write(0x4000, 0x09)
+	if c.Read(0xA000) != 0 {
+		t.Errorf("Expected RTCM to remain 0, got %d", c.Read(0xA000))
 	}
 }
