@@ -2,6 +2,7 @@ package io
 
 import (
 	"fmt"
+	"image/color"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -61,6 +62,8 @@ func (io *IO) ProcessInput() {
 
 // Render renders the console's frame buffer to the display
 func (io *IO) Render() {
+	io.win.Clear(color.Black)
+
 	picture := pixel.Picture(io.pic)
 	sprite := pixel.NewSprite(picture, picture.Bounds())
 	sprite.Draw(io.win, pixel.IM)
