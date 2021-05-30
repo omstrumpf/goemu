@@ -41,12 +41,12 @@ type APU struct {
 }
 
 // NewAPU constructs a valid APU struct
-func NewAPU() *APU {
+func NewAPU(speedFactor float64) *APU {
 	apu := new(APU)
 
 	apu.outchan = make(chan audio.ChanneledSample, bufferLength)
 
-	apu.sampleTimer = newTimerByHz(Bitrate, apu.takeSample)
+	apu.sampleTimer = newTimerByHz(int(float64(Bitrate)/speedFactor), apu.takeSample)
 
 	apu.squareWave1 = newSquareWave()
 	apu.squareWave2 = newSquareWave()

@@ -47,7 +47,7 @@ type GBC struct {
 }
 
 // NewGBC constructs a valid GBC struct
-func NewGBC(skiplogo bool, rom []byte, ram []byte) *GBC {
+func NewGBC(skiplogo bool, speedfactor float64, rom []byte, ram []byte) *GBC {
 	gbc := new(GBC)
 
 	gbc.cart = cartridge.NewCart(rom)
@@ -62,7 +62,7 @@ func NewGBC(skiplogo bool, rom []byte, ram []byte) *GBC {
 	gbc.timer = NewTimer(gbc.mmu)
 	gbc.cpu = NewCPU(gbc.mmu)
 	gbc.ppu = NewPPU(gbc.mmu)
-	gbc.apu = audio.NewAPU()
+	gbc.apu = audio.NewAPU(speedfactor)
 
 	gbc.mmu.ppu = gbc.ppu
 	gbc.mmu.apu = gbc.apu

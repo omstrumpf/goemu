@@ -24,7 +24,7 @@ func _main() {
 
 	loglevel := flag.String("loglevel", "ERROR", "Log level. ERROR, WARNING, DEBUG, TRACE.")
 	skiplogo := flag.Bool("skiplogo", false, "Skip the logo scroll sequence")
-	fastmode := flag.Bool("fastmode", false, "Don't limit emulation speed")
+	speed := flag.Float64("speed", 1.0, "Emulation speed. 1.0 is real time, 0 is unlimited.")
 	frames := flag.Uint64("frames", 0, "Number of frames to emulate. 0 is infinite.")
 	savefile := flag.String("savefile", "", "File to read/write cartridge save data to")
 	flag.Parse()
@@ -71,15 +71,17 @@ func _main() {
 
 	log.Tracef("Initializing gameboy")
 
-	gameboy := gbc.NewGBC(*skiplogo, rom, ram)
+	gameboy := gbc.NewGBC(*skiplogo, *speed, rom, ram)
 
 	io := io.NewIO(gameboy)
 
 	var ticker *time.Ticker
-	if *fastmode {
+	if *speed <= 0 {
 		ticker = time.NewTicker(time.Nanosecond)
 	} else {
-		ticker = time.NewTicker(gameboy.GetFrameTime())
+		frameTime := time.Duration(int64(float64(gameboy.GetFrameTime().Nanoseconds()) / *speed))
+
+		ticker = time.NewTicker(frameTime)
 	}
 
 	// Game loop

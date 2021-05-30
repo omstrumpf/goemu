@@ -70,8 +70,8 @@ func (rtc *rtc) runForClocks(clocks int) {
 
 	rtc.clocksSinceLastSecond += clocks
 
-	for rtc.clocksSinceLastSecond >= constants.BaseClockSpeed {
-		rtc.clocksSinceLastSecond -= constants.BaseClockSpeed
+	for rtc.clocksSinceLastSecond >= constants.ClockSpeed {
+		rtc.clocksSinceLastSecond -= constants.ClockSpeed
 		rtc.incSeconds()
 	}
 }
