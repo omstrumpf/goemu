@@ -1,7 +1,5 @@
 package audio
 
-import "github.com/omstrumpf/goemu/internal/app/log"
-
 type sweep struct {
 	timer *timer
 
@@ -31,20 +29,20 @@ func (sweep *sweep) runForClocks(clocks int) {
 }
 
 func (sweep *sweep) tick() {
-	if sweep.period != 0 {
+	if sweep.counter > 0 {
 		sweep.counter--
+	}
 
-		if sweep.counter == 0 {
-			sweep.counter = sweep.period
+	if sweep.counter == 0 {
+		sweep.reloadCounter()
 
-			if sweep.enabled {
-				newFreq := sweep.calculateNewFrequency()
+		if sweep.enabled && sweep.period > 0 {
+			newFreq := sweep.calculateNewFrequency()
 
-				if !sweep.checkOverflow(newFreq) && sweep.shift != 0 {
-					sweep.writeFreq(newFreq)
+			if !sweep.checkOverflow(newFreq) && sweep.shift > 0 {
+				sweep.writeFreq(newFreq)
 
-					sweep.checkOverflow(sweep.calculateNewFrequency())
-				}
+				sweep.checkOverflow(sweep.calculateNewFrequency())
 			}
 		}
 	}
@@ -52,12 +50,21 @@ func (sweep *sweep) tick() {
 
 func (sweep *sweep) trigger() {
 	sweep.freqShadow = sweep.squareWave.frequency
-	sweep.counter = sweep.period
 
-	sweep.enabled = (sweep.period != 0 || sweep.shift != 0)
+	sweep.reloadCounter()
 
-	if sweep.shift != 0 {
+	sweep.enabled = (sweep.period > 0 || sweep.shift > 0)
+
+	if sweep.shift > 0 {
 		sweep.checkOverflow(sweep.calculateNewFrequency())
+	}
+}
+
+func (sweep *sweep) reloadCounter() {
+	if sweep.period > 0 {
+		sweep.counter = sweep.period
+	} else {
+		sweep.counter = 8
 	}
 }
 
@@ -75,7 +82,6 @@ func (sweep *sweep) calculateNewFrequency() uint16 {
 
 func (sweep *sweep) checkOverflow(freq uint16) bool {
 	if freq > 2047 {
-		log.Debugf("Sweep unit disabling channel")
 		sweep.channel.disable()
 		return true
 	}
