@@ -5,16 +5,10 @@ import (
 )
 
 func TestAPUPower(t *testing.T) {
-	apu := NewAPU()
-
-	if apu.enabled {
-		t.Errorf("Expected APU to start disabled")
-	}
-
-	apu.Write(0xFF26, 0b1000_0000)
+	apu := NewAPU(1)
 
 	if !apu.enabled {
-		t.Errorf("Expected write to FF26 to enable APU")
+		t.Errorf("Expected APU to start enabled")
 	}
 
 	apu.Write(0xFF26, 0b0000_0000)
@@ -22,10 +16,16 @@ func TestAPUPower(t *testing.T) {
 	if apu.enabled {
 		t.Errorf("Expected reset of FF26 to disable APU")
 	}
+
+	apu.Write(0xFF26, 0b1000_0000)
+
+	if !apu.enabled {
+		t.Errorf("Expected write to FF26 to enable APU")
+	}
 }
 
 func TestAPUWaveRAM(t *testing.T) {
-	apu := NewAPU()
+	apu := NewAPU(1)
 
 	apu.Write(0xFF26, 0b1000_0000)
 

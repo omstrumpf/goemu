@@ -419,7 +419,7 @@ func TestMBC3RTC(t *testing.T) {
 	}
 
 	// Wait for 2 minutes 10 seconds
-	c.RunForClocks(constants.BaseClockSpeed * 130)
+	c.RunForClocks(constants.ClockSpeed * 130)
 
 	if c.Read(0xA000) != 0x00 {
 		t.Errorf("Expected RTC registers to persist until latched, got %#02x", c.Read(0xA000))
@@ -440,7 +440,7 @@ func TestMBC3RTC(t *testing.T) {
 	}
 
 	// Wait for 26 hours
-	c.RunForClocks(constants.BaseClockSpeed * 60 * 60 * 26)
+	c.RunForClocks(constants.ClockSpeed * 60 * 60 * 26)
 	c.Write(0x6000, 0x00)
 	c.Write(0x6000, 0x01)
 
@@ -465,7 +465,7 @@ func TestMBC3RTC(t *testing.T) {
 	}
 
 	// Wait for 300 days
-	c.RunForClocks(constants.BaseClockSpeed * 60 * 60 * 24 * 300)
+	c.RunForClocks(constants.ClockSpeed * 60 * 60 * 24 * 300)
 	c.Write(0x6000, 0x00)
 	c.Write(0x6000, 0x01)
 
@@ -482,7 +482,7 @@ func TestMBC3RTC(t *testing.T) {
 	c.Write(0xA000, 0b0100_0001)
 
 	// Wait 23 seconds while halted
-	c.RunForClocks(constants.BaseClockSpeed * 23)
+	c.RunForClocks(constants.ClockSpeed * 23)
 	c.Write(0x6000, 0x00)
 	c.Write(0x6000, 0x01)
 
@@ -496,7 +496,7 @@ func TestMBC3RTC(t *testing.T) {
 	c.Write(0xA000, 0b0000_0001)
 
 	// Wait for 300 more days
-	c.RunForClocks(constants.BaseClockSpeed * 60 * 60 * 24 * 300)
+	c.RunForClocks(constants.ClockSpeed * 60 * 60 * 24 * 300)
 	c.Write(0x6000, 0x00)
 	c.Write(0x6000, 0x01)
 
@@ -552,7 +552,7 @@ func TestMBC3RTC(t *testing.T) {
 	c.Write(0xA000, 0)
 
 	// Wait 2 seconds
-	c.RunForClocks(constants.BaseClockSpeed * 2)
+	c.RunForClocks(constants.ClockSpeed * 2)
 	c.Write(0x6000, 0x00)
 	c.Write(0x6000, 0x01)
 
@@ -567,7 +567,7 @@ func TestMBC3RTC(t *testing.T) {
 	}
 
 	// Wait 1 more second
-	c.RunForClocks(constants.BaseClockSpeed)
+	c.RunForClocks(constants.ClockSpeed)
 	c.Write(0x6000, 0x00)
 	c.Write(0x6000, 0x01)
 
