@@ -14,6 +14,8 @@ type sweep struct {
 	negate  bool
 
 	freqShadow uint16
+
+	negativeSweepSinceLastTrigger bool // For some very obscure behaviour
 }
 
 func newSweep(channel *channel, squareWave *squareWave) *sweep {
@@ -49,6 +51,8 @@ func (sweep *sweep) tick() {
 }
 
 func (sweep *sweep) trigger() {
+	sweep.negativeSweepSinceLastTrigger = false
+
 	sweep.freqShadow = sweep.squareWave.frequency
 
 	sweep.reloadCounter()
@@ -58,6 +62,17 @@ func (sweep *sweep) trigger() {
 	if sweep.shift > 0 {
 		sweep.checkOverflow(sweep.calculateNewFrequency())
 	}
+}
+
+func (sweep *sweep) setNegate(negate bool) {
+	if sweep.negativeSweepSinceLastTrigger && sweep.negate && !negate {
+		// Clearing the sweep negate mode bit after at least one sweep calculation
+		// has been made using the negate mode since the last trigger causes the
+		// channel to be immediately disabled.
+		sweep.channel.disable()
+	}
+
+	sweep.negate = negate
 }
 
 func (sweep *sweep) reloadCounter() {
@@ -72,10 +87,11 @@ func (sweep *sweep) calculateNewFrequency() uint16 {
 	newFreq := sweep.freqShadow >> sweep.shift
 
 	if sweep.negate {
-		newFreq = ^newFreq
+		newFreq = sweep.freqShadow - newFreq
+		sweep.negativeSweepSinceLastTrigger = true
+	} else {
+		newFreq = sweep.freqShadow + newFreq
 	}
-
-	newFreq += sweep.freqShadow
 
 	return newFreq
 }

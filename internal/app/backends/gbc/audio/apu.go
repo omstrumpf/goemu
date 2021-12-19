@@ -250,7 +250,7 @@ func (apu *APU) Write(addr uint16, val byte) {
 	switch addr {
 	case 0xFF10: // CH1 Sweep
 		apu.sweep.period = (val & 0b0111_0000) >> 4
-		apu.sweep.negate = (val & 0b0000_1000) != 0
+		apu.sweep.setNegate((val & 0b0000_1000) != 0)
 		apu.sweep.shift = (val & 0b0000_0111)
 	case 0xFF11: // CH1 Duty and Length Counter
 		apu.squareWave1.duty = (val & 0b1100_0000) >> 6
